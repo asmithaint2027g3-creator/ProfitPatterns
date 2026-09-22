@@ -42,7 +42,6 @@ export function Footer() {
             </p>
             <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
               <li><Link to="/about" className="transition-colors hover:text-foreground">About</Link></li>
-              <li><a href="/#icp" className="transition-colors hover:text-foreground">Ideal Customer Profile (ICP)</a></li>
               <li><Link to="/about" className="transition-colors hover:text-foreground">Our Approach</Link></li>
               <li><Link to="/about" className="transition-colors hover:text-foreground">Why ProfitPatterns</Link></li>
               <li><Link to="/how-it-works" className="transition-colors hover:text-foreground">How We Work</Link></li>

@@ -15,6 +15,7 @@ import { Route as CaseStudiesRouteImport } from './routes/case-studies'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as IcpRouteImport } from './routes/icp'
 import { Route as IndustriesRouteImport } from './routes/industries'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -63,6 +64,11 @@ const FaqRoute = FaqRouteImport.update({
 const HowItWorksRoute = HowItWorksRouteImport.update({
   id: '/how-it-works',
   path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IcpRoute = IcpRouteImport.update({
+  id: '/icp',
+  path: '/icp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndustriesRoute = IndustriesRouteImport.update({
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/icp': typeof IcpRoute
   '/industries': typeof IndustriesRouteWithChildren
   '/insights': typeof InsightsRouteWithChildren
   '/privacy': typeof PrivacyRoute
@@ -194,6 +201,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/icp': typeof IcpRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/case-studies/$slug': typeof CaseStudiesSlugRoute
@@ -217,6 +225,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/icp': typeof IcpRoute
   '/industries': typeof IndustriesRouteWithChildren
   '/insights': typeof InsightsRouteWithChildren
   '/privacy': typeof PrivacyRoute
@@ -246,6 +255,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/faq'
     | '/how-it-works'
+    | '/icp'
     | '/industries'
     | '/insights'
     | '/privacy'
@@ -272,6 +282,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/faq'
     | '/how-it-works'
+    | '/icp'
     | '/privacy'
     | '/terms'
     | '/case-studies/$slug'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/faq'
     | '/how-it-works'
+    | '/icp'
     | '/industries'
     | '/insights'
     | '/privacy'
@@ -322,6 +334,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   FaqRoute: typeof FaqRoute
   HowItWorksRoute: typeof HowItWorksRoute
+  IcpRoute: typeof IcpRoute
   IndustriesRoute: typeof IndustriesRouteWithChildren
   InsightsRoute: typeof InsightsRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
@@ -373,6 +386,13 @@ declare module '@tanstack/react-router' {
       path: '/how-it-works'
       fullPath: '/how-it-works'
       preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/icp': {
+      id: '/icp'
+      path: '/icp'
+      fullPath: '/icp'
+      preLoaderRoute: typeof IcpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/industries': {
@@ -602,6 +622,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   FaqRoute: FaqRoute,
   HowItWorksRoute: HowItWorksRoute,
+  IcpRoute: IcpRoute,
   IndustriesRoute: IndustriesRouteWithChildren,
   InsightsRoute: InsightsRouteWithChildren,
   PrivacyRoute: PrivacyRoute,

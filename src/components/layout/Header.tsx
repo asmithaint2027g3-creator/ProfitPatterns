@@ -22,6 +22,7 @@ const navItems: MenuItemConfig[] = [
   { key: "about", label: "About", to: "/about", hasMegaMenu: true },
   { key: "solutions", label: "Solutions", to: "/solutions", hasMegaMenu: true },
   { key: "industries", label: "Industries", to: "/industries", hasMegaMenu: true },
+  { key: "icp", label: "ICP", to: "/icp", hasMegaMenu: false },
   { key: "resources", label: "Resources", to: "/resources", hasMegaMenu: true },
   { key: "contact", label: "Contact", to: "/contact", hasMegaMenu: true },
 ];
@@ -150,6 +151,12 @@ export function Header() {
                 <Link
                   key={item.key}
                   to={item.to as "/"}
+                  onClick={(e) => {
+                    if (item.key === "icp" && pathname === "/") {
+                      e.preventDefault();
+                      document.getElementById("icp")?.scrollIntoView({ behavior: "smooth" });
+                    }
+                  }}
                   onMouseEnter={() => handleMouseEnter(item.key)}
                   className={cn(
                     "group relative inline-flex items-center px-3 py-2 xl:px-3.5 2xl:px-4 rounded font-display text-[17px] xl:text-[18px] font-semibold transition-all duration-150 cursor-pointer whitespace-nowrap",
@@ -281,7 +288,13 @@ export function Header() {
                     <li key={item.key}>
                       <Link
                         to={item.to as "/"}
-                        onClick={() => setMobileOpen(false)}
+                        onClick={(e) => {
+                          setMobileOpen(false);
+                          if (item.key === "icp" && pathname === "/") {
+                            e.preventDefault();
+                            document.getElementById("icp")?.scrollIntoView({ behavior: "smooth" });
+                          }
+                        }}
                         className="block rounded px-4 py-3 font-display text-[19px] font-bold text-foreground transition-colors hover:bg-secondary hover:text-primary"
                         activeProps={{ className: "bg-secondary text-primary font-bold" }}
                         activeOptions={{ exact: item.to === "/" }}
