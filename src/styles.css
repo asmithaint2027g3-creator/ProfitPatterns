@@ -1,0 +1,239 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+/*
+ * ProfitPatterns Editorial Consulting Design System
+ * Clean, sophisticated, editorial-style B2B consulting surface.
+ * Typography: Times New Roman throughout (headings + body).
+ * Palette: Warm ivory/off-white bg (#FAFAF8), deep charcoal (#1A1A1A), muted gold (#8B7355).
+ */
+
+@theme inline {
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.25rem;
+  --radius-4xl: 1.5rem;
+
+  --font-display: "Times New Roman", Times, Georgia, serif;
+  --font-body: "Times New Roman", Times, Georgia, serif;
+  --font-sans: "Times New Roman", Times, Georgia, serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 0.375rem;
+
+  /* Warm ivory / off-white background #FAFAF8 */
+  --background: #FAFAF8;
+  /* Deep charcoal foreground #1A1A1A */
+  --foreground: #1A1A1A;
+
+  /* Card: crisp white */
+  --card: #FFFFFF;
+  --card-foreground: #1A1A1A;
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1A1A;
+
+  /* Subtle warm surfaces */
+  --surface: #F5F3EE;
+  --line: #E5E0D8;
+  --border: #E5E0D8;
+  --input: #E5E0D8;
+
+  /* Primary & Accent: Muted Gold / Bronze #8B7355 */
+  --primary: #8B7355;
+  --primary-foreground: #FFFFFF;
+  --accent: #8B7355;
+  --accent-foreground: #FFFFFF;
+
+  /* Secondary: Soft warm beige */
+  --secondary: #F4F1EA;
+  --secondary-foreground: #1A1A1A;
+
+  /* Muted: Soft taupe */
+  --muted: #F5F2EB;
+  --muted-foreground: #66615B;
+
+  --destructive: #A33A3A;
+  --destructive-foreground: #FFFFFF;
+
+  --ring: #8B7355;
+
+  --chart-1: #8B7355;
+  --chart-2: #2D3748;
+  --chart-3: #718096;
+  --chart-4: #B79C7D;
+  --chart-5: #CBD5E0;
+
+  --sidebar: #FAFAF8;
+  --sidebar-foreground: #1A1A1A;
+  --sidebar-primary: #8B7355;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F4F1EA;
+  --sidebar-accent-foreground: #1A1A1A;
+  --sidebar-border: #E5E0D8;
+  --sidebar-ring: #8B7355;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    color-scheme: light;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+    font-weight: 600;
+    color: var(--color-foreground);
+  }
+
+  ::selection {
+    background-color: rgba(139, 115, 85, 0.2);
+    color: #1A1A1A;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+/* Editorial Minimal Card */
+@utility pp-card {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Backward-compatible alias for existing glass references -> clean bordered card */
+@utility glass {
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+}
+
+@utility glow-field {
+  background-image: none;
+}
+
+@utility text-gradient {
+  color: var(--color-primary);
+}
+
+@utility pp-eyebrow {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+@keyframes pp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility animate-rise {
+  animation: pp-rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes pp-mega-menu {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@utility animate-mega-menu {
+  animation: pp-mega-menu 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Staggered animation delay utilities */
+@utility delay-75  { animation-delay: 75ms; }
+@utility delay-150 { animation-delay: 150ms; }
+@utility delay-225 { animation-delay: 225ms; }
+@utility delay-300 { animation-delay: 300ms; }
+@utility delay-375 { animation-delay: 375ms; }
+@utility delay-450 { animation-delay: 450ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
