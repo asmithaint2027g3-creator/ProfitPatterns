@@ -23,6 +23,7 @@ import { Route as ResourcesRouteImport } from './routes/resources'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as SolutionsRouteImport } from './routes/solutions'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as WhoWeServeRouteImport } from './routes/who-we-serve'
 import { Route as CaseStudiesIndexRouteImport } from './routes/case-studies.index'
 import { Route as CaseStudiesSlugRouteImport } from './routes/case-studies.$slug'
 import { Route as IndustriesIndexRouteImport } from './routes/industries.index'
@@ -106,6 +107,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WhoWeServeRoute = WhoWeServeRouteImport.update({
+  id: '/who-we-serve',
+  path: '/who-we-serve',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CaseStudiesIndexRoute = CaseStudiesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/services': typeof ServicesRouteWithChildren
   '/solutions': typeof SolutionsRouteWithChildren
   '/terms': typeof TermsRoute
+  '/who-we-serve': typeof WhoWeServeRoute
   '/case-studies/$slug': typeof CaseStudiesSlugRoute
   '/industries/$slug': typeof IndustriesSlugRoute
   '/insights/$slug': typeof InsightsSlugRoute
@@ -204,6 +211,7 @@ export interface FileRoutesByTo {
   '/icp': typeof IcpRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/who-we-serve': typeof WhoWeServeRoute
   '/case-studies/$slug': typeof CaseStudiesSlugRoute
   '/industries/$slug': typeof IndustriesSlugRoute
   '/insights/$slug': typeof InsightsSlugRoute
@@ -233,6 +241,7 @@ export interface FileRoutesById {
   '/services': typeof ServicesRouteWithChildren
   '/solutions': typeof SolutionsRouteWithChildren
   '/terms': typeof TermsRoute
+  '/who-we-serve': typeof WhoWeServeRoute
   '/case-studies/$slug': typeof CaseStudiesSlugRoute
   '/industries/$slug': typeof IndustriesSlugRoute
   '/insights/$slug': typeof InsightsSlugRoute
@@ -263,6 +272,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/solutions'
     | '/terms'
+    | '/who-we-serve'
     | '/case-studies/$slug'
     | '/industries/$slug'
     | '/insights/$slug'
@@ -285,6 +295,7 @@ export interface FileRouteTypes {
     | '/icp'
     | '/privacy'
     | '/terms'
+    | '/who-we-serve'
     | '/case-studies/$slug'
     | '/industries/$slug'
     | '/insights/$slug'
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '/services'
     | '/solutions'
     | '/terms'
+    | '/who-we-serve'
     | '/case-studies/$slug'
     | '/industries/$slug'
     | '/insights/$slug'
@@ -342,6 +354,7 @@ export interface RootRouteChildren {
   ServicesRoute: typeof ServicesRouteWithChildren
   SolutionsRoute: typeof SolutionsRouteWithChildren
   TermsRoute: typeof TermsRoute
+  WhoWeServeRoute: typeof WhoWeServeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -442,6 +455,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/who-we-serve': {
+      id: '/who-we-serve'
+      path: '/who-we-serve'
+      fullPath: '/who-we-serve'
+      preLoaderRoute: typeof WhoWeServeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/case-studies/': {
@@ -630,6 +650,7 @@ const rootRouteChildren: RootRouteChildren = {
   ServicesRoute: ServicesRouteWithChildren,
   SolutionsRoute: SolutionsRouteWithChildren,
   TermsRoute: TermsRoute,
+  WhoWeServeRoute: WhoWeServeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

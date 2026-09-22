@@ -5,6 +5,7 @@ import { useState } from "react";
 import { MegaMenuIcon } from "@/components/layout/MegaMenuIcons";
 import { Button } from "@/components/ui/button";
 import { type MegaMenuSection, type SubmenuItem } from "@/config/megaMenuData";
+import { whoWeServeSegments } from "@/content/whoWeServe";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,108 @@ interface MegaMenuPanelProps {
 }
 
 export function MegaMenuPanel({ section, onClose }: MegaMenuPanelProps) {
+  // If Who We Serve, render the specialized 2-panel executive layout requested in specification
+  if (section.menuKey === "who-we-serve") {
+    return (
+      <div
+        role="region"
+        aria-label="Who We Serve Mega Menu"
+        className="absolute left-0 right-0 top-full z-50 mt-1 mx-auto max-w-7xl px-5 lg:px-8 pointer-events-auto"
+      >
+        <div className="w-full overflow-hidden rounded-lg border border-border bg-card shadow-2xl shadow-black/10 animate-mega-menu">
+          <div className="grid grid-cols-12 min-h-[380px]">
+            {/* Left Panel — Introduction */}
+            <div className="col-span-4 bg-[#1A1A1A] p-7 lg:p-8 text-[#FAFAF8] flex flex-col justify-between border-r border-[#2C2C2C]">
+              <div>
+                <p className="font-display text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C4B296]">
+                  STRATEGIC SEGMENTS
+                </p>
+                <h3 className="mt-3 font-display text-2xl lg:text-3xl font-bold tracking-tight text-white">
+                  Who We Serve
+                </h3>
+                <p className="mt-4 text-[14px] leading-relaxed text-[#A8A29E]">
+                  AI disruption, profitability pressure, and strategic uncertainty demand more than technology decisions. ProfitPatterns helps decision-makers translate AI into measurable business value and long-term competitive advantage.
+                </p>
+              </div>
+
+              <div className="pt-6 border-t border-[#333333]">
+                <Link
+                  to="/who-we-serve"
+                  onClick={() => {
+                    track("nav_click", { menu: "Who We Serve", item: "View All Segments" });
+                    onClose();
+                  }}
+                  className="inline-flex items-center gap-1.5 text-[14px] font-medium text-[#C4B296] hover:text-[#EAE5DC] transition-colors"
+                >
+                  Explore All Customer Segments
+                  <ArrowRight className="size-3.5" aria-hidden="true" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Right Panel — Four ICP Categories in a 2x2 Grid */}
+            <div className="col-span-8 bg-card p-6 lg:p-7 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between border-b border-border/80 pb-3 mb-4">
+                  <span className="font-display text-[12px] font-bold uppercase tracking-[0.18em] text-primary">
+                    Ideal Customer Profiles
+                  </span>
+                  <span className="text-[12px] text-muted-foreground">
+                    4 Strategic Segments
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {whoWeServeSegments.map((segment) => (
+                    <a
+                      key={segment.id}
+                      href={`/who-we-serve#${segment.anchor}`}
+                      onClick={() => {
+                        track("nav_click", { menu: "Who We Serve", item: segment.title });
+                        onClose();
+                      }}
+                      className="group flex flex-col justify-between rounded-lg border border-border bg-[#FBF9F5]/80 p-5 transition-all duration-200 hover:border-primary/50 hover:bg-card hover:shadow-sm cursor-pointer"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-display text-[17px] font-bold text-foreground group-hover:text-primary transition-colors">
+                            {segment.title}
+                          </h4>
+                          <ArrowRight className="size-3.5 text-primary opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0.5" />
+                        </div>
+                        <p className="mt-1 font-display text-[11px] font-semibold uppercase tracking-wider text-primary">
+                          {segment.positioning}
+                        </p>
+                        <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground line-clamp-3">
+                          {segment.supportingDescription}
+                        </p>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-border/60 flex items-center gap-1 text-[12px] font-bold text-primary group-hover:underline underline-offset-4">
+                        <span>Explore {segment.title} →</span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bottom bar */}
+              <div className="mt-4 pt-3 border-t border-border/80 flex items-center justify-between text-xs text-muted-foreground">
+                <span>Executive-level diagnostic frameworks tailored to governance and capital structure</span>
+                <Link
+                  to="/contact"
+                  onClick={onClose}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  Schedule Strategic Diagnostic →
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   // Currently active category in the left column
   const [activeCategoryId, setActiveCategoryId] = useState<string>(
     section.categories[0]?.id || ""

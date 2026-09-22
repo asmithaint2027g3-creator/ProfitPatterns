@@ -22,7 +22,7 @@ const navItems: MenuItemConfig[] = [
   { key: "about", label: "About", to: "/about", hasMegaMenu: true },
   { key: "solutions", label: "Solutions", to: "/solutions", hasMegaMenu: true },
   { key: "industries", label: "Industries", to: "/industries", hasMegaMenu: true },
-  { key: "icp", label: "ICP", to: "/icp", hasMegaMenu: false },
+  { key: "who-we-serve", label: "ICP", to: "/who-we-serve", hasMegaMenu: true },
   { key: "resources", label: "Resources", to: "/resources", hasMegaMenu: true },
   { key: "contact", label: "Contact", to: "/contact", hasMegaMenu: true },
 ];
@@ -84,6 +84,18 @@ export function Header() {
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Close on Escape key press
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setActiveMenuKey(null);
+        setMobileOpen(false);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   // Close menu on route change

@@ -28,7 +28,7 @@ export interface MegaCategory {
 }
 
 export interface MegaMenuSection {
-  menuKey: "about" | "solutions" | "industries" | "insights" | "resources" | "contact";
+  menuKey: "about" | "solutions" | "industries" | "insights" | "resources" | "contact" | "who-we-serve";
   label: string;
   to: string;
   leftCategoryLabel: string;
@@ -1095,6 +1095,124 @@ export const megaMenuData: Record<string, MegaMenuSection> = {
       text: "Ready to turn AI into a measurable profit advantage?",
       actionLabel: "Talk to an Expert Today",
       to: "/contact",
+    },
+  },
+  "who-we-serve": {
+    menuKey: "who-we-serve",
+    label: "Who We Serve",
+    to: "/who-we-serve",
+    leftCategoryLabel: "WHO WE SERVE",
+    leftDescription:
+      "AI disruption, profitability pressure, and strategic uncertainty demand more than technology decisions. ProfitPatterns helps decision-makers translate AI into measurable business value and long-term competitive advantage.",
+    categories: [
+      {
+        id: "icp-all",
+        label: "Customer Segments",
+        description: "Four distinct Ideal Customer Profiles",
+        defaultPreview: {
+          title: "Executive Strategic Partnership",
+          description:
+            "AI disruption, profitability pressure, and strategic uncertainty demand more than technology decisions. ProfitPatterns helps decision-makers translate AI into measurable business value and long-term competitive advantage.",
+          highlights: [
+            "Independent business-first advisory",
+            "Multi-pattern economic advantage",
+            "Measurable enterprise value creation",
+          ],
+          ctaText: "Explore All Segments",
+          ctaTo: "/who-we-serve",
+        },
+      },
+    ],
+    items: [
+      {
+        id: "cxos-enterprise-leaders",
+        title: "CXOs & Enterprise Leaders",
+        description:
+          "Translate AI potential into profit strategy, identify value leakage, and design transformation roadmaps aligned with growth, margins, and competitive positioning.",
+        to: "/who-we-serve#cxos-enterprise-leaders",
+        iconName: "Briefcase",
+        categoryRef: "icp-all",
+        preview: {
+          title: "For CEOs, COOs & CFOs Leading Through AI Disruption",
+          description:
+            "Translate AI potential into profit strategy, identify value leakage, and design transformation roadmaps aligned with growth, margins, and competitive positioning.",
+          highlights: [
+            "15–25% EBITDA uplift",
+            "6–18 month payback on AI investments",
+            "Clear platform or ecosystem end-game",
+          ],
+          ctaText: "Explore CXOs & Enterprise Leaders →",
+          ctaTo: "/who-we-serve#cxos-enterprise-leaders",
+        },
+      },
+      {
+        id: "boards-directors",
+        title: "Boards & Directors",
+        description:
+          "Gain an independent business-first perspective on AI investments, capital allocation, governance, and long-term strategic defensibility.",
+        to: "/who-we-serve#boards-directors",
+        iconName: "ShieldCheck",
+        categoryRef: "icp-all",
+        preview: {
+          title: "For Boards Demanding Clarity, Not AI Theater",
+          description:
+            "Gain an independent business-first perspective on AI investments, capital allocation, governance, and long-term strategic defensibility.",
+          highlights: [
+            "Confident AI governance",
+            "Sharper capital allocation decisions",
+            "Stronger strategic oversight",
+          ],
+          ctaText: "Explore Boards & Directors →",
+          ctaTo: "/who-we-serve#boards-directors",
+        },
+      },
+      {
+        id: "private-equity-investors",
+        title: "Private Equity & Investors",
+        description:
+          "Identify AI-driven value creation opportunities, develop repeatable portfolio playbooks, and improve visibility into EBITDA opportunities.",
+        to: "/who-we-serve#private-equity-investors",
+        iconName: "TrendingUp",
+        categoryRef: "icp-all",
+        preview: {
+          title: "For Investors Focused on Value Creation, Not Experiments",
+          description:
+            "Identify AI-driven value creation opportunities, develop repeatable portfolio playbooks, and improve visibility into EBITDA opportunities.",
+          highlights: [
+            "Portfolio-wide value creation visibility",
+            "Repeatable AI value-creation playbooks",
+            "Faster identification of EBITDA opportunities",
+          ],
+          ctaText: "Explore Private Equity & Investors →",
+          ctaTo: "/who-we-serve#private-equity-investors",
+        },
+      },
+      {
+        id: "family-owned-enterprises",
+        title: "Family-Owned Enterprises",
+        description:
+          "Modernize with strategic clarity while protecting core profit pools, ownership priorities, organizational culture, and long-term resilience.",
+        to: "/who-we-serve#family-owned-enterprises",
+        iconName: "Compass",
+        categoryRef: "icp-all",
+        preview: {
+          title: "For Owners Protecting Legacy While Building the Next Growth Engine",
+          description:
+            "Modernize with strategic clarity while protecting core profit pools, ownership priorities, organizational culture, and long-term resilience.",
+          highlights: [
+            "Stronger and more resilient profit engines",
+            "Clearer next-generation growth opportunities",
+            "Self-funded modernization roadmap",
+          ],
+          ctaText: "Explore Family-Owned Enterprises →",
+          ctaTo: "/who-we-serve#family-owned-enterprises",
+        },
+      },
+    ],
+    bottomCta: {
+      text: "AI disruption, profitability pressure, and strategic uncertainty demand more than technology decisions.",
+      actionLabel: "View All 4 Strategic Segments",
+      to: "/who-we-serve",
     },
   },
 };
