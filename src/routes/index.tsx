@@ -9,6 +9,7 @@ import { BusinessFlowVisual } from "@/components/sections/BusinessFlowVisual";
 import { FinalCTA } from "@/components/sections/FinalCTA";
 import { FrameworkSection } from "@/components/sections/FrameworkSection";
 import { HeroVisualCarousel } from "@/components/sections/HeroVisualCarousel";
+import { IdealCustomerProfileSection } from "@/components/sections/IdealCustomerProfileSection";
 import { ProblemDiscovery } from "@/components/sections/ProblemDiscovery";
 import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
@@ -16,7 +17,7 @@ import { siteConfig } from "@/config/site";
 import { faqs } from "@/content/faqs";
 import { processSteps } from "@/content/framework";
 import { services } from "@/content/services";
-import { whoWeHelp, workingPrinciples } from "@/content/trust";
+import { workingPrinciples } from "@/content/trust";
 import { track } from "@/lib/analytics";
 import { canonical, faqSchema, organizationSchema, pageMeta } from "@/lib/seo";
 import { cn } from "@/lib/utils";
@@ -293,32 +294,10 @@ function Home() {
         </div>
       </Section>
 
-      {/* Who We Help with Staggered Scroll Reveal */}
-      <Section className="border-y border-border bg-[#FBF9F5]">
-        <ScrollReveal direction="up">
-          <SectionHeading
-            eyebrow="Who We Help"
-            title="Built for Businesses That Want to Work Smarter."
-            description="Whether you are building a new business, scaling an existing operation or looking for better ways to use technology, the starting point is the same: identify the opportunity."
-            action={
-              <Button asChild variant="outline" size="sm">
-                <Link to="/contact">Tell Us About Your Business</Link>
-              </Button>
-            }
-          />
-        </ScrollReveal>
-
-        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {whoWeHelp.map((item, idx) => (
-            <ScrollReveal key={item.title} delay={idx * 80} direction="up">
-              <div className="h-full rounded border border-border bg-card p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-sm">
-                <h3 className="font-display text-base font-bold tracking-tight text-foreground">{item.title}</h3>
-                <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">{item.body}</p>
-              </div>
-            </ScrollReveal>
-          ))}
-        </div>
-      </Section>
+      {/* Ideal Customer Profile (ICP) Strategic Qualification Framework */}
+      <ScrollReveal direction="up">
+        <IdealCustomerProfileSection />
+      </ScrollReveal>
 
       {/* How It Works */}
       <Section>

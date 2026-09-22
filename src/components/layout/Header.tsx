@@ -22,7 +22,6 @@ const navItems: MenuItemConfig[] = [
   { key: "about", label: "About", to: "/about", hasMegaMenu: true },
   { key: "solutions", label: "Solutions", to: "/solutions", hasMegaMenu: true },
   { key: "industries", label: "Industries", to: "/industries", hasMegaMenu: true },
-  { key: "insights", label: "Insights", to: "/insights", hasMegaMenu: true },
   { key: "resources", label: "Resources", to: "/resources", hasMegaMenu: true },
   { key: "contact", label: "Contact", to: "/contact", hasMegaMenu: true },
 ];
