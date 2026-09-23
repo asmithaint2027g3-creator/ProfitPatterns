@@ -10,7 +10,8 @@ import {
 
 /** Max submissions allowed from one client within the window. */
 const RATE_LIMIT_MAX = 5;
-const RATE_LIMIT_WINDOW_MINUTES = 15;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const submissions = new Map<string, number[]>();
 
 function clientKey(): string {
   try {
@@ -24,28 +25,16 @@ function clientKey(): string {
   }
 }
 
-type AdminClient = typeof import("@/integrations/supabase/client.server")["supabaseAdmin"];
-
-async function getAdmin(): Promise<AdminClient> {
-  const mod = await import("@/integrations/supabase/client.server");
-  return mod.supabaseAdmin;
-}
-
-/** Returns true when the caller is within the allowed rate. */
-async function withinRateLimit(admin: AdminClient): Promise<boolean> {
+/** In-memory rate limiting */
+function withinRateLimit(): boolean {
   const key = clientKey();
-  const since = new Date(Date.now() - RATE_LIMIT_WINDOW_MINUTES * 60_000).toISOString();
-
-  const { count, error } = await admin
-    .from("lead_submission_log")
-    .select("id", { count: "exact", head: true })
-    .eq("client_key", key)
-    .gte("created_at", since);
-
-  if (error) return true; // never block a genuine lead on a logging failure
-  if ((count ?? 0) >= RATE_LIMIT_MAX) return false;
-
-  await admin.from("lead_submission_log").insert({ client_key: key });
+  const now = Date.now();
+  const timestamps = (submissions.get(key) || []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+  if (timestamps.length >= RATE_LIMIT_MAX) {
+    return false;
+  }
+  timestamps.push(now);
+  submissions.set(key, timestamps);
   return true;
 }
 
@@ -57,111 +46,113 @@ function clean(value: string | undefined | null): string | null {
 const GENERIC_ERROR =
   "We couldn't send your message just now. Please try again, or reach us on WhatsApp.";
 
+// Google Apps Script endpoint URL
+const APPS_SCRIPT_URL =
+  process.env.VITE_ANALYTICS_URL ||
+  process.env.APPS_SCRIPT_URL ||
+  "https://script.google.com/macros/s/AKfycbzjmmb2ZtocATMl4AeItsDOT7YfEXiL_AUDvA6uIHXSEFWuMNXn_kBFAQnYqTtgH3Wa/exec";
+
+async function forwardLeadToGoogleSheets(leadPayload: Record<string, unknown>): Promise<LeadSubmitResult> {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8",
+      },
+      body: JSON.stringify(leadPayload),
+    });
+
+    if (!response.ok) {
+      console.error("Google Sheets lead submission failed with status:", response.status);
+      return { ok: false, error: GENERIC_ERROR };
+    }
+
+    const leadId = `lead_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    return { ok: true, id: leadId };
+  } catch (error) {
+    console.error("Failed to forward lead to Google Sheets:", error);
+    return { ok: false, error: GENERIC_ERROR };
+  }
+}
+
 export const submitQuickLead = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => quickLeadSchema.parse(data))
+  .validator((data: unknown) => quickLeadSchema.parse(data))
   .handler(async ({ data }): Promise<LeadSubmitResult> => {
     if (data.companyWebsiteHp) return { ok: false, error: GENERIC_ERROR };
 
-    const admin = await getAdmin();
-    if (!(await withinRateLimit(admin))) {
+    if (!withinRateLimit()) {
       return { ok: false, error: "Too many submissions. Please try again in a few minutes." };
     }
 
-    const { data: row, error } = await admin
-      .from("leads")
-      .insert({
-        name: data.name,
-        email: data.email.toLowerCase(),
-        phone: clean(data.phone),
-        company: clean(data.company),
-        requirement: clean(data.requirement),
-        message: clean(data.message),
-        cta_type: "QUICK_FORM",
-        source: clean(data.source) ?? "quick_form",
-        page: clean(data.page),
-      })
-      .select("id")
-      .single();
-
-    if (error || !row) {
-      console.error("quick lead insert failed", error?.message);
-      return { ok: false, error: GENERIC_ERROR };
-    }
-    return { ok: true, id: row.id };
+    return await forwardLeadToGoogleSheets({
+      type: "lead",
+      lead_type: "QUICK_FORM",
+      event_name: "form_submit",
+      name: data.name,
+      email: data.email.toLowerCase(),
+      phone: clean(data.phone),
+      company: clean(data.company),
+      requirement: clean(data.requirement),
+      message: clean(data.message),
+      source: clean(data.source) ?? "quick_form",
+      page: clean(data.page) ?? "/contact",
+    });
   });
 
 export const submitConsultationLead = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => consultationLeadSchema.parse(data))
+  .validator((data: unknown) => consultationLeadSchema.parse(data))
   .handler(async ({ data }): Promise<LeadSubmitResult> => {
     if (data.companyWebsiteHp) return { ok: false, error: GENERIC_ERROR };
 
-    const admin = await getAdmin();
-    if (!(await withinRateLimit(admin))) {
+    if (!withinRateLimit()) {
       return { ok: false, error: "Too many submissions. Please try again in a few minutes." };
     }
 
-    const { data: row, error } = await admin
-      .from("leads")
-      .insert({
-        name: data.fullName,
-        email: data.workEmail.toLowerCase(),
-        phone: clean(data.phone),
-        company: clean(data.company),
-        job_title: clean(data.jobTitle),
-        industry: clean(data.industry),
-        company_size: clean(data.companySize),
-        website: clean(data.website),
-        challenge: clean(data.primaryChallenge),
-        current_challenge: clean(data.currentChallenge),
-        desired_outcome: clean(data.desiredOutcome),
-        current_tools: clean(data.currentTools),
-        existing_ai_usage: clean(data.existingAIUsage),
-        project_scope: clean(data.projectScope),
-        budget_range: clean(data.budgetRange),
-        preferred_contact_time: clean(data.preferredContactTime),
-        cta_type: "LONG_FORM",
-        source: clean(data.source) ?? "long_form",
-        page: clean(data.page),
-      })
-      .select("id")
-      .single();
-
-    if (error || !row) {
-      console.error("consultation lead insert failed", error?.message);
-      return { ok: false, error: GENERIC_ERROR };
-    }
-    return { ok: true, id: row.id };
+    return await forwardLeadToGoogleSheets({
+      type: "lead",
+      lead_type: "LONG_FORM",
+      event_name: "form_submit",
+      name: data.fullName,
+      email: data.workEmail.toLowerCase(),
+      phone: clean(data.phone),
+      company: clean(data.company),
+      job_title: clean(data.jobTitle),
+      industry: clean(data.industry),
+      company_size: clean(data.companySize),
+      website: clean(data.website),
+      requirement: clean(data.primaryChallenge),
+      challenge: clean(data.currentChallenge),
+      desired_outcome: clean(data.desiredOutcome),
+      current_tools: clean(data.currentTools),
+      existing_ai_usage: clean(data.existingAIUsage),
+      project_scope: clean(data.projectScope),
+      budget_range: clean(data.budgetRange),
+      preferred_contact_time: clean(data.preferredContactTime),
+      source: clean(data.source) ?? "long_form",
+      page: clean(data.page) ?? "/contact",
+    });
   });
 
 export const submitChatLead = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => chatLeadSchema.parse(data))
+  .validator((data: unknown) => chatLeadSchema.parse(data))
   .handler(async ({ data }): Promise<LeadSubmitResult> => {
     if (data.companyWebsiteHp) return { ok: false, error: GENERIC_ERROR };
 
-    const admin = await getAdmin();
-    if (!(await withinRateLimit(admin))) {
+    if (!withinRateLimit()) {
       return { ok: false, error: "Too many submissions. Please try again in a few minutes." };
     }
 
-    const { data: row, error } = await admin
-      .from("leads")
-      .insert({
-        name: data.name,
-        email: data.email.toLowerCase(),
-        phone: clean(data.phone),
-        company: clean(data.company),
-        requirement: clean(data.intent),
-        current_challenge: clean(data.businessProblem),
-        cta_type: "CHATBOT",
-        source: "assistant",
-        page: clean(data.page),
-      })
-      .select("id")
-      .single();
-
-    if (error || !row) {
-      console.error("chat lead insert failed", error?.message);
-      return { ok: false, error: GENERIC_ERROR };
-    }
-    return { ok: true, id: row.id };
+    return await forwardLeadToGoogleSheets({
+      type: "lead",
+      lead_type: "CHATBOT",
+      event_name: "form_submit",
+      name: data.name,
+      email: data.email.toLowerCase(),
+      phone: clean(data.phone),
+      company: clean(data.company),
+      requirement: clean(data.intent),
+      challenge: clean(data.businessProblem),
+      source: "assistant",
+      page: clean(data.page) ?? "/",
+    });
   });
