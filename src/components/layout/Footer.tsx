@@ -14,9 +14,13 @@ export function Footer() {
           {/* Brand column */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-2.5">
-              <span className="grid size-7 place-items-center rounded border border-primary/40 bg-secondary font-display text-xs font-bold text-primary tracking-wider">
-                PP
-              </span>
+              <img
+                src="/favicon.png"
+                alt="ProfitPatterns"
+                width={28}
+                height={28}
+                className="size-7 rounded-md border border-primary/40 object-cover shadow-xs"
+              />
               <span className="font-display font-semibold tracking-tight text-foreground text-lg">
                 Profit<span className="text-primary font-normal">Patterns</span>
               </span>

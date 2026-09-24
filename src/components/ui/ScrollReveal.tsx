@@ -36,6 +36,16 @@ export function ScrollReveal({
       return;
     }
 
+    const currentEl = elementRef.current;
+    if (currentEl) {
+      // Check if already visible or near viewport to avoid blank space
+      const rect = currentEl.getBoundingClientRect();
+      if (rect.top < window.innerHeight + 100) {
+        setIsVisible(true);
+        return;
+      }
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -46,12 +56,11 @@ export function ScrollReveal({
         }
       },
       {
-        threshold,
-        rootMargin: "0px 0px -40px 0px",
+        threshold: Math.min(threshold, 0.05),
+        rootMargin: "150px 0px 50px 0px",
       }
     );
 
-    const currentEl = elementRef.current;
     if (currentEl) {
       observer.observe(currentEl);
     }

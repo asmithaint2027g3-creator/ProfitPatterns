@@ -62,10 +62,10 @@ function Home() {
     <>
       {/* Two-Column Editorial Hero with Staggered Entrance Animation */}
       <section className="relative border-b border-border bg-background overflow-hidden">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 sm:py-20 lg:py-24">
-          <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-14">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 pb-12 sm:pt-8 sm:pb-14 lg:pt-8 lg:pb-14">
+          <div className="grid items-start gap-10 lg:grid-cols-12 lg:gap-12">
             {/* Left Column: Value Proposition & CTAs (Staggered load sequence) */}
-            <div className="lg:col-span-7">
+            <div className="lg:col-span-7 pt-1 sm:pt-2">
               {/* 1. Eyebrow badge */}
               <div
                 style={{ animationDelay: "0ms" }}
@@ -170,7 +170,7 @@ function Home() {
 
       {/* Problem Discovery with Scroll Reveal */}
       <Section id="problems">
-        <ScrollReveal direction="up" threshold={0.15}>
+        <ScrollReveal direction="up" threshold={0.02}>
           <ProblemDiscovery />
         </ScrollReveal>
       </Section>
@@ -295,9 +295,7 @@ function Home() {
       </Section>
 
       {/* Ideal Customer Profile (ICP) Strategic Qualification Framework */}
-      <ScrollReveal direction="up">
-        <IdealCustomerProfileSection />
-      </ScrollReveal>
+      <IdealCustomerProfileSection />
 
       {/* How It Works */}
       <Section>

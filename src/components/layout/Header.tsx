@@ -138,9 +138,13 @@ export function Header() {
           className="group flex items-center gap-3 shrink-0 mr-6 lg:mr-8 xl:mr-12"
           aria-label="ProfitPatterns Home"
         >
-          <span className="grid size-8 place-items-center rounded border border-primary/50 bg-[#1A1A1A] font-display text-xs font-bold text-[#C4B296] tracking-wider transition-transform group-hover:scale-105">
-            PP
-          </span>
+          <img
+            src="/favicon.png"
+            alt="ProfitPatterns"
+            width={32}
+            height={32}
+            className="size-8 rounded-md border border-primary/40 object-cover shadow-xs transition-transform duration-200 group-hover:scale-105"
+          />
           <span className="font-display text-[22px] font-bold tracking-tight text-foreground whitespace-nowrap">
             Profit<span className="text-primary font-normal">Patterns</span>
           </span>

@@ -10,7 +10,7 @@ export function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className={cn("relative mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-20", className)}>
+    <section id={id} className={cn("relative mx-auto max-w-7xl px-5 py-10 sm:py-14 lg:py-16", className)}>
       {children}
     </section>
   );
