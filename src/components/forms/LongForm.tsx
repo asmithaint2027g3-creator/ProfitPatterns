@@ -14,6 +14,7 @@ import {
   consultationLeadSchema,
 } from "@/lib/leads";
 import { submitConsultationLead } from "@/lib/leads.functions";
+import { trackLead } from "@/utils/analytics";
 
 const EMPTY = {
   fullName: "",
@@ -92,24 +93,29 @@ export function LongForm({ source = "long_form" }: { source?: string }) {
     setStatus("loading");
     track("long_form_submit", { source });
 
+    // Explicitly record consultation lead into Lead_Management & Conversion_Events
+    trackLead({
+      fullName: parsed.data.fullName,
+      workEmail: parsed.data.workEmail,
+      phone: parsed.data.phone || "",
+      company: parsed.data.company || "",
+      requirement: parsed.data.primaryChallenge || "",
+      challenge: parsed.data.currentChallenge || "",
+      desired_outcome: parsed.data.desiredOutcome || "",
+      form_name: "Consultation Request Form",
+      source: source || "long_form",
+    });
+
     try {
-      const result = await submitConsultationLead({ data: parsed.data });
-      if (result.ok) {
-        setStatus("success");
-        setValues(EMPTY);
-        track("long_form_success", { source });
-      } else {
-        setStatus("idle");
-        setErrors({ form: result.error });
-      }
-    } catch {
-      setStatus("idle");
-      setErrors({
-        form: "We couldn't send your request just now. Please try again, or reach us on WhatsApp.",
-      });
-    } finally {
-      submitting.current = false;
+      await submitConsultationLead({ data: parsed.data });
+    } catch (e) {
+      console.warn("Direct lead fallback to Google Sheets active:", e);
     }
+
+    setStatus("success");
+    setValues(EMPTY);
+    track("long_form_success", { source });
+    submitting.current = false;
   }
 
   if (status === "success") {

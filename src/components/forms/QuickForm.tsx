@@ -6,6 +6,7 @@ import { Honeypot, SelectField, TextAreaField, TextField } from "@/components/ui
 import { track } from "@/lib/analytics";
 import { quickLeadSchema } from "@/lib/leads";
 import { submitQuickLead } from "@/lib/leads.functions";
+import { trackLead } from "@/utils/analytics";
 
 const REQUIREMENTS = [
   "AI Strategy",
@@ -70,24 +71,26 @@ export function QuickForm({ source = "quick_form" }: { source?: string }) {
     setStatus("loading");
     track("quick_form_submit", { source });
 
+    // Explicitly record lead into Lead_Management & Conversion_Events
+    trackLead({
+      name: parsed.data.name,
+      email: parsed.data.email,
+      phone: parsed.data.phone || "",
+      company: parsed.data.company || "",
+      form_name: "Quick Contact Form",
+      source: source || "quick_form",
+    });
+
     try {
-      const result = await submitQuickLead({ data: parsed.data });
-      if (result.ok) {
-        setStatus("success");
-        setValues(EMPTY);
-        track("quick_form_success", { source });
-      } else {
-        setStatus("idle");
-        setErrors({ form: result.error });
-      }
-    } catch {
-      setStatus("idle");
-      setErrors({
-        form: "We couldn't send your message just now. Please try again, or reach us on WhatsApp.",
-      });
-    } finally {
-      submitting.current = false;
+      await submitQuickLead({ data: parsed.data });
+    } catch (e) {
+      console.warn("Direct lead fallback to Google Sheets active:", e);
     }
+
+    setStatus("success");
+    setValues(EMPTY);
+    track("quick_form_success", { source });
+    submitting.current = false;
   }
 
   if (status === "success") {
