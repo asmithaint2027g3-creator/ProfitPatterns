@@ -180,24 +180,24 @@ export const Route =
         {
           rel: "icon",
           type: "image/svg+xml",
-          href: "/favicon.svg",
+          href: "/favicon.svg?v=2",
         },
 
         {
           rel: "icon",
           type: "image/png",
-          href: "/favicon.png",
+          href: "/favicon.png?v=2",
         },
 
         {
           rel: "icon",
-          href: "/favicon.ico",
+          href: "/favicon.ico?v=2",
           sizes: "any",
         },
 
         {
           rel: "apple-touch-icon",
-          href: "/apple-touch-icon.png",
+          href: "/apple-touch-icon.png?v=2",
         },
 
         {
