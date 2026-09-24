@@ -6,12 +6,15 @@
  * simply no-op, so the app never depends on a script that may be blocked.
  */
 
+import { trackEvent } from "../utils/analytics";
+
 export type AnalyticsEventName =
   | "page_view"
   | "service_view"
   | "case_study_view"
   | "cta_click"
   | "whatsapp_click"
+  | "navigation_click"
   | "quick_form_open"
   | "quick_form_submit"
   | "quick_form_success"
@@ -21,7 +24,19 @@ export type AnalyticsEventName =
   | "chat_open"
   | "chat_message"
   | "chat_lead_started"
-  | "chat_lead_completed";
+  | "chat_lead_completed"
+  | "session_start"
+  | "session_end"
+  | "scroll_depth"
+  | "form_start"
+  | "form_submit"
+  | "nav_click"
+  | "mega_menu_cta_click"
+  | "diagnostic_answer"
+  | "diagnostic_completed"
+  | "icp_pillar_click"
+  | "pain_signal_toggle"
+  | string;
 
 export type AnalyticsPayload = Record<string, string | number | boolean | undefined>;
 
@@ -30,7 +45,15 @@ export interface AnalyticsAdapter {
   track: (event: AnalyticsEventName, payload: AnalyticsPayload) => void;
 }
 
-const adapters: AnalyticsAdapter[] = [];
+export const sheetsAdapter: AnalyticsAdapter = {
+  name: "google-sheets",
+  track: (event, payload) => {
+    // Forward all application tracking events to Google Sheets
+    trackEvent(event, payload as Record<string, unknown>);
+  },
+};
+
+const adapters: AnalyticsAdapter[] = [sheetsAdapter];
 
 export function registerAdapter(adapter: AnalyticsAdapter) {
   if (!adapters.some((a) => a.name === adapter.name)) adapters.push(adapter);

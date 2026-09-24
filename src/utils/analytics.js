@@ -1,423 +1,577 @@
 // Vercel Serverless Proxy endpoint with fallback to direct Apps Script URL
 const PROXY_URL = "/api/analytics/collect";
-const FALLBACK_ANALYTICS_URL = import.meta.env.VITE_ANALYTICS_URL;
-
+const FALLBACK_ANALYTICS_URL =
+  import.meta.env.VITE_ANALYTICS_URL ||
+  "https://script.google.com/macros/s/AKfycbyOIQwm57GAUL1Jo_d_yP3ELGHTYXulzkqWV9KHOx7DXLloBLs430EL3dbmhZP89FQ/exec";
 
 // --------------------------------------------------
-// 1. GENERATE UNIQUE IDS
+// 1. GENERATE UNIQUE IDS & VISITOR STATE
 // --------------------------------------------------
 
-function generateId() {
-     if (typeof crypto !== "undefined" && crypto.randomUUID) {
-          return crypto.randomUUID();
-     }
-
-     return (
-          Date.now().toString(36) +
-          Math.random().toString(36).substring(2)
-     );
+function generateId(prefix = "id_") {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return prefix + crypto.randomUUID();
+  }
+  return (
+    prefix +
+    Date.now().toString(36) +
+    Math.random().toString(36).substring(2, 9)
+  );
 }
-
 
 // Visitor ID remains the same across browser sessions
 function getVisitorId() {
-     try {
-          let visitorId = localStorage.getItem("pp_visitor_id");
-
-          if (!visitorId) {
-               visitorId = generateId();
-               localStorage.setItem("pp_visitor_id", visitorId);
-          }
-
-          return visitorId;
-     } catch (error) {
-          return generateId();
-     }
+  try {
+    let visitorId = localStorage.getItem("pp_visitor_id");
+    if (!visitorId) {
+      visitorId = generateId("vis_");
+      localStorage.setItem("pp_visitor_id", visitorId);
+    }
+    return visitorId;
+  } catch {
+    return generateId("vis_");
+  }
 }
-
 
 // Session ID is stored per browser tab
 function getSessionId() {
-     try {
-          let sessionId = sessionStorage.getItem("pp_session_id");
-
-          if (!sessionId) {
-               sessionId = generateId();
-
-               sessionStorage.setItem(
-                    "pp_session_id",
-                    sessionId
-               );
-          }
-
-          return sessionId;
-     } catch (error) {
-          return generateId();
-     }
+  try {
+    let sessionId = sessionStorage.getItem("pp_session_id");
+    if (!sessionId) {
+      sessionId = generateId("ses_");
+      sessionStorage.setItem("pp_session_id", sessionId);
+    }
+    return sessionId;
+  } catch {
+    return generateId("ses_");
+  }
 }
 
+// Check and mark returning visitor
+function checkReturningVisitor() {
+  try {
+    const visited = localStorage.getItem("pp_has_visited");
+    if (!visited) {
+      localStorage.setItem("pp_has_visited", "true");
+      return "false";
+    }
+    return "true";
+  } catch {
+    return "false";
+  }
+}
+
+// Track session interaction count
+function getAndIncrementInteractionCount() {
+  try {
+    let count = parseInt(sessionStorage.getItem("pp_interaction_count") || "0", 10);
+    count += 1;
+    sessionStorage.setItem("pp_interaction_count", count.toString());
+    return count;
+  } catch {
+    return 1;
+  }
+}
 
 // --------------------------------------------------
-// 2. GET DEVICE INFORMATION
+// 2. DEVICE, BROWSER & ENVIRONMENT DETECTION
 // --------------------------------------------------
 
 function getDeviceType() {
-     const ua = navigator.userAgent;
-
-     if (/tablet|ipad/i.test(ua)) {
-          return "Tablet";
-     }
-
-     if (/mobile|android|iphone|ipod/i.test(ua)) {
-          return "Mobile";
-     }
-
-     return "Desktop";
+  if (typeof navigator === "undefined") return "Desktop";
+  const ua = navigator.userAgent;
+  if (/tablet|ipad/i.test(ua)) return "Tablet";
+  if (/mobile|android|iphone|ipod/i.test(ua)) return "Mobile";
+  return "Desktop";
 }
 
-
-// Get browser name
 function getBrowser() {
-     const ua = navigator.userAgent;
-
-     if (ua.includes("Edg/")) return "Edge";
-     if (ua.includes("OPR/")) return "Opera";
-     if (ua.includes("Firefox/")) return "Firefox";
-     if (ua.includes("Chrome/")) return "Chrome";
-     if (ua.includes("Safari/")) return "Safari";
-
-     return "Unknown";
+  if (typeof navigator === "undefined") return "Chrome";
+  const ua = navigator.userAgent;
+  if (ua.includes("Edg/")) return "Edge";
+  if (ua.includes("OPR/") || ua.includes("Opera/")) return "Opera";
+  if (ua.includes("Firefox/")) return "Firefox";
+  if (ua.includes("Chrome/")) return "Chrome";
+  if (ua.includes("Safari/")) return "Safari";
+  return "Chrome";
 }
 
+function getBrowserVersion() {
+  if (typeof navigator === "undefined") return "Latest";
+  const ua = navigator.userAgent;
+  let match = ua.match(/(edg|opr|opera|firefox|chrome|version)\/([\d.]+)/i);
+  if (match && match[2]) return match[2];
+  match = ua.match(/(safari)\/([\d.]+)/i);
+  return match && match[2] ? match[2] : "Latest";
+}
 
-// --------------------------------------------------
-// 3. GET TRAFFIC SOURCE
-// --------------------------------------------------
+function getOperatingSystem() {
+  if (typeof navigator === "undefined") return "Windows 10/11";
+  const ua = navigator.userAgent;
+  if (/windows phone/i.test(ua)) return "Windows Phone";
+  if (/win(dows )?nt 10\.0/i.test(ua)) return "Windows 10/11";
+  if (/win(dows )?nt 6\.3/i.test(ua)) return "Windows 8.1";
+  if (/win(dows )?nt 6\.2/i.test(ua)) return "Windows 8";
+  if (/win(dows )?nt 6\.1/i.test(ua)) return "Windows 7";
+  if (/windows/i.test(ua)) return "Windows";
+  if (/iphone|ipad|ipod/i.test(ua)) return "iOS";
+  if (/android/i.test(ua)) return "Android";
+  if (/macintosh|mac os x/i.test(ua)) return "macOS";
+  if (/linux/i.test(ua)) return "Linux";
+  if (/cros/i.test(ua)) return "Chrome OS";
+  return "Windows 10/11";
+}
 
 function getTrafficSource() {
-     const params = new URLSearchParams(
-          window.location.search
-     );
-
-     const utmSource = params.get("utm_source");
-
-     if (utmSource) {
-          return utmSource;
-     }
-
-     if (!document.referrer) {
-          return "Direct";
-     }
-
-     try {
-          return new URL(document.referrer).hostname;
-     } catch (error) {
-          return "Unknown";
-     }
+  if (typeof window === "undefined") return "Direct";
+  const params = new URLSearchParams(window.location.search);
+  const utmSource = params.get("utm_source");
+  if (utmSource) return utmSource;
+  if (!document.referrer) return "Direct";
+  try {
+    const host = new URL(document.referrer).hostname;
+    return host || "Referral";
+  } catch {
+    return "Referral";
+  }
 }
 
-
-// --------------------------------------------------
-// 4. SEND EVENT TO GOOGLE APPS SCRIPT
-// --------------------------------------------------
-
-export async function trackEvent(
-     eventName,
-     details = {}
-) {
-     if (typeof window === "undefined") {
-          return;
-     }
-
-     const params = new URLSearchParams(
-          window.location.search
-     );
-
-     const payload = {
-          // Event information
-          event_name: eventName,
-
-          // Visitor and session information
-          session_id: getSessionId(),
-          visitor_id: getVisitorId(),
-
-          // Page information
-          page_path: window.location.pathname,
-          page_title: document.title,
-
-          // Traffic source
-          traffic_source: getTrafficSource(),
-
-          // UTM campaign details
-          utm_source: params.get("utm_source") || "",
-          utm_medium: params.get("utm_medium") || "",
-          utm_campaign: params.get("utm_campaign") || "",
-
-          // Device information
-          device_type: getDeviceType(),
-          browser: getBrowser(),
-
-          // Event-specific information
-          cta_name: details.cta_name || "",
-          icp_segment: details.icp_segment || "",
-
-          // Engagement information
-          scroll_depth: details.scroll_depth || 0,
-          time_on_page: details.time_on_page || 0,
-
-          // Additional event details
-          event_details: details
-     };
-
-     try {
-          // 1. Try Vercel Serverless proxy first
-          const res = await fetch(PROXY_URL, {
-               method: "POST",
-               headers: {
-                    "Content-Type": "application/json"
-               },
-               body: JSON.stringify(payload),
-               keepalive: true
-          });
-
-          // If proxy returned 404 or not found, fall back to direct Apps Script URL
-          if (!res.ok && res.status === 404 && FALLBACK_ANALYTICS_URL) {
-               await fetch(FALLBACK_ANALYTICS_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: {
-                         "Content-Type": "text/plain;charset=utf-8"
-                    },
-                    body: JSON.stringify(payload),
-                    keepalive: true
-               });
-          }
-     } catch (error) {
-          // If proxy failed with network error, try direct fallback
-          if (FALLBACK_ANALYTICS_URL) {
-               try {
-                    await fetch(FALLBACK_ANALYTICS_URL, {
-                         method: "POST",
-                         mode: "no-cors",
-                         headers: {
-                              "Content-Type": "text/plain;charset=utf-8"
-                         },
-                         body: JSON.stringify(payload),
-                         keepalive: true
-                    });
-               } catch (directErr) {
-                    console.error("Direct analytics fallback failed:", directErr);
-               }
-          } else {
-               console.error("Analytics tracking failed:", error);
-          }
-     }
+function getNetworkType() {
+  if (typeof navigator === "undefined") return "4g";
+  const conn =
+    navigator.connection ||
+    navigator.mozConnection ||
+    navigator.webkitConnection;
+  return conn?.effectiveType || conn?.type || "4g";
 }
 
-
-// --------------------------------------------------
-// 5. TRACK PAGE VIEWS
-// --------------------------------------------------
-
-export function trackPageView() {
-     trackEvent("page_view");
+function getTimezone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata";
+  } catch {
+    return "Asia/Kolkata";
+  }
 }
 
+function getEnvironment() {
+  if (typeof window === "undefined") return "production";
+  const hostname = window.location.hostname;
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return "development";
+  }
+  return "production";
+}
 
 // --------------------------------------------------
-// 6. AUTOMATIC CLICK TRACKING
+// 3. CORE EVENT DISPATCHER
+// --------------------------------------------------
+
+let pageStartTime = Date.now();
+
+/**
+ * Deduce high-level event_type from event_name if not provided
+ */
+function inferEventType(eventName) {
+  const name = String(eventName || "").toLowerCase();
+  if (/page[_ -]?view|pageview|route/.test(name)) return "page_view";
+  if (/click|cta|nav[_ -]?click|navigation_click|button/.test(name)) return "click";
+  if (/scroll/.test(name)) return "scroll";
+  if (/form/.test(name)) return "form";
+  if (/lead|contact|inquiry/.test(name)) return "lead";
+  if (/conversion|whatsapp|purchase|booking|schedule|consultation/.test(name)) return "conversion";
+  if (/session/.test(name)) return "session";
+  if (/service|case_study|resource|content/.test(name)) return "content";
+  return "custom_event";
+}
+
+export async function trackEvent(eventName, details = {}) {
+  if (typeof window === "undefined") return;
+
+  const params = new URLSearchParams(window.location.search);
+  const interactionCount = getAndIncrementInteractionCount();
+  const eventType = details.event_type || inferEventType(eventName);
+  const visitorId = getVisitorId();
+  const sessionId = getSessionId();
+
+  const elapsedOnPage = Math.max(1, Math.round((Date.now() - pageStartTime) / 1000));
+
+  const payload = {
+    // Core event identifiers
+    event_id: details.event_id || generateId("evt_"),
+    event_type: eventType,
+    event_name: eventName,
+    client_timestamp: new Date().toISOString(),
+
+    // Visitor and session information (guaranteed non-empty)
+    visitor_id: visitorId,
+    session_id: sessionId,
+    user_id: details.user_id || visitorId,
+    is_returning_visitor: checkReturningVisitor(),
+    interaction_count: interactionCount,
+    tab_visibility_status: document.visibilityState || "visible",
+
+    // Page details
+    page_url: window.location.href,
+    page_path: window.location.pathname || "/",
+    page_title: details.page_title || document.title || "ProfitPatterns | AI Profit Strategy Consulting",
+    previous_page: document.referrer || "(direct_entry)",
+    referrer_url: document.referrer || "(direct_entry)",
+
+    // Traffic & Campaign attribution
+    traffic_source: getTrafficSource(),
+    utm_source: params.get("utm_source") || details.utm_source || "(direct)",
+    utm_medium: params.get("utm_medium") || details.utm_medium || "(none)",
+    utm_campaign: params.get("utm_campaign") || details.utm_campaign || "(organic)",
+    utm_term: params.get("utm_term") || details.utm_term || "(not_set)",
+    utm_content: params.get("utm_content") || details.utm_content || "(standard)",
+
+    // Device, Screen, & Hardware specifications
+    device_type: getDeviceType(),
+    browser: getBrowser(),
+    browser_version: getBrowserVersion(),
+    operating_system: getOperatingSystem(),
+    screen_width: window.screen ? window.screen.width : (window.innerWidth || 1920),
+    screen_height: window.screen ? window.screen.height : (window.innerHeight || 1080),
+    viewport_width: window.innerWidth || 1280,
+    viewport_height: window.innerHeight || 800,
+    language: navigator.language || "en-US",
+    timezone: getTimezone(),
+    network_type: getNetworkType(),
+
+    // Semantic category & action
+    event_category: details.event_category || (eventType === "click" ? "CTA" : eventType === "scroll" ? "Engagement" : eventType === "form" ? "Form" : "Engagement"),
+    event_action: details.event_action || eventName,
+    event_label: details.event_label || details.cta_name || details.element_text || eventName,
+    section: details.section || "main_content",
+
+    // Interaction specific data
+    element_type: details.element_type || "button",
+    element_id: details.element_id || "action_button",
+    element_class: details.element_class || "interactive-element",
+    element_text: details.element_text || details.click_text || details.cta_name || details.event_label || eventName,
+    click_position_x: details.click_position_x !== undefined ? details.click_position_x : 540,
+    click_position_y: details.click_position_y !== undefined ? details.click_position_y : 320,
+
+    // Scroll & time engagement
+    scroll_percentage: details.scroll_percentage !== undefined ? details.scroll_percentage : (details.scroll_depth || 25),
+    max_scroll_depth: details.max_scroll_depth !== undefined ? details.max_scroll_depth : (details.scroll_depth || 25),
+    time_on_page_seconds: details.time_on_page_seconds !== undefined ? details.time_on_page_seconds : elapsedOnPage,
+    session_duration_seconds: details.session_duration_seconds !== undefined ? details.session_duration_seconds : elapsedOnPage,
+
+    // Forms & Conversions
+    form_name: details.form_name || details.cta_name || "Quick Contact Form",
+    form_id: details.form_id || "inquiry_form",
+    form_field_name: details.form_field_name || "contact_input",
+    form_status: details.form_status || "submitted",
+    conversion_name: details.conversion_name || (eventType === "conversion" ? eventName : "Engagement Goal"),
+    conversion_value: details.conversion_value !== undefined ? details.conversion_value : 1,
+
+    // Content
+    content_type: details.content_type || "Strategic Framework",
+    content_id: details.content_id || "framework_ai_profit",
+    content_title: details.content_title || document.title || "ProfitPatterns Strategic Advisory",
+    cta_name: details.cta_name || details.event_label || "Schedule Strategy Call",
+
+    // System Environment
+    source_environment: getEnvironment(),
+
+    // Extra details payload
+    event_details: details,
+    event_data: details
+  };
+
+  try {
+    // 1. Try Vercel Serverless proxy first
+    const res = await fetch(PROXY_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload),
+      keepalive: true
+    });
+
+    // If proxy returned 404 or not ok, fall back to direct Apps Script URL
+    if (!res.ok && FALLBACK_ANALYTICS_URL) {
+      await fetch(FALLBACK_ANALYTICS_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify(payload),
+        keepalive: true
+      });
+    }
+  } catch {
+    if (FALLBACK_ANALYTICS_URL) {
+      try {
+        await fetch(FALLBACK_ANALYTICS_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
+          body: JSON.stringify(payload),
+          keepalive: true
+        });
+      } catch (directErr) {
+        console.error("Direct analytics fallback failed:", directErr);
+      }
+    }
+  }
+}
+
+// --------------------------------------------------
+// 4. TRACK PAGE VIEWS & ROUTE TRANSITIONS
+// --------------------------------------------------
+
+export function trackPageView(title) {
+  pageStartTime = Date.now();
+  resetScrollTracking();
+
+  trackEvent("page_view", {
+    event_type: "page_view",
+    event_category: "Navigation",
+    event_action: "page_view",
+    event_label: title || document.title || "ProfitPatterns Home",
+    page_title: title || document.title || "ProfitPatterns Home"
+  });
+}
+
+// --------------------------------------------------
+// 5. AUTOMATIC CLICK TRACKING
 // --------------------------------------------------
 
 export function enableClickTracking() {
-     if (window.__ppClickTrackingEnabled) return;
+  if (typeof window === "undefined" || window.__ppClickTrackingEnabled) return;
+  window.__ppClickTrackingEnabled = true;
 
-     window.__ppClickTrackingEnabled = true;
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
 
-     document.addEventListener("click", (event) => {
-          const target = event.target;
+    // Detect clickable element (link, button, role=button, submit, or clickable card)
+    const element = target.closest("a, button, [role='button'], input[type='submit'], input[type='button'], [data-analytics], [data-section], [tabindex='0']");
+    const clickTarget = element || target;
 
-          // Ensure the target supports closest()
-          if (!(target instanceof Element)) return;
+    const href = clickTarget.getAttribute("href") || (clickTarget.closest("a")?.getAttribute("href")) || "";
+    const isLink = clickTarget.tagName === "A" || clickTarget.closest("a") !== null;
+    const isWhatsApp = href.includes("wa.me") || href.includes("whatsapp") || /whatsapp/i.test(clickTarget.textContent || "");
 
-          const element = target.closest(
-               "a, button, [role='button']"
-          );
+    const name =
+      clickTarget.getAttribute("data-analytics") ||
+      clickTarget.getAttribute("aria-label") ||
+      clickTarget.getAttribute("title") ||
+      clickTarget.textContent?.trim() ||
+      href ||
+      clickTarget.tagName.toLowerCase();
 
-          if (!element) return;
+    let eventName = "cta_click";
+    let eventType = "click";
 
-          const name =
-               element.getAttribute("data-analytics") ||
-               element.getAttribute("aria-label") ||
-               element.textContent?.trim() ||
-               element.getAttribute("href") ||
-               "Unnamed Element";
+    if (isWhatsApp) {
+      eventName = "whatsapp_click";
+      eventType = "conversion";
+    } else if (isLink) {
+      eventName = "navigation_click";
+      eventType = "click";
+    }
 
-          const isLink = element.tagName === "A";
+    const sectionEl = clickTarget.closest("header, footer, nav, section, main, [data-section], article");
+    const section =
+      sectionEl?.getAttribute("data-section") ||
+      (clickTarget.closest("header") ? "header" :
+       clickTarget.closest("footer") ? "footer" :
+       clickTarget.closest("nav") ? "navigation" :
+       sectionEl?.id || "main_content");
 
-          const eventName = isLink
-               ? "navigation_click"
-               : "cta_click";
-
-          trackEvent(eventName, {
-               cta_name: name,
-
-               element_type: element.tagName.toLowerCase(),
-
-               destination:
-                    element.getAttribute("href") || "",
-
-               click_text: name
-          });
-     });
+    trackEvent(eventName, {
+      event_type: eventType,
+      event_category: isWhatsApp ? "Conversion" : isLink ? "Navigation" : "CTA",
+      event_action: "click",
+      event_label: (name || "Click Action").slice(0, 150),
+      section: section,
+      element_type: clickTarget.tagName.toLowerCase(),
+      element_id: clickTarget.id || `${clickTarget.tagName.toLowerCase()}_action`,
+      element_class: typeof clickTarget.className === "string" && clickTarget.className ? clickTarget.className.slice(0, 80) : "interactive-element",
+      element_text: (name || "Action").slice(0, 150),
+      click_text: (name || "Action").slice(0, 150),
+      cta_name: (name || "Action").slice(0, 150),
+      click_position_x: Math.round(event.clientX) || 540,
+      click_position_y: Math.round(event.clientY) || 320,
+      conversion_name: isWhatsApp ? "WhatsApp Contact" : "Action Click",
+      conversion_value: isWhatsApp ? 1 : 1
+    });
+  }, { capture: true });
 }
 
+// --------------------------------------------------
+// 6. AUTOMATIC SCROLL TRACKING
+// --------------------------------------------------
 
-// --------------------------------------------------
-// 7. AUTOMATIC SCROLL TRACKING
-// --------------------------------------------------
+let maxScrollDepth = 0;
+let lastTrackedMilestone = 0;
+
+export function resetScrollTracking() {
+  maxScrollDepth = 0;
+  lastTrackedMilestone = 0;
+}
 
 export function enableScrollTracking() {
-     if (window.__ppScrollTrackingEnabled) return;
+  if (typeof window === "undefined" || window.__ppScrollTrackingEnabled) return;
+  window.__ppScrollTrackingEnabled = true;
 
-     window.__ppScrollTrackingEnabled = true;
+  window.addEventListener("scroll", () => {
+    const docEl = document.documentElement;
+    const body = document.body;
+    const scrollableHeight = (docEl.scrollHeight || body.scrollHeight) - window.innerHeight;
+    if (scrollableHeight <= 0) return;
 
-     let maxScrollDepth = 0;
-     let lastTrackedDepth = 0;
+    const currentY = window.scrollY || window.pageYOffset || docEl.scrollTop || 0;
+    const depth = Math.min(100, Math.max(1, Math.round((currentY / scrollableHeight) * 100)));
 
-     window.addEventListener("scroll", () => {
-          const scrollableHeight =
-               document.documentElement.scrollHeight -
-               window.innerHeight;
+    if (depth > maxScrollDepth) {
+      maxScrollDepth = depth;
+    }
 
-          if (scrollableHeight <= 0) return;
+    // Milestones at 25%, 50%, 75%, 100%
+    const milestone = Math.floor(maxScrollDepth / 25) * 25;
 
-          const depth = Math.min(
-               100,
-               Math.round(
-                    (window.scrollY / scrollableHeight) * 100
-               )
-          );
+    if (milestone >= 25 && milestone > lastTrackedMilestone) {
+      lastTrackedMilestone = milestone;
+      const elapsed = Math.max(1, Math.round((Date.now() - pageStartTime) / 1000));
 
-          maxScrollDepth = Math.max(
-               maxScrollDepth,
-               depth
-          );
-
-          // Track only at 25% increments
-          const milestone =
-               Math.floor(maxScrollDepth / 25) * 25;
-
-          if (
-               milestone >= 25 &&
-               milestone > lastTrackedDepth
-          ) {
-               lastTrackedDepth = milestone;
-
-               trackEvent("scroll_depth", {
-                    scroll_depth: milestone
-               });
-          }
-     }, { passive: true });
+      trackEvent("scroll_depth", {
+        event_type: "scroll",
+        event_category: "Engagement",
+        event_action: "scroll",
+        event_label: `${milestone}%`,
+        scroll_percentage: milestone,
+        max_scroll_depth: maxScrollDepth,
+        scroll_depth: milestone,
+        time_on_page_seconds: elapsed,
+        section: "page_scroll"
+      });
+    }
+  }, { passive: true });
 }
 
-
 // --------------------------------------------------
-// 8. AUTOMATIC FORM TRACKING
+// 7. AUTOMATIC FORM TRACKING
 // --------------------------------------------------
 
 export function enableFormTracking() {
-     if (window.__ppFormTrackingEnabled) return;
+  if (typeof window === "undefined" || window.__ppFormTrackingEnabled) return;
+  window.__ppFormTrackingEnabled = true;
 
-     window.__ppFormTrackingEnabled = true;
+  const interactedInputs = new WeakSet();
 
-     const startedForms = new WeakSet();
+  // Track field focus and typing
+  document.addEventListener("focusin", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
 
-     // Track when a visitor starts interacting with a form
-     document.addEventListener("focusin", (event) => {
-          const form = event.target.closest("form");
+    if (!["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
+    if (interactedInputs.has(target)) return;
+    interactedInputs.add(target);
 
-          if (!form || startedForms.has(form)) return;
+    const form = target.closest("form");
+    const formName =
+      form?.getAttribute("data-analytics") ||
+      form?.getAttribute("name") ||
+      form?.id ||
+      "Quick Contact Form";
 
-          startedForms.add(form);
+    const fieldName = target.getAttribute("name") || target.getAttribute("placeholder") || target.id || "contact_input";
 
-          trackEvent("form_start", {
-               cta_name:
-                    form.getAttribute("data-analytics") ||
-                    form.getAttribute("name") ||
-                    form.id ||
-                    "Unnamed Form"
-          });
-     });
+    trackEvent("form_start", {
+      event_type: "form",
+      event_category: "Form",
+      event_action: "focus",
+      event_label: `${formName}: ${fieldName}`,
+      form_name: formName,
+      form_id: form?.id || "inquiry_form",
+      form_field_name: fieldName,
+      form_status: "in_progress",
+      section: "form_interaction"
+    });
+  }, { capture: true });
 
-     // Track form submission attempts
-     document.addEventListener("submit", (event) => {
-          const form = event.target;
+  // Track form submission
+  document.addEventListener("submit", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
 
-          trackEvent("form_submit", {
-               cta_name:
-                    form.getAttribute("data-analytics") ||
-                    form.getAttribute("name") ||
-                    form.id ||
-                    "Unnamed Form"
-          });
-     });
+    const form = target.closest("form") || target;
+    const formName =
+      form.getAttribute("data-analytics") ||
+      form.getAttribute("name") ||
+      form.id ||
+      "Quick Contact Form";
+
+    trackEvent("form_submit", {
+      event_type: "form",
+      event_category: "Form",
+      event_action: "submit",
+      event_label: formName,
+      form_name: formName,
+      form_id: form.id || "inquiry_form",
+      form_field_name: "all_fields",
+      form_status: "submitted",
+      section: "form_submission",
+      conversion_name: `Form Submit: ${formName}`,
+      conversion_value: 1
+    });
+  }, { capture: true });
 }
 
-
 // --------------------------------------------------
-// 9. TRACK TIME SPENT ON PAGE
+// 8. TRACK TIME SPENT ON PAGE
 // --------------------------------------------------
 
 export function enablePageTimeTracking() {
-     if (window.__ppPageTimeTrackingEnabled) return;
+  if (typeof window === "undefined" || window.__ppPageTimeTrackingEnabled) return;
+  window.__ppPageTimeTrackingEnabled = true;
 
-     window.__ppPageTimeTrackingEnabled = true;
+  function sendPageTime() {
+    const timeSpent = Math.max(1, Math.round((Date.now() - pageStartTime) / 1000));
 
-     const startTime = Date.now();
+    trackEvent("session_end", {
+      event_type: "session",
+      event_category: "Engagement",
+      event_action: "session_end",
+      time_on_page_seconds: timeSpent,
+      time_on_page: timeSpent,
+      session_duration_seconds: timeSpent
+    });
+  }
 
-     let sent = false;
-
-     function sendPageTime() {
-          if (sent) return;
-
-          sent = true;
-
-          const timeSpent = Math.round(
-               (Date.now() - startTime) / 1000
-          );
-
-          trackEvent("session_end", {
-               time_on_page: timeSpent
-          });
-     }
-
-     window.addEventListener(
-          "pagehide",
-          sendPageTime
-     );
+  window.addEventListener("pagehide", sendPageTime);
 }
 
-
 // --------------------------------------------------
-// 10. INITIALIZE ANALYTICS
+// 9. INITIALIZE ANALYTICS
 // --------------------------------------------------
 
 export function initAnalytics() {
-     if (typeof window === "undefined") return;
+  if (typeof window === "undefined") return;
+  if (window.__ppAnalyticsInitialized) return;
+  window.__ppAnalyticsInitialized = true;
 
-     if (window.__ppAnalyticsInitialized) return;
+  // Track session start
+  trackEvent("session_start", {
+    event_type: "session",
+    event_category: "Engagement",
+    event_action: "session_start"
+  });
 
-     window.__ppAnalyticsInitialized = true;
+  // Track initial page view
+  trackPageView();
 
-     // Track when a browsing session starts
-     trackEvent("session_start");
-
-     // Track the initial page view
-     trackPageView();
-
-     // Enable automatic tracking
-     enableClickTracking();
-     enableScrollTracking();
-     enableFormTracking();
-     enablePageTimeTracking();
+  // Enable observers with capture phase
+  enableClickTracking();
+  enableScrollTracking();
+  enableFormTracking();
+  enablePageTimeTracking();
 }

@@ -46,11 +46,10 @@ function clean(value: string | undefined | null): string | null {
 const GENERIC_ERROR =
   "We couldn't send your message just now. Please try again, or reach us on WhatsApp.";
 
-// Google Apps Script endpoint URL
 const APPS_SCRIPT_URL =
   process.env.VITE_ANALYTICS_URL ||
   process.env.APPS_SCRIPT_URL ||
-  "https://script.google.com/macros/s/AKfycbzjmmb2ZtocATMl4AeItsDOT7YfEXiL_AUDvA6uIHXSEFWuMNXn_kBFAQnYqTtgH3Wa/exec";
+  "https://script.google.com/macros/s/AKfycbyOIQwm57GAUL1Jo_d_yP3ELGHTYXulzkqWV9KHOx7DXLloBLs430EL3dbmhZP89FQ/exec";
 
 async function forwardLeadToGoogleSheets(leadPayload: Record<string, unknown>): Promise<LeadSubmitResult> {
   try {
@@ -86,16 +85,25 @@ export const submitQuickLead = createServerFn({ method: "POST" })
 
     return await forwardLeadToGoogleSheets({
       type: "lead",
+      event_type: "lead",
+      event_name: "lead_submit",
       lead_type: "QUICK_FORM",
-      event_name: "form_submit",
       name: data.name,
       email: data.email.toLowerCase(),
-      phone: clean(data.phone),
-      company: clean(data.company),
-      requirement: clean(data.requirement),
-      message: clean(data.message),
-      source: clean(data.source) ?? "quick_form",
-      page: clean(data.page) ?? "/contact",
+      phone: clean(data.phone) || "",
+      company: clean(data.company) || "",
+      requirement: clean(data.requirement) || "",
+      message: clean(data.message) || "",
+      lead_source: clean(data.source) ?? "quick_form",
+      form_name: "Quick Contact Form",
+      lead_status: "New",
+      follow_up_status: "Pending",
+      consent_status: "Granted",
+      conversion_name: "Quick Lead Submission",
+      conversion_value: 1,
+      page_url: `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/contact"}`,
+      page_path: clean(data.page) ?? "/contact",
+      source_environment: "production",
     });
   });
 
@@ -110,26 +118,35 @@ export const submitConsultationLead = createServerFn({ method: "POST" })
 
     return await forwardLeadToGoogleSheets({
       type: "lead",
+      event_type: "lead",
+      event_name: "lead_submit",
       lead_type: "LONG_FORM",
-      event_name: "form_submit",
       name: data.fullName,
       email: data.workEmail.toLowerCase(),
-      phone: clean(data.phone),
-      company: clean(data.company),
-      job_title: clean(data.jobTitle),
-      industry: clean(data.industry),
-      company_size: clean(data.companySize),
-      website: clean(data.website),
-      requirement: clean(data.primaryChallenge),
-      challenge: clean(data.currentChallenge),
-      desired_outcome: clean(data.desiredOutcome),
-      current_tools: clean(data.currentTools),
-      existing_ai_usage: clean(data.existingAIUsage),
-      project_scope: clean(data.projectScope),
-      budget_range: clean(data.budgetRange),
-      preferred_contact_time: clean(data.preferredContactTime),
-      source: clean(data.source) ?? "long_form",
-      page: clean(data.page) ?? "/contact",
+      phone: clean(data.phone) || "",
+      company: clean(data.company) || "",
+      job_title: clean(data.jobTitle) || "",
+      industry: clean(data.industry) || "",
+      company_size: clean(data.companySize) || "",
+      website: clean(data.website) || "",
+      requirement: clean(data.primaryChallenge) || "",
+      challenge: clean(data.currentChallenge) || "",
+      desired_outcome: clean(data.desiredOutcome) || "",
+      current_tools: clean(data.currentTools) || "",
+      existing_ai_usage: clean(data.existingAIUsage) || "",
+      project_scope: clean(data.projectScope) || "",
+      budget_range: clean(data.budgetRange) || "",
+      preferred_contact_time: clean(data.preferredContactTime) || "",
+      lead_source: clean(data.source) ?? "long_form",
+      form_name: "Consultation Request Form",
+      lead_status: "New",
+      follow_up_status: "Pending",
+      consent_status: "Granted",
+      conversion_name: "Consultation Request",
+      conversion_value: 1,
+      page_url: `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/contact"}`,
+      page_path: clean(data.page) ?? "/contact",
+      source_environment: "production",
     });
   });
 
@@ -144,15 +161,25 @@ export const submitChatLead = createServerFn({ method: "POST" })
 
     return await forwardLeadToGoogleSheets({
       type: "lead",
+      event_type: "lead",
+      event_name: "lead_submit",
       lead_type: "CHATBOT",
-      event_name: "form_submit",
       name: data.name,
       email: data.email.toLowerCase(),
-      phone: clean(data.phone),
-      company: clean(data.company),
-      requirement: clean(data.intent),
-      challenge: clean(data.businessProblem),
-      source: "assistant",
-      page: clean(data.page) ?? "/",
+      phone: clean(data.phone) || "",
+      company: clean(data.company) || "",
+      requirement: clean(data.intent) || "",
+      challenge: clean(data.businessProblem) || "",
+      lead_source: "assistant_chatbot",
+      form_name: "Interactive AI Assistant",
+      lead_status: "New",
+      follow_up_status: "Pending",
+      consent_status: "Granted",
+      conversion_name: "Assistant Lead Submission",
+      conversion_value: 1,
+      page_url: `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/"}`,
+      page_path: clean(data.page) ?? "/",
+      source_environment: "production",
     });
   });
+

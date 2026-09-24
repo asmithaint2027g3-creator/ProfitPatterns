@@ -28,6 +28,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import {
   initAnalytics,
   trackEvent,
+  trackPageView,
 } from "../utils/analytics";
 
 
@@ -273,7 +274,7 @@ function RootComponent() {
 
     initialPath.current = pathname;
 
-    trackEvent("page_view");
+    trackPageView();
 
   }, [pathname]);
 
