@@ -1090,6 +1090,25 @@ export const megaMenuData: Record<string, MegaMenuSection> = {
           ctaTo: "/contact",
         },
       },
+      {
+        id: "audit-submission",
+        title: "Submit Process for AI Audit",
+        description: "Upload SOPs, workflows, or spreadsheets for a confidential feasibility & ROI audit",
+        to: "/audit-submission",
+        iconName: "UploadCloud",
+        categoryRef: "consultation-types",
+        preview: {
+          title: "Confidential Process AI Audit",
+          description: "Submit your team's workflow documentation or process logs to receive an executive AI readiness & ROI scorecard in 24–48 hours.",
+          highlights: [
+            "Protected by institutional mutual NDA",
+            "Identifies high-ROI automation bottlenecks",
+            "Turnaround in 24–48 hours by senior advisors",
+          ],
+          ctaText: "Submit Process Docs",
+          ctaTo: "/audit-submission",
+        },
+      },
     ],
     bottomCta: {
       text: "Ready to turn AI into a measurable profit advantage?",

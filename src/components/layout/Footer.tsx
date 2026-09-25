@@ -99,6 +99,7 @@ export function Footer() {
             <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
               <li><Link to="/insights" className="transition-colors hover:text-foreground">Insights</Link></li>
               <li><Link to="/resources" className="transition-colors hover:text-foreground">All Resources</Link></li>
+              <li><Link to="/audit-submission" className="font-semibold text-primary transition-colors hover:underline">Submit Process for Audit</Link></li>
               <li><Link to="/resources/ai-opportunity-assessment" className="transition-colors hover:text-foreground">AI Assessment</Link></li>
               <li><Link to="/resources/ai-readiness-checklist" className="transition-colors hover:text-foreground">AI Readiness</Link></li>
             </ul>

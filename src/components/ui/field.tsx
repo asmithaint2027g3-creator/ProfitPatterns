@@ -103,7 +103,7 @@ export function SelectField({
   ...props
 }: BaseProps &
   React.SelectHTMLAttributes<HTMLSelectElement> & {
-    options: readonly string[];
+    options: readonly (string | { label: string; value: string })[];
     placeholder?: string;
   }) {
   return (
@@ -119,11 +119,15 @@ export function SelectField({
         {...props}
       >
         {placeholder ? <option value="">{placeholder}</option> : null}
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
+        {options.map((option) => {
+          const val = typeof option === "string" ? option : option.value;
+          const lbl = typeof option === "string" ? option : option.label;
+          return (
+            <option key={val} value={val}>
+              {lbl}
+            </option>
+          );
+        })}
       </select>
       <FieldError id={`${id}-error`} message={error} />
     </div>

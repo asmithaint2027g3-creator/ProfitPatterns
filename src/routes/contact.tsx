@@ -39,43 +39,68 @@ function Contact() {
 
       {/* Contact option cards */}
       <Section>
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <ScrollReveal delay={0} direction="up">
-            <div className="h-full rounded border border-border bg-card p-6 shadow-sm transition-all duration-200 hover:border-primary/40 hover:shadow-md">
-              <MessageCircle className="size-5 text-primary" aria-hidden="true" />
-              <h2 className="mt-4 font-display text-base font-bold text-foreground">Chat on WhatsApp</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Fastest route for a quick question or to arrange a call.
-              </p>
+            <div className="h-full rounded border border-border bg-card p-6 shadow-sm transition-all duration-200 hover:border-primary/40 hover:shadow-md flex flex-col justify-between">
+              <div>
+                <MessageCircle className="size-5 text-primary" aria-hidden="true" />
+                <h2 className="mt-4 font-display text-base font-bold text-foreground">Chat on WhatsApp</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Fastest route for a quick question or to arrange an introductory call.
+                </p>
+              </div>
               <WhatsAppCTA location="contact_page" variant="accent" size="sm" className="mt-4" />
             </div>
           </ScrollReveal>
 
-          <ScrollReveal delay={100} direction="up">
-            <div className="h-full rounded border border-border bg-card p-6 shadow-sm transition-all duration-200 hover:border-primary/40 hover:shadow-md">
-              <Mail className="size-5 text-primary" aria-hidden="true" />
-              <h2 className="mt-4 font-display text-base font-bold text-foreground">Email</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                <a
-                  href={`mailto:${siteConfig.email}`}
-                  className="underline-offset-4 transition-colors hover:text-primary hover:underline"
-                >
-                  {siteConfig.email}
-                </a>
-              </p>
-              <p className="mt-2 text-xs text-muted-foreground">{siteConfig.responseTime}</p>
+          <ScrollReveal delay={80} direction="up">
+            <div className="h-full rounded border border-border bg-card p-6 shadow-sm transition-all duration-200 hover:border-primary/40 hover:shadow-md flex flex-col justify-between">
+              <div>
+                <Mail className="size-5 text-primary" aria-hidden="true" />
+                <h2 className="mt-4 font-display text-base font-bold text-foreground">Email</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  <a
+                    href={`mailto:${siteConfig.email}`}
+                    className="underline-offset-4 transition-colors hover:text-primary hover:underline"
+                  >
+                    {siteConfig.email}
+                  </a>
+                </p>
+              </div>
+              <p className="mt-4 text-xs text-muted-foreground">{siteConfig.responseTime}</p>
             </div>
           </ScrollReveal>
 
-          <ScrollReveal delay={200} direction="up">
-            <div className="h-full rounded border border-border bg-card p-6 shadow-sm transition-all duration-200 hover:border-primary/40 hover:shadow-md">
-              <MessagesSquare className="size-5 text-primary" aria-hidden="true" />
-              <h2 className="mt-4 font-display text-base font-bold text-foreground">ProfitPatterns Assistant</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Open the assistant using the button in the bottom-right corner. It helps you find the
-                right solution and can pass your details to us.
-              </p>
-              <p className="mt-2 text-xs text-muted-foreground">{siteConfig.locationNote}</p>
+          <ScrollReveal delay={160} direction="up">
+            <div className="h-full rounded border border-border bg-card p-6 shadow-sm transition-all duration-200 hover:border-primary/40 hover:shadow-md flex flex-col justify-between">
+              <div>
+                <MessagesSquare className="size-5 text-primary" aria-hidden="true" />
+                <h2 className="mt-4 font-display text-base font-bold text-foreground">ProfitPatterns Assistant</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Interactive AI assistant in the bottom corner helps match solutions and log requirements.
+                </p>
+              </div>
+              <p className="mt-4 text-xs text-muted-foreground">{siteConfig.locationNote}</p>
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal delay={240} direction="up">
+            <div className="h-full rounded border-2 border-primary/30 bg-primary/5 p-6 shadow-sm transition-all duration-200 hover:border-primary hover:shadow-md flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">NDA Protected</span>
+                </div>
+                <h2 className="mt-3 font-display text-base font-bold text-foreground">Submit Process for Audit</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Upload SOPs, workflow diagrams or spreadsheets for a comprehensive AI feasibility audit.
+                </p>
+              </div>
+              <a
+                href="/audit-submission"
+                className="mt-4 inline-flex items-center justify-center gap-1 rounded bg-[#1A1A1A] px-3 py-2 text-xs font-semibold text-[#FAFAF8] hover:bg-[#2D2D2D] transition-colors"
+              >
+                Upload Documents →
+              </a>
             </div>
           </ScrollReveal>
         </div>

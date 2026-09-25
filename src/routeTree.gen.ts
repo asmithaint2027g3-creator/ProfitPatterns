@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AuditSubmissionRouteImport } from './routes/audit-submission'
 import { Route as CaseStudiesRouteImport } from './routes/case-studies'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as FaqRouteImport } from './routes/faq'
@@ -45,6 +46,11 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditSubmissionRoute = AuditSubmissionRouteImport.update({
+  id: '/audit-submission',
+  path: '/audit-submission',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CaseStudiesRoute = CaseStudiesRouteImport.update({
@@ -176,6 +182,7 @@ const SolutionsSlugRoute = SolutionsSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/audit-submission': typeof AuditSubmissionRoute
   '/case-studies': typeof CaseStudiesRouteWithChildren
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
@@ -205,6 +212,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/audit-submission': typeof AuditSubmissionRoute
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/how-it-works': typeof HowItWorksRoute
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/audit-submission': typeof AuditSubmissionRoute
   '/case-studies': typeof CaseStudiesRouteWithChildren
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
@@ -260,6 +269,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/audit-submission'
     | '/case-studies'
     | '/contact'
     | '/faq'
@@ -289,6 +299,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/audit-submission'
     | '/contact'
     | '/faq'
     | '/how-it-works'
@@ -312,6 +323,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/audit-submission'
     | '/case-studies'
     | '/contact'
     | '/faq'
@@ -342,6 +354,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  AuditSubmissionRoute: typeof AuditSubmissionRoute
   CaseStudiesRoute: typeof CaseStudiesRouteWithChildren
   ContactRoute: typeof ContactRoute
   FaqRoute: typeof FaqRoute
@@ -371,6 +384,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/audit-submission': {
+      id: '/audit-submission'
+      path: '/audit-submission'
+      fullPath: '/audit-submission'
+      preLoaderRoute: typeof AuditSubmissionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/case-studies': {
@@ -638,6 +658,7 @@ const SolutionsRouteWithChildren = SolutionsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  AuditSubmissionRoute: AuditSubmissionRoute,
   CaseStudiesRoute: CaseStudiesRouteWithChildren,
   ContactRoute: ContactRoute,
   FaqRoute: FaqRoute,

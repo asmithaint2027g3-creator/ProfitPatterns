@@ -133,4 +133,57 @@ export const chatLeadSchema = honeypotSchema.extend({
 });
 export type ChatLeadInput = z.infer<typeof chatLeadSchema>;
 
+export const AUDIT_DOC_TYPES = [
+  "Standard Operating Procedure (SOP)",
+  "Process Workflow Diagram / Map",
+  "Operational Data / Metrics Spreadsheet",
+  "Technical Spec / Architecture Document",
+  "Project Scope / RFP Document",
+  "Other Process Documentation",
+] as const;
+
+export const ESTIMATED_WEEKLY_HOURS = [
+  "1 – 5 hours / week",
+  "5 – 15 hours / week",
+  "15 – 40 hours / week",
+  "40+ hours / week (team-wide)",
+] as const;
+
+export const AUDIT_PRIMARY_GOALS = [
+  "Identify High-ROI Automation Opportunities",
+  "Eliminate Manual Data Entry & Human Bottlenecks",
+  "Evaluate Custom AI / LLM Feasibility",
+  "Accelerate Turnaround Time for Customers",
+  "Formulate Clear 12-Month Automation Roadmap",
+] as const;
+
+export const uploadedFileSchema = z.object({
+  name: z.string().max(255),
+  size: z.number().max(30 * 1024 * 1024),
+  type: z.string().max(100),
+  category: z.string().optional(),
+});
+export type UploadedFileInfo = z.infer<typeof uploadedFileSchema>;
+
+export const auditLeadSchema = honeypotSchema.extend({
+  fullName: trimmed(100).min(2, { message: "Please enter your full name." }),
+  workEmail: trimmed(255).email({ message: "Please enter a valid work email." }),
+  phone: trimmed(30).optional().or(z.literal("")),
+  company: trimmed(120).optional().or(z.literal("")),
+  jobTitle: trimmed(120).optional().or(z.literal("")),
+  industry: trimmed(120).optional().or(z.literal("")),
+  docType: trimmed(120).default("Process Workflow Diagram / Map"),
+  weeklyHoursSpent: trimmed(60).default("15 – 40 hours / week"),
+  primaryGoal: trimmed(120).default("Identify High-ROI Automation Opportunities"),
+  processSummary: trimmed(3000).optional().or(z.literal("")),
+  files: z.array(uploadedFileSchema).min(1, {
+    message: "Please attach at least one document for audit.",
+  }),
+  ndaRequested: z.boolean().default(true),
+  page: trimmed(200).optional(),
+  source: trimmed(120).optional(),
+});
+export type AuditLeadInput = z.infer<typeof auditLeadSchema>;
+
 export type LeadSubmitResult = { ok: true; id: string } | { ok: false; error: string };
+

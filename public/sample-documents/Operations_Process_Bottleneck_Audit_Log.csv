@@ -1,0 +1,7 @@
+Process_ID,Department,Process_Name,Weekly_Manual_Hours,FTE_Assigned,Avg_Error_Rate_Pct,Current_Software_Tools,Est_Annual_Labor_Cost_USD,Primary_Friction_Point,Target_AI_Capability
+PROC-01,Finance,AP Vendor Invoice Line-Item Matching,35,3,4.8%,Gmail / Excel / NetSuite,78000,Manual data transcription from non-standard PDFs,Document LLM & Automated 2-Way Match
+PROC-02,Customer Ops,Tier-1 Support Ticket Categorization & Routing,28,4,8.2%,Zendesk / Slack / Jira,62000,Delays in classifying urgent vs billing inquiries,Intent Classification & Auto-Drafting Agent
+PROC-03,Sales Operations,CRM Lead Enrichment & Account Verification,22,2,6.5%,HubSpot / LinkedIn / Google Sheets,48000,Repetitive manual lookup of company size & tech stack,Autonomous Web Enrichment Agent
+PROC-04,Logistics,Freight Shipping Bill Reconciliation & Tracking,40,4,5.1%,Carrier Portals / TMS / SAP,92000,Logging into 12 carrier portals to update ETA statuses,RPA / Carrier API Webhooks & Tracking Bot
+PROC-05,Legal & HR,Contract Expiration & Vendor Renewal Auditing,15,1,3.4%,DocuSign / Drive / Outlook,35000,Searching unstructured contract PDFs for notice deadlines,Contract Clause Extraction & Alerting
+PROC-06,Marketing,SEO Competitor Price Scraping & Catalog Sync,18,2,7.0%,Browser / Excel / Shopify,41000,Manual price check against 6 competing distributors,Scheduled Web Scraping & Anomaly Detection

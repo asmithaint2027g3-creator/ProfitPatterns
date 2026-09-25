@@ -1,0 +1,62 @@
+================================================================================
+STANDARD OPERATING PROCEDURE (SOP)
+DOCUMENT REF: SOP-FIN-2026-084
+VERSION: 2.1 | STATUS: ACTIVE MANUAL PROCESS
+CLASSIFICATION: CONFIDENTIAL — INTERNAL OPERATIONS
+================================================================================
+
+TITLE: Vendor Invoice Verification, Discrepancy Matching & ERP Entry Workflow
+DEPARTMENT: Finance & Accounts Payable
+PROCESS OWNER: Lead Financial Controller
+TARGET FOR AI AUDIT: Process Automation & Human-in-the-Loop LLM Extraction
+
+1. PROCESS OBJECTIVE:
+The purpose of this procedure is to verify incoming vendor PDF invoices, cross-reference 
+line-item charges against approved Purchase Orders (POs) and Delivery Receipts, 
+resolve pricing discrepancies, and manually key line-item records into NetSuite/QuickBooks.
+
+2. CURRENT RESOURCE CONSUMPTION & METRICS:
+- AP Specialists Involved: 3 full-time equivalents (FTEs)
+- Weekly Manual Time Spent: ~32–38 hours per week total
+- Monthly Invoice Volume: 850 – 1,200 PDF invoices
+- Average Processing Time per Invoice: 11.5 minutes
+- Human Error / Discrepancy Rate: 4.8% (data transcription typos, tax code mismatch)
+- Estimated Annual Operational Cost: $78,000 USD in manual labor
+
+3. STEP-BY-STEP WORKFLOW:
+
+Step 1: Ingestion & Sorting
+- Staff checks shared inbox (invoices@company.com).
+- Download PDF invoices, verify they are not duplicates, and save to Google Drive / SharePoint.
+- Open Excel tracking sheet "2026_AP_Batch_Register.xlsx".
+
+Step 2: Line-Item Cross-Check
+- Open PO in NetSuite to verify vendor name, PO number, line items, unit quantities, and prices.
+- Open shipping bill/delivery receipt to confirm inventory received.
+- Compare vendor line prices against agreed contract rates.
+
+Step 3: Discrepancy Handling
+- If price variance > $15 or missing items, specialist flags the invoice.
+- Specialist drafts an email to vendor requesting credit memo or revised invoice.
+- Invoice placed in pending hold folder.
+
+Step 4: Manual ERP Entry & GL Coding
+- Manually key in: Vendor ID, Invoice Date, Due Date, Tax Amounts, GL Account Codes, 
+  and Department Cost Centers into the accounting software.
+- Route for manager approval if invoice exceeds $5,000 threshold.
+
+4. PRIMARY BOTTLENECK & PAIN POINTS:
+- Inconsistent vendor PDF layouts (multi-page tables, scanned handwriting, varied date formats).
+- High cognitive fatigue from copying & pasting item codes between three separate browser tabs.
+- Month-end reconciliation crunch leading to 2-3 days delay in financial closing.
+
+5. DESIRED AI & AUTOMATION AUDIT OUTCOME:
+- Implement automated document extraction (OCR + Document LLM) capable of parsing 
+  unstructured PDF invoices with 98%+ accuracy.
+- Automated two-way matching against NetSuite POs with confidence scoring.
+- Reduce manual verification time from 11.5 minutes to under 1 minute per invoice.
+- Projected target annual savings: ~$55,000+ and 80% reduction in month-end overtime.
+
+================================================================================
+END OF SOP DOCUMENT — SUBMITTED FOR PROFITPATTERNS AI FEASIBILITY AUDIT
+================================================================================

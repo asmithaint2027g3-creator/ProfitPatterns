@@ -31,6 +31,7 @@ import {
   ShoppingBag,
   Sliders,
   TrendingUp,
+  UploadCloud,
   UserCheck,
   Workflow,
 } from "lucide-react";
@@ -71,6 +72,7 @@ const iconMap: Record<string, React.ComponentType<LucideProps>> = {
   ShieldCheck,
   Search,
   ArrowRight,
+  UploadCloud,
 };
 
 export function MegaMenuIcon({ name, className }: { name: string; className?: string }) {

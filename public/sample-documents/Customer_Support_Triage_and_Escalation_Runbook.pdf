@@ -1,0 +1,67 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 1839 >>
+stream
+BT
+/F1 12 Tf
+50 750 Td
+18 TL
+(BUSINESS WORKFLOW RUNBOOK) '
+(DOCUMENT REF: RUNBOOK-OPS-2026-11) '
+(STATUS: PRODUCTION MANUAL WORKFLOW) '
+(------------------------------------------------------------------------) '
+(WORKFLOW TITLE: Customer Support Ticket Triage, SLA Priority Tagging & Escalation) '
+(BUSINESS UNIT: Global Customer Operations & Success) '
+(APPLICATION: ProfitPatterns AI Diagnostic Intake Sample) '
+() '
+(1. CONTEXT:) '
+(The support operations team receives 1,400+ weekly customer requests across web forms,) '
+(email, and chat. Agents currently spend 28+ hours/week manually reading,) '
+(tagging, and assigning urgency tiers for incoming inquiries.) '
+() '
+(2. CURRENT PROCESS STEPS:) '
+(1. Agent opens Zendesk Unassigned Queue.) '
+(2. Reads inquiry text and customer account tier \Enterprise, Mid-Market, Standard\.) '
+(3. Evaluates sentiment and urgency \e.g. system downtime vs password reset\.) '
+(4. Assigns tags: [Product_Area], [Issue_Type], [SLA_Tier], [Priority_Level].) '
+(5. For technical bugs, manually duplicates ticket details into Jira and pings on Slack.) '
+(6. For standard questions, copies canned response macros from Google Docs.) '
+() '
+(3. MEASURED INEFFICIENCIES:) '
+(- Median time to first human triage: 47 minutes during peak business hours.) '
+(- 12% of high-severity enterprise tickets are initially tagged with normal priority.) '
+(- Agents spend ~28 hours per week collectively performing repetitive categorization.) '
+() '
+(4. OBJECTIVES FOR PROFITPATTERNS AUDIT:) '
+(- Feasibility study for deploying an autonomous AI Triage Agent \< 30s response\.) '
+(- Auto-draft contextual resolution replies for top recurring issues.) '
+(- Projected payback timeframe: 3 months with 40% reduction in first-response time.) '
+(------------------------------------------------------------------------) '
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000002132 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+2202
+%%EOF

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 
 import {
+  auditLeadSchema,
   chatLeadSchema,
   consultationLeadSchema,
   quickLeadSchema,
@@ -182,4 +183,49 @@ export const submitChatLead = createServerFn({ method: "POST" })
       source_environment: "production",
     });
   });
+
+export const submitAuditLead = createServerFn({ method: "POST" })
+  .validator((data: unknown) => auditLeadSchema.parse(data))
+  .handler(async ({ data }): Promise<LeadSubmitResult> => {
+    if (data.companyWebsiteHp) return { ok: false, error: GENERIC_ERROR };
+
+    if (!withinRateLimit()) {
+      return { ok: false, error: "Too many submissions. Please try again in a few minutes." };
+    }
+
+    const filesSummary = data.files
+      .map((f) => `${f.name} (${Math.round(f.size / 1024)} KB${f.category ? ` - ${f.category}` : ""})`)
+      .join("; ");
+
+    return await forwardLeadToGoogleSheets({
+      type: "lead",
+      event_type: "lead",
+      event_name: "lead_submit",
+      lead_type: "PROCESS_AUDIT_SUBMISSION",
+      name: data.fullName,
+      email: data.workEmail.toLowerCase(),
+      phone: clean(data.phone) || "",
+      company: clean(data.company) || "",
+      job_title: clean(data.jobTitle) || "",
+      industry: clean(data.industry) || "",
+      requirement: clean(data.primaryGoal) || "",
+      challenge: clean(data.processSummary) || "",
+      audit_doc_type: clean(data.docType) || "",
+      weekly_hours_spent: clean(data.weeklyHoursSpent) || "",
+      files_count: data.files.length,
+      files_list: filesSummary,
+      nda_requested: data.ndaRequested ? "Yes" : "No",
+      lead_source: clean(data.source) ?? "audit_submission_form",
+      form_name: "Process AI Audit Document Submission",
+      lead_status: "New",
+      follow_up_status: "Pending",
+      consent_status: "Granted",
+      conversion_name: "Process Audit Submission",
+      conversion_value: 1,
+      page_url: `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/audit-submission"}`,
+      page_path: clean(data.page) ?? "/audit-submission",
+      source_environment: "production",
+    });
+  });
+
 
