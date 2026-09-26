@@ -48,9 +48,73 @@ const GENERIC_ERROR =
   "We couldn't send your message just now. Please try again, or reach us on WhatsApp.";
 
 const APPS_SCRIPT_URL =
-  process.env.VITE_ANALYTICS_URL ||
-  process.env.APPS_SCRIPT_URL ||
+  process.env["VITE_ANALYTICS_URL"] ||
+  process.env["APPS_SCRIPT_URL"] ||
   "https://script.google.com/macros/s/AKfycbyOIQwm57GAUL1Jo_d_yP3ELGHTYXulzkqWV9KHOx7DXLloBLs430EL3dbmhZP89FQ/exec";
+
+interface AirtableLeadPayload {
+  name: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  leadType: string;
+  requirement?: string;
+  message?: string;
+  pageUrl?: string;
+}
+
+async function forwardLeadToAirtable(lead: AirtableLeadPayload): Promise<void> {
+  const token =
+    process.env["AIRTABLE_PERSONAL_ACCESS_TOKEN"] ||
+    process.env["VITE_AIRTABLE_PERSONAL_ACCESS_TOKEN"];
+  const baseId =
+    process.env["AIRTABLE_BASE_ID"] ||
+    process.env["VITE_AIRTABLE_BASE_ID"];
+  const tableName =
+    process.env["AIRTABLE_TABLE_NAME"] ||
+    process.env["VITE_AIRTABLE_TABLE_NAME"] ||
+    "Leads";
+
+  if (!token || !baseId) {
+    return;
+  }
+
+  try {
+    const fields: Record<string, string> = {
+      Name: lead.name,
+      Email: lead.email,
+    };
+
+    if (lead.phone) fields["Phone"] = lead.phone;
+    if (lead.company) fields["Company"] = lead.company;
+    if (lead.leadType) fields["Lead Type"] = lead.leadType;
+    if (lead.requirement) fields["Requirement"] = lead.requirement;
+    if (lead.message) fields["Message"] = lead.message;
+    if (lead.pageUrl) fields["Source Page"] = lead.pageUrl;
+    fields["Status"] = "New";
+
+    const response = await fetch(`https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        fields,
+        typecast: true,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("Airtable submission failed:", response.status, errText);
+    } else {
+      console.log("Successfully posted lead directly to Airtable!");
+    }
+  } catch (error) {
+    console.error("Failed to forward lead to Airtable:", error);
+  }
+}
 
 async function forwardLeadToGoogleSheets(leadPayload: Record<string, unknown>): Promise<LeadSubmitResult> {
   try {
@@ -84,6 +148,17 @@ export const submitQuickLead = createServerFn({ method: "POST" })
       return { ok: false, error: "Too many submissions. Please try again in a few minutes." };
     }
 
+    void forwardLeadToAirtable({
+      name: data.name,
+      email: data.email.toLowerCase(),
+      phone: clean(data.phone) || "",
+      company: clean(data.company) || "",
+      leadType: "Quick Form",
+      requirement: clean(data.requirement) || "",
+      message: clean(data.message) || "",
+      pageUrl: `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/contact"}`,
+    });
+
     return await forwardLeadToGoogleSheets({
       type: "lead",
       event_type: "lead",
@@ -116,6 +191,17 @@ export const submitConsultationLead = createServerFn({ method: "POST" })
     if (!withinRateLimit()) {
       return { ok: false, error: "Too many submissions. Please try again in a few minutes." };
     }
+
+    void forwardLeadToAirtable({
+      name: data.fullName,
+      email: data.workEmail.toLowerCase(),
+      phone: clean(data.phone) || "",
+      company: clean(data.company) || "",
+      leadType: "Consultation",
+      requirement: clean(data.primaryChallenge) || "",
+      message: [clean(data.currentChallenge), clean(data.desiredOutcome)].filter(Boolean).join(" | "),
+      pageUrl: `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/contact"}`,
+    });
 
     return await forwardLeadToGoogleSheets({
       type: "lead",
@@ -160,6 +246,17 @@ export const submitChatLead = createServerFn({ method: "POST" })
       return { ok: false, error: "Too many submissions. Please try again in a few minutes." };
     }
 
+    void forwardLeadToAirtable({
+      name: data.name,
+      email: data.email.toLowerCase(),
+      phone: clean(data.phone) || "",
+      company: clean(data.company) || "",
+      leadType: "Chatbot",
+      requirement: clean(data.intent) || "",
+      message: clean(data.businessProblem) || "",
+      pageUrl: `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/"}`,
+    });
+
     return await forwardLeadToGoogleSheets({
       type: "lead",
       event_type: "lead",
@@ -196,6 +293,17 @@ export const submitAuditLead = createServerFn({ method: "POST" })
     const filesSummary = data.files
       .map((f) => `${f.name} (${Math.round(f.size / 1024)} KB${f.category ? ` - ${f.category}` : ""})`)
       .join("; ");
+
+    void forwardLeadToAirtable({
+      name: data.fullName,
+      email: data.workEmail.toLowerCase(),
+      phone: clean(data.phone) || "",
+      company: clean(data.company) || "",
+      leadType: "Process Audit",
+      requirement: clean(data.primaryGoal) || "",
+      message: `${clean(data.processSummary) || ""}${filesSummary ? ` (Files: ${filesSummary})` : ""}`,
+      pageUrl: `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/audit-submission"}`,
+    });
 
     return await forwardLeadToGoogleSheets({
       type: "lead",

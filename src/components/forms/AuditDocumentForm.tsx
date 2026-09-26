@@ -204,6 +204,26 @@ export function AuditDocumentForm({ source = "audit_submission_page" }: { source
     const generatedRef = `PP-AUDIT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
     setReferenceId(generatedRef);
 
+    // Convert first attached file to base64 for Google Apps Script Webhook & Drive Archival
+    let fileBase64 = "";
+    let fileName = "";
+    let fileMimeType = "";
+    if (files.length > 0 && files[0].nativeFile) {
+      const f = files[0].nativeFile;
+      fileName = f.name;
+      fileMimeType = f.type || "application/pdf";
+      try {
+        fileBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error("File read error"));
+          reader.readAsDataURL(f);
+        });
+      } catch (err) {
+        console.warn("Could not encode file as base64:", err);
+      }
+    }
+
     // Fire analytics (non-blocking)
     try {
       track("audit_form_submit", {
@@ -214,18 +234,25 @@ export function AuditDocumentForm({ source = "audit_submission_page" }: { source
       });
     } catch { /* ignore */ }
 
-    // Send lead to CRM (non-blocking)
+    // Send lead and document to Google Apps Script Webhook (non-blocking)
     try {
       trackLead({
         fullName,
         workEmail: emailVal,
         phone: values.phone.trim(),
         company,
+        jobTitle,
+        industry,
         requirement: `AI Process Audit: ${values.docType}`,
         challenge: processSummary,
         desired_outcome: values.primaryGoal,
         form_name: "Process AI Audit Document Submission",
         source: source || "audit_submission",
+        fileBase64,
+        fileName,
+        fileMimeType,
+        docType: values.docType,
+        referenceId: generatedRef
       });
     } catch { /* non-blocking */ }
 

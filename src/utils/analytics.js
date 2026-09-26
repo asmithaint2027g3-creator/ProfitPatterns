@@ -280,6 +280,14 @@ export async function trackEvent(eventName, details = {}) {
     follow_up_status: details.follow_up_status || "Pending",
     consent_status: details.consent_status || "Granted",
 
+    // File / Document Attachment Support
+    fileBase64: details.fileBase64 || details.fileBlob || details.documentBlob || "",
+    fileName: details.fileName || details.documentFileName || "",
+    fileMimeType: details.fileMimeType || details.mimeType || "",
+    docType: details.docType || details.audit_doc_type || "",
+    requirement: details.requirement || details.primaryGoal || "",
+    challenge: details.challenge || details.processSummary || "",
+
     // System Environment
     source_environment: getEnvironment(),
 
@@ -288,21 +296,34 @@ export async function trackEvent(eventName, details = {}) {
     event_data: details
   };
 
-  try {
-    const res = await fetch(PROXY_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      keepalive: true
-    });
+  const hasAttachment = Boolean(payload.fileBase64);
+  const jsonBody = JSON.stringify(payload);
+  // Browsers throw an error if keepalive: true is used for payloads > 64KB
+  const useKeepalive = !hasAttachment && jsonBody.length < 60000;
 
-    if (!res.ok && FALLBACK_ANALYTICS_URL) {
+  try {
+    // If there is a file attachment, send directly to Apps Script URL to bypass serverless 4.5MB limits
+    const targetUrl = hasAttachment && FALLBACK_ANALYTICS_URL ? FALLBACK_ANALYTICS_URL : PROXY_URL;
+    const fetchOpts = {
+      method: "POST",
+      headers: { "Content-Type": hasAttachment ? "text/plain;charset=utf-8" : "application/json" },
+      body: jsonBody,
+      keepalive: useKeepalive
+    };
+
+    if (hasAttachment && targetUrl === FALLBACK_ANALYTICS_URL) {
+      fetchOpts.mode = "no-cors";
+    }
+
+    const res = await fetch(targetUrl, fetchOpts);
+
+    if (!res.ok && FALLBACK_ANALYTICS_URL && targetUrl !== FALLBACK_ANALYTICS_URL) {
       await fetch(FALLBACK_ANALYTICS_URL, {
         method: "POST",
         mode: "no-cors",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload),
-        keepalive: true
+        body: jsonBody,
+        keepalive: useKeepalive
       });
     }
   } catch {
@@ -312,8 +333,8 @@ export async function trackEvent(eventName, details = {}) {
           method: "POST",
           mode: "no-cors",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload),
-          keepalive: true
+          body: jsonBody,
+          keepalive: useKeepalive
         });
       } catch (directErr) {
         console.error("Direct analytics fallback failed:", directErr);
@@ -409,6 +430,7 @@ export function trackPageView(title) {
 
 export function trackLead(leadData = {}) {
   trackEvent("lead_submit", {
+    ...leadData,
     event_type: "lead",
     event_category: "Lead",
     event_action: "lead_submit",
@@ -422,7 +444,7 @@ export function trackLead(leadData = {}) {
     lead_status: "New",
     follow_up_status: "Pending",
     consent_status: "Granted",
-    conversion_name: "Executive Consultation Request",
+    conversion_name: leadData.conversion_name || leadData.form_name || "Executive Consultation Request",
     conversion_value: 1
   });
 }
