@@ -74,6 +74,8 @@ interface AirtableLeadPayload {
   email: string;
   phone?: string | undefined;
   company?: string | undefined;
+  jobTitle?: string | undefined;
+  industry?: string | undefined;
   leadType: string;
   requirement?: string | undefined;
   message?: string | undefined;
@@ -92,12 +94,14 @@ async function saveToAirtable(lead: AirtableLeadPayload): Promise<void> {
     process.env["VITE_AIRTABLE_TABLE_NAME"] ||
     "Leads";
 
-  if (!token || !baseId) return;
+  if (!token || !baseId || baseId.startsWith("pat")) return;
 
   try {
     const fields: Record<string, string> = { Name: lead.name, Email: lead.email, Status: "New" };
     if (lead.phone) fields["Phone"] = lead.phone;
     if (lead.company) fields["Company"] = lead.company;
+    if (lead.jobTitle) fields["Job Title"] = lead.jobTitle;
+    if (lead.industry) fields["Industry"] = lead.industry;
     if (lead.leadType) fields["Lead Type"] = lead.leadType;
     if (lead.requirement) fields["Requirement"] = lead.requirement;
     if (lead.message) fields["Message"] = lead.message;
@@ -171,6 +175,8 @@ async function runLeadAutomations(p: AutomationPayload): Promise<void> {
       email: p.email,
       phone: p.phone || undefined,
       company: p.company || undefined,
+      jobTitle: p.jobTitle || undefined,
+      industry: p.industry || undefined,
       leadType: p.leadType,
       requirement: p.requirement || p.primaryGoal || undefined,
       message: p.challenge || p.message || p.processSummary || undefined,

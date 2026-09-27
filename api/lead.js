@@ -2,6 +2,7 @@
 // Dedicated Vercel Serverless Function for Lead Submissions & Jira Automation
 
 import { createJiraLeadTask } from "./_jira.js";
+import { saveLeadToAirtable } from "./_airtable.js";
 
 const DEFAULT_APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbyOIQwm57GAUL1Jo_d_yP3ELGHTYXulzkqWV9KHOx7DXLloBLs430EL3dbmhZP89FQ/exec";
@@ -102,35 +103,21 @@ export default async function handler(req, res) {
     }
 
     // Forward to Airtable (if configured)
-    const airtableToken = process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN || process.env.VITE_AIRTABLE_PERSONAL_ACCESS_TOKEN;
-    const airtableBase = process.env.AIRTABLE_BASE_ID || process.env.VITE_AIRTABLE_BASE_ID;
-    const airtableTable = process.env.AIRTABLE_TABLE_NAME || "Leads";
-
-    if (airtableToken && airtableBase) {
-      try {
-        await fetch(`https://api.airtable.com/v0/${airtableBase}/${encodeURIComponent(airtableTable)}`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${airtableToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            fields: {
-              Name: name,
-              Email: email,
-              Phone: phone,
-              Company: company,
-              "Lead Type": leadType,
-              Requirement: payload.requirement || payload.primaryChallenge || payload.primaryGoal || "",
-              Message: payload.challenge || payload.currentChallenge || payload.message || payload.processSummary || "",
-              Status: "New",
-            },
-            typecast: true,
-          }),
-        });
-      } catch (atErr) {
-        console.warn("Airtable logging notice:", atErr);
-      }
+    try {
+      await saveLeadToAirtable({
+        name,
+        email,
+        phone,
+        company,
+        jobTitle: payload.jobTitle || payload.job_title || "",
+        industry: payload.industry || "",
+        leadType,
+        requirement: payload.requirement || payload.primaryChallenge || payload.primaryGoal || "",
+        challenge: payload.challenge || payload.currentChallenge || payload.message || payload.processSummary || "",
+        pageUrl: payload.pageUrl || payload.page_url || "",
+      });
+    } catch (atErr) {
+      console.warn("Airtable logging notice:", atErr);
     }
 
     const leadId = `lead_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
