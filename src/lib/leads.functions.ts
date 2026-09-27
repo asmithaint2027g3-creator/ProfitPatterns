@@ -8,8 +8,11 @@ import {
   quickLeadSchema,
   type LeadSubmitResult,
 } from "./leads";
+import { createJiraLeadTask } from "./jira";
+import { sendLeadEmails } from "./email";
 
-/** Max submissions allowed from one client within the window. */
+// ─── Rate Limiting ────────────────────────────────────────────────────────────
+
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const submissions = new Map<string, number[]>();
@@ -26,14 +29,11 @@ function clientKey(): string {
   }
 }
 
-/** In-memory rate limiting */
 function withinRateLimit(): boolean {
   const key = clientKey();
   const now = Date.now();
   const timestamps = (submissions.get(key) || []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
-  if (timestamps.length >= RATE_LIMIT_MAX) {
-    return false;
-  }
+  if (timestamps.length >= RATE_LIMIT_MAX) return false;
   timestamps.push(now);
   submissions.set(key, timestamps);
   return true;
@@ -44,26 +44,43 @@ function clean(value: string | undefined | null): string | null {
   return trimmedValue ? trimmedValue.slice(0, 2000) : null;
 }
 
-const GENERIC_ERROR =
-  "We couldn't send your message just now. Please try again, or reach us on WhatsApp.";
+const GENERIC_ERROR = "We couldn't send your message just now. Please try again, or reach us on WhatsApp.";
+
+// ─── Google Sheets (via Apps Script) ─────────────────────────────────────────
 
 const APPS_SCRIPT_URL =
   process.env["VITE_ANALYTICS_URL"] ||
   process.env["APPS_SCRIPT_URL"] ||
   "https://script.google.com/macros/s/AKfycbyOIQwm57GAUL1Jo_d_yP3ELGHTYXulzkqWV9KHOx7DXLloBLs430EL3dbmhZP89FQ/exec";
 
+async function forwardLeadToGoogleSheets(leadPayload: Record<string, unknown>): Promise<void> {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(leadPayload),
+    });
+    if (!response.ok) console.error("Google Sheets submission failed:", response.status);
+    else console.log("✅ Lead saved to Google Sheets");
+  } catch (error) {
+    console.error("Google Sheets error:", error);
+  }
+}
+
+// ─── Airtable (Lead Storage) ──────────────────────────────────────────────────
+
 interface AirtableLeadPayload {
   name: string;
   email: string;
-  phone?: string;
-  company?: string;
+  phone?: string | undefined;
+  company?: string | undefined;
   leadType: string;
-  requirement?: string;
-  message?: string;
-  pageUrl?: string;
+  requirement?: string | undefined;
+  message?: string | undefined;
+  pageUrl?: string | undefined;
 }
 
-async function forwardLeadToAirtable(lead: AirtableLeadPayload): Promise<void> {
+async function saveToAirtable(lead: AirtableLeadPayload): Promise<void> {
   const token =
     process.env["AIRTABLE_PERSONAL_ACCESS_TOKEN"] ||
     process.env["VITE_AIRTABLE_PERSONAL_ACCESS_TOKEN"];
@@ -75,265 +92,360 @@ async function forwardLeadToAirtable(lead: AirtableLeadPayload): Promise<void> {
     process.env["VITE_AIRTABLE_TABLE_NAME"] ||
     "Leads";
 
-  if (!token || !baseId) {
-    return;
-  }
+  if (!token || !baseId) return;
 
   try {
-    const fields: Record<string, string> = {
-      Name: lead.name,
-      Email: lead.email,
-    };
-
+    const fields: Record<string, string> = { Name: lead.name, Email: lead.email, Status: "New" };
     if (lead.phone) fields["Phone"] = lead.phone;
     if (lead.company) fields["Company"] = lead.company;
     if (lead.leadType) fields["Lead Type"] = lead.leadType;
     if (lead.requirement) fields["Requirement"] = lead.requirement;
     if (lead.message) fields["Message"] = lead.message;
     if (lead.pageUrl) fields["Source Page"] = lead.pageUrl;
-    fields["Status"] = "New";
 
-    const response = await fetch(`https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}`, {
+    const res = await fetch(`https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        fields,
-        typecast: true,
-      }),
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ fields, typecast: true }),
     });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("Airtable submission failed:", response.status, errText);
-    } else {
-      console.log("Successfully posted lead directly to Airtable!");
-    }
-  } catch (error) {
-    console.error("Failed to forward lead to Airtable:", error);
+    if (!res.ok) console.error("Airtable save failed:", res.status, await res.text());
+    else console.log("✅ Lead saved to Airtable");
+  } catch (e) {
+    console.error("Airtable error:", e);
   }
 }
 
-async function forwardLeadToGoogleSheets(leadPayload: Record<string, unknown>): Promise<LeadSubmitResult> {
+// ─── Background Automation Runner ─────────────────────────────────────────────
+//
+// Runs for every lead submission — all 4 destinations in parallel:
+//   1. ✅ Google Sheets  (telemetry / analytics)
+//   2. ✅ Airtable       (lead database / CRM)
+//   3. ✅ Jira           (Task + Sub-tasks created automatically)
+//   4. ✅ Email          (Team alert + Client confirmation via Resend)
+//
+// Called with `void` so it NEVER blocks the form success response.
+
+interface AutomationPayload {
+  leadType: "Quick Form" | "Consultation" | "Process Audit" | "Chatbot";
+  name: string;
+  email: string;
+  phone?: string | null;
+  company?: string | null;
+  jobTitle?: string | null;
+  industry?: string | null;
+  companySize?: string | null;
+  website?: string | null;
+  requirement?: string | null;
+  challenge?: string | null;
+  desiredOutcome?: string | null;
+  currentTools?: string | null;
+  existingAIUsage?: string | null;
+  projectScope?: string | null;
+  budgetRange?: string | null;
+  preferredContactTime?: string | null;
+  message?: string | null;
+  auditDocType?: string | null;
+  weeklyHoursSpent?: string | null;
+  primaryGoal?: string | null;
+  processSummary?: string | null;
+  filesCount?: number;
+  filesList?: string;
+  ndaRequested?: boolean;
+  driveLink?: string | null;
+  pageUrl?: string;
+  // Google Sheets specific
+  sheetsPayload: Record<string, unknown>;
+}
+
+async function runLeadAutomations(p: AutomationPayload): Promise<void> {
+  // 1. Google Sheets (fire and forget)
+  void forwardLeadToGoogleSheets(p.sheetsPayload);
+
+  // 2. Airtable (fire and forget)
+  void saveToAirtable({
+    name: p.name,
+    email: p.email,
+    phone: p.phone || undefined,
+    company: p.company || undefined,
+    leadType: p.leadType,
+    requirement: p.requirement || p.primaryGoal || undefined,
+    message: p.challenge || p.message || p.processSummary || undefined,
+    pageUrl: p.pageUrl,
+  });
+
+  // 3. Jira Task + Sub-tasks → then 4. Email with Jira link attached
   try {
-    const response = await fetch(APPS_SCRIPT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8",
-      },
-      body: JSON.stringify(leadPayload),
+    const jiraResult = await createJiraLeadTask({
+      leadType: p.leadType,
+      name: p.name,
+      email: p.email,
+      phone: p.phone,
+      company: p.company,
+      jobTitle: p.jobTitle,
+      industry: p.industry,
+      companySize: p.companySize,
+      website: p.website,
+      requirement: p.requirement,
+      challenge: p.challenge,
+      desiredOutcome: p.desiredOutcome,
+      currentTools: p.currentTools,
+      existingAIUsage: p.existingAIUsage,
+      projectScope: p.projectScope,
+      budgetRange: p.budgetRange,
+      preferredContactTime: p.preferredContactTime,
+      message: p.message,
+      auditDocType: p.auditDocType,
+      weeklyHoursSpent: p.weeklyHoursSpent,
+      primaryGoal: p.primaryGoal,
+      processSummary: p.processSummary,
+      filesCount: p.filesCount,
+      filesList: p.filesList,
+      ndaRequested: p.ndaRequested,
+      driveLink: p.driveLink,
+      pageUrl: p.pageUrl,
+      leadStatus: "New",
     });
 
-    if (!response.ok) {
-      console.error("Google Sheets lead submission failed with status:", response.status);
-      return { ok: false, error: GENERIC_ERROR };
+    if (jiraResult.ok) {
+      console.log(`✅ Jira: ${jiraResult.parentIssueKey} | Sub-tasks: [${jiraResult.subTaskKeys?.join(", ")}]`);
     }
 
-    const leadId = `lead_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    return { ok: true, id: leadId };
-  } catch (error) {
-    console.error("Failed to forward lead to Google Sheets:", error);
-    return { ok: false, error: GENERIC_ERROR };
+    // 4. Email — includes Jira task link if successfully created
+    await sendLeadEmails({
+      ...p,
+      jiraTaskKey: jiraResult.ok ? jiraResult.parentIssueKey : undefined,
+      jiraTaskUrl: jiraResult.ok ? jiraResult.parentIssueUrl : undefined,
+    });
+  } catch (e) {
+    console.error("Jira/Email automation error:", e);
+    // Fallback: still send email even if Jira failed
+    void sendLeadEmails({ ...p });
   }
 }
 
+// ─── Form Handlers ────────────────────────────────────────────────────────────
+
+// ── ⚡ Quick Form ──────────────────────────────────────────────────────────────
 export const submitQuickLead = createServerFn({ method: "POST" })
   .validator((data: unknown) => quickLeadSchema.parse(data))
   .handler(async ({ data }): Promise<LeadSubmitResult> => {
     if (data.companyWebsiteHp) return { ok: false, error: GENERIC_ERROR };
+    if (!withinRateLimit()) return { ok: false, error: "Too many submissions. Please try again in a few minutes." };
 
-    if (!withinRateLimit()) {
-      return { ok: false, error: "Too many submissions. Please try again in a few minutes." };
-    }
+    const pageUrl = `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/contact"}`;
 
-    void forwardLeadToAirtable({
-      name: data.name,
-      email: data.email.toLowerCase(),
-      phone: clean(data.phone) || "",
-      company: clean(data.company) || "",
+    void runLeadAutomations({
       leadType: "Quick Form",
-      requirement: clean(data.requirement) || "",
-      message: clean(data.message) || "",
-      pageUrl: `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/contact"}`,
-    });
-
-    return await forwardLeadToGoogleSheets({
-      type: "lead",
-      event_type: "lead",
-      event_name: "lead_submit",
-      lead_type: "QUICK_FORM",
       name: data.name,
       email: data.email.toLowerCase(),
-      phone: clean(data.phone) || "",
-      company: clean(data.company) || "",
-      requirement: clean(data.requirement) || "",
-      message: clean(data.message) || "",
-      lead_source: clean(data.source) ?? "quick_form",
-      form_name: "Quick Contact Form",
-      lead_status: "New",
-      follow_up_status: "Pending",
-      consent_status: "Granted",
-      conversion_name: "Quick Lead Submission",
-      conversion_value: 1,
-      page_url: `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/contact"}`,
-      page_path: clean(data.page) ?? "/contact",
-      source_environment: "production",
+      phone: clean(data.phone),
+      company: clean(data.company),
+      requirement: clean(data.requirement),
+      message: clean(data.message),
+      pageUrl,
+      sheetsPayload: {
+        type: "lead",
+        event_type: "lead",
+        event_name: "lead_submit",
+        lead_type: "QUICK_FORM",
+        name: data.name,
+        email: data.email.toLowerCase(),
+        phone: clean(data.phone) || "",
+        company: clean(data.company) || "",
+        requirement: clean(data.requirement) || "",
+        message: clean(data.message) || "",
+        lead_source: clean(data.source) ?? "quick_form",
+        form_name: "Quick Contact Form",
+        lead_status: "New",
+        follow_up_status: "Pending",
+        consent_status: "Granted",
+        conversion_name: "Quick Lead Submission",
+        conversion_value: 1,
+        page_url: pageUrl,
+        page_path: clean(data.page) ?? "/contact",
+        source_environment: "production",
+      },
     });
+
+    const leadId = `lead_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    return { ok: true, id: leadId };
   });
 
+// ── 🤝 Consultation Form ───────────────────────────────────────────────────────
 export const submitConsultationLead = createServerFn({ method: "POST" })
   .validator((data: unknown) => consultationLeadSchema.parse(data))
   .handler(async ({ data }): Promise<LeadSubmitResult> => {
     if (data.companyWebsiteHp) return { ok: false, error: GENERIC_ERROR };
+    if (!withinRateLimit()) return { ok: false, error: "Too many submissions. Please try again in a few minutes." };
 
-    if (!withinRateLimit()) {
-      return { ok: false, error: "Too many submissions. Please try again in a few minutes." };
-    }
+    const pageUrl = `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/contact"}`;
 
-    void forwardLeadToAirtable({
-      name: data.fullName,
-      email: data.workEmail.toLowerCase(),
-      phone: clean(data.phone) || "",
-      company: clean(data.company) || "",
+    void runLeadAutomations({
       leadType: "Consultation",
-      requirement: clean(data.primaryChallenge) || "",
-      message: [clean(data.currentChallenge), clean(data.desiredOutcome)].filter(Boolean).join(" | "),
-      pageUrl: `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/contact"}`,
-    });
-
-    return await forwardLeadToGoogleSheets({
-      type: "lead",
-      event_type: "lead",
-      event_name: "lead_submit",
-      lead_type: "LONG_FORM",
       name: data.fullName,
       email: data.workEmail.toLowerCase(),
-      phone: clean(data.phone) || "",
-      company: clean(data.company) || "",
-      job_title: clean(data.jobTitle) || "",
-      industry: clean(data.industry) || "",
-      company_size: clean(data.companySize) || "",
-      website: clean(data.website) || "",
-      requirement: clean(data.primaryChallenge) || "",
-      challenge: clean(data.currentChallenge) || "",
-      desired_outcome: clean(data.desiredOutcome) || "",
-      current_tools: clean(data.currentTools) || "",
-      existing_ai_usage: clean(data.existingAIUsage) || "",
-      project_scope: clean(data.projectScope) || "",
-      budget_range: clean(data.budgetRange) || "",
-      preferred_contact_time: clean(data.preferredContactTime) || "",
-      lead_source: clean(data.source) ?? "long_form",
-      form_name: "Consultation Request Form",
-      lead_status: "New",
-      follow_up_status: "Pending",
-      consent_status: "Granted",
-      conversion_name: "Consultation Request",
-      conversion_value: 1,
-      page_url: `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/contact"}`,
-      page_path: clean(data.page) ?? "/contact",
-      source_environment: "production",
+      phone: clean(data.phone),
+      company: clean(data.company),
+      jobTitle: clean(data.jobTitle),
+      industry: clean(data.industry),
+      companySize: clean(data.companySize),
+      website: clean(data.website),
+      requirement: clean(data.primaryChallenge),
+      challenge: clean(data.currentChallenge),
+      desiredOutcome: clean(data.desiredOutcome),
+      currentTools: clean(data.currentTools),
+      existingAIUsage: clean(data.existingAIUsage),
+      projectScope: clean(data.projectScope),
+      budgetRange: clean(data.budgetRange),
+      preferredContactTime: clean(data.preferredContactTime),
+      pageUrl,
+      sheetsPayload: {
+        type: "lead",
+        event_type: "lead",
+        event_name: "lead_submit",
+        lead_type: "LONG_FORM",
+        name: data.fullName,
+        email: data.workEmail.toLowerCase(),
+        phone: clean(data.phone) || "",
+        company: clean(data.company) || "",
+        job_title: clean(data.jobTitle) || "",
+        industry: clean(data.industry) || "",
+        company_size: clean(data.companySize) || "",
+        website: clean(data.website) || "",
+        requirement: clean(data.primaryChallenge) || "",
+        challenge: clean(data.currentChallenge) || "",
+        desired_outcome: clean(data.desiredOutcome) || "",
+        current_tools: clean(data.currentTools) || "",
+        existing_ai_usage: clean(data.existingAIUsage) || "",
+        project_scope: clean(data.projectScope) || "",
+        budget_range: clean(data.budgetRange) || "",
+        preferred_contact_time: clean(data.preferredContactTime) || "",
+        lead_source: clean(data.source) ?? "long_form",
+        form_name: "Consultation Request Form",
+        lead_status: "New",
+        follow_up_status: "Pending",
+        consent_status: "Granted",
+        conversion_name: "Consultation Request",
+        conversion_value: 1,
+        page_url: pageUrl,
+        page_path: clean(data.page) ?? "/contact",
+        source_environment: "production",
+      },
     });
+
+    const leadId = `lead_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    return { ok: true, id: leadId };
   });
 
+// ── 🤖 Chatbot Lead ────────────────────────────────────────────────────────────
 export const submitChatLead = createServerFn({ method: "POST" })
   .validator((data: unknown) => chatLeadSchema.parse(data))
   .handler(async ({ data }): Promise<LeadSubmitResult> => {
     if (data.companyWebsiteHp) return { ok: false, error: GENERIC_ERROR };
+    if (!withinRateLimit()) return { ok: false, error: "Too many submissions. Please try again in a few minutes." };
 
-    if (!withinRateLimit()) {
-      return { ok: false, error: "Too many submissions. Please try again in a few minutes." };
-    }
+    const pageUrl = `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/"}`;
 
-    void forwardLeadToAirtable({
-      name: data.name,
-      email: data.email.toLowerCase(),
-      phone: clean(data.phone) || "",
-      company: clean(data.company) || "",
+    void runLeadAutomations({
       leadType: "Chatbot",
-      requirement: clean(data.intent) || "",
-      message: clean(data.businessProblem) || "",
-      pageUrl: `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/"}`,
-    });
-
-    return await forwardLeadToGoogleSheets({
-      type: "lead",
-      event_type: "lead",
-      event_name: "lead_submit",
-      lead_type: "CHATBOT",
       name: data.name,
       email: data.email.toLowerCase(),
-      phone: clean(data.phone) || "",
-      company: clean(data.company) || "",
-      requirement: clean(data.intent) || "",
-      challenge: clean(data.businessProblem) || "",
-      lead_source: "assistant_chatbot",
-      form_name: "Interactive AI Assistant",
-      lead_status: "New",
-      follow_up_status: "Pending",
-      consent_status: "Granted",
-      conversion_name: "Assistant Lead Submission",
-      conversion_value: 1,
-      page_url: `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/"}`,
-      page_path: clean(data.page) ?? "/",
-      source_environment: "production",
+      phone: clean(data.phone),
+      company: clean(data.company),
+      requirement: clean(data.intent),
+      challenge: clean(data.businessProblem),
+      pageUrl,
+      sheetsPayload: {
+        type: "lead",
+        event_type: "lead",
+        event_name: "lead_submit",
+        lead_type: "CHATBOT",
+        name: data.name,
+        email: data.email.toLowerCase(),
+        phone: clean(data.phone) || "",
+        company: clean(data.company) || "",
+        requirement: clean(data.intent) || "",
+        challenge: clean(data.businessProblem) || "",
+        lead_source: "assistant_chatbot",
+        form_name: "Interactive AI Assistant",
+        lead_status: "New",
+        follow_up_status: "Pending",
+        consent_status: "Granted",
+        conversion_name: "Assistant Lead Submission",
+        conversion_value: 1,
+        page_url: pageUrl,
+        page_path: clean(data.page) ?? "/",
+        source_environment: "production",
+      },
     });
+
+    const leadId = `lead_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    return { ok: true, id: leadId };
   });
 
+// ── 🔍 Process Audit Form ──────────────────────────────────────────────────────
 export const submitAuditLead = createServerFn({ method: "POST" })
   .validator((data: unknown) => auditLeadSchema.parse(data))
   .handler(async ({ data }): Promise<LeadSubmitResult> => {
     if (data.companyWebsiteHp) return { ok: false, error: GENERIC_ERROR };
+    if (!withinRateLimit()) return { ok: false, error: "Too many submissions. Please try again in a few minutes." };
 
-    if (!withinRateLimit()) {
-      return { ok: false, error: "Too many submissions. Please try again in a few minutes." };
-    }
-
-    const filesSummary = data.files
+    const filesList = data.files
       .map((f) => `${f.name} (${Math.round(f.size / 1024)} KB${f.category ? ` - ${f.category}` : ""})`)
       .join("; ");
 
-    void forwardLeadToAirtable({
-      name: data.fullName,
-      email: data.workEmail.toLowerCase(),
-      phone: clean(data.phone) || "",
-      company: clean(data.company) || "",
+    const pageUrl = `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/audit-submission"}`;
+
+    void runLeadAutomations({
       leadType: "Process Audit",
-      requirement: clean(data.primaryGoal) || "",
-      message: `${clean(data.processSummary) || ""}${filesSummary ? ` (Files: ${filesSummary})` : ""}`,
-      pageUrl: `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/audit-submission"}`,
-    });
-
-    return await forwardLeadToGoogleSheets({
-      type: "lead",
-      event_type: "lead",
-      event_name: "lead_submit",
-      lead_type: "PROCESS_AUDIT_SUBMISSION",
       name: data.fullName,
       email: data.workEmail.toLowerCase(),
-      phone: clean(data.phone) || "",
-      company: clean(data.company) || "",
-      job_title: clean(data.jobTitle) || "",
-      industry: clean(data.industry) || "",
-      requirement: clean(data.primaryGoal) || "",
-      challenge: clean(data.processSummary) || "",
-      audit_doc_type: clean(data.docType) || "",
-      weekly_hours_spent: clean(data.weeklyHoursSpent) || "",
-      files_count: data.files.length,
-      files_list: filesSummary,
-      nda_requested: data.ndaRequested ? "Yes" : "No",
-      lead_source: clean(data.source) ?? "audit_submission_form",
-      form_name: "Process AI Audit Document Submission",
-      lead_status: "New",
-      follow_up_status: "Pending",
-      consent_status: "Granted",
-      conversion_name: "Process Audit Submission",
-      conversion_value: 1,
-      page_url: `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/audit-submission"}`,
-      page_path: clean(data.page) ?? "/audit-submission",
-      source_environment: "production",
+      phone: clean(data.phone),
+      company: clean(data.company),
+      jobTitle: clean(data.jobTitle),
+      industry: clean(data.industry),
+      requirement: clean(data.primaryGoal),
+      challenge: clean(data.processSummary),
+      primaryGoal: clean(data.primaryGoal),
+      processSummary: clean(data.processSummary),
+      auditDocType: clean(data.docType),
+      weeklyHoursSpent: clean(data.weeklyHoursSpent),
+      filesCount: data.files.length,
+      filesList,
+      ndaRequested: data.ndaRequested,
+      pageUrl,
+      sheetsPayload: {
+        type: "lead",
+        event_type: "lead",
+        event_name: "lead_submit",
+        lead_type: "PROCESS_AUDIT_SUBMISSION",
+        name: data.fullName,
+        email: data.workEmail.toLowerCase(),
+        phone: clean(data.phone) || "",
+        company: clean(data.company) || "",
+        job_title: clean(data.jobTitle) || "",
+        industry: clean(data.industry) || "",
+        requirement: clean(data.primaryGoal) || "",
+        challenge: clean(data.processSummary) || "",
+        audit_doc_type: clean(data.docType) || "",
+        weekly_hours_spent: clean(data.weeklyHoursSpent) || "",
+        files_count: data.files.length,
+        files_list: filesList,
+        nda_requested: data.ndaRequested ? "Yes" : "No",
+        lead_source: clean(data.source) ?? "audit_submission_form",
+        form_name: "Process AI Audit Document Submission",
+        lead_status: "New",
+        follow_up_status: "Pending",
+        consent_status: "Granted",
+        conversion_name: "Process Audit Submission",
+        conversion_value: 1,
+        page_url: pageUrl,
+        page_path: clean(data.page) ?? "/audit-submission",
+        source_environment: "production",
+      },
     });
+
+    const leadId = `lead_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    return { ok: true, id: leadId };
   });
-
-

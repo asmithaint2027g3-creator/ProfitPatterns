@@ -249,6 +249,9 @@ export async function trackEvent(eventName, details = {}) {
     element_text: details.element_text || details.click_text || details.cta_name || details.event_label || eventName,
     click_position_x: details.click_position_x !== undefined ? details.click_position_x : 540,
     click_position_y: details.click_position_y !== undefined ? details.click_position_y : 320,
+    hand_zone: details.hand_zone || (getDeviceType() === "Mobile" || getDeviceType() === "Tablet" 
+      ? ((details.click_position_x || 540) / (window.innerWidth || 1280) < 0.40 ? "Left-Hand Zone" : (details.click_position_x || 540) / (window.innerWidth || 1280) > 0.60 ? "Right-Hand Zone" : "Center / Dual Zone")
+      : "Desktop Pointer"),
 
     // Scroll & time engagement
     scroll_percentage: details.scroll_percentage !== undefined ? details.scroll_percentage : (details.scroll_depth || 25),
@@ -495,6 +498,19 @@ export function enableClickTracking() {
        clickTarget.closest("nav") ? "navigation" :
        sectionEl?.id || "main_content");
 
+    const clientX = Math.round(event.clientX) || 0;
+    const clientY = Math.round(event.clientY) || 0;
+    const vpWidth = window.innerWidth || 1280;
+    const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    const isMobileDevice = getDeviceType() === "Mobile" || (isTouch && vpWidth < 768);
+    let handZone = "Desktop Pointer";
+    if (isMobileDevice) {
+      const ratio = clientX / vpWidth;
+      if (ratio < 0.40) handZone = "Left-Hand Zone";
+      else if (ratio > 0.60) handZone = "Right-Hand Zone";
+      else handZone = "Center / Dual Zone";
+    }
+
     trackEvent(eventName, {
       event_type: eventType,
       event_category: isWhatsApp ? "Conversion" : isLink ? "Navigation" : "CTA",
@@ -507,8 +523,9 @@ export function enableClickTracking() {
       element_text: (name || "Action").slice(0, 150),
       click_text: (name || "Action").slice(0, 150),
       cta_name: (name || "Action").slice(0, 150),
-      click_position_x: Math.round(event.clientX) || 540,
-      click_position_y: Math.round(event.clientY) || 320,
+      click_position_x: clientX,
+      click_position_y: clientY,
+      hand_zone: handZone,
       conversion_name: isWhatsApp ? "WhatsApp Contact" : "Action Click",
       conversion_value: isWhatsApp ? 1 : 1
     });
@@ -534,11 +551,13 @@ export function enableScrollTracking() {
   window.addEventListener("scroll", () => {
     const docEl = document.documentElement;
     const body = document.body;
-    const scrollableHeight = (docEl.scrollHeight || body.scrollHeight) - window.innerHeight;
+    const vpHeight = window.innerHeight || docEl.clientHeight || 800;
+    const totalHeight = Math.max(docEl.scrollHeight, body.scrollHeight, docEl.offsetHeight, body.offsetHeight);
+    const scrollableHeight = totalHeight - vpHeight;
     if (scrollableHeight <= 0) return;
 
     const currentY = window.scrollY || window.pageYOffset || docEl.scrollTop || 0;
-    const depth = Math.min(100, Math.max(1, Math.round((currentY / scrollableHeight) * 100)));
+    const depth = Math.min(100, Math.max(0, Math.round((currentY / scrollableHeight) * 100)));
 
     if (depth > maxScrollDepth) {
       maxScrollDepth = depth;
@@ -559,7 +578,8 @@ export function enableScrollTracking() {
         max_scroll_depth: maxScrollDepth,
         scroll_depth: milestone,
         time_on_page_seconds: elapsed,
-        section: "page_scroll"
+        section: "page_scroll",
+        device_type: getDeviceType()
       });
     }
   }, { passive: true });
