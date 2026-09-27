@@ -1,5 +1,7 @@
 // api/analytics/collect.js
-// Vercel Serverless Function Proxy for Google Sheets Analytics
+// Vercel Serverless Function Proxy for Google Sheets Analytics & Jira Automation
+
+import { createJiraLeadTask } from "../_jira.js";
 
 const DEFAULT_APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbyOIQwm57GAUL1Jo_d_yP3ELGHTYXulzkqWV9KHOx7DXLloBLs430EL3dbmhZP89FQ/exec";
@@ -49,6 +51,46 @@ export default async function handler(req, res) {
     }
     if (!payload.source_environment) {
       payload.source_environment = process.env.NODE_ENV === "development" ? "development" : "production";
+    }
+
+    // If this event is a lead submission, automatically trigger Jira task & subtask creation
+    const isLeadEvent =
+      payload.event_type === "lead" ||
+      payload.event_name === "lead_submit" ||
+      payload.event_name === "form_submit";
+
+    const hasContactDetails = Boolean(payload.email || payload.phone || payload.name);
+
+    if (isLeadEvent && hasContactDetails) {
+      try {
+        await createJiraLeadTask({
+          name: payload.name || payload.fullName,
+          email: payload.email || payload.workEmail,
+          phone: payload.phone,
+          company: payload.company,
+          jobTitle: payload.jobTitle || payload.job_title,
+          industry: payload.industry,
+          companySize: payload.companySize || payload.company_size,
+          requirement: payload.requirement || payload.primaryChallenge || payload.primaryGoal,
+          challenge: payload.challenge || payload.currentChallenge || payload.message || payload.processSummary,
+          desiredOutcome: payload.desiredOutcome || payload.desired_outcome,
+          docType: payload.docType || payload.audit_doc_type,
+          filesCount: payload.filesCount || payload.files_count,
+          fileName: payload.fileName,
+          referenceId: payload.referenceId,
+          pageUrl: payload.page_url || payload.pageUrl,
+          leadType:
+            payload.lead_type === "PROCESS_AUDIT_SUBMISSION" || payload.docType
+              ? "Process Audit"
+              : payload.lead_type === "LONG_FORM" || payload.jobTitle
+              ? "Consultation"
+              : payload.lead_type === "CHATBOT"
+              ? "Chatbot"
+              : "Quick Form",
+        });
+      } catch (jiraErr) {
+        console.warn("Jira creation in analytics proxy notice:", jiraErr);
+      }
     }
 
     // Forward the event from Vercel to Google Apps Script

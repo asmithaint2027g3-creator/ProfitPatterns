@@ -82,9 +82,45 @@ export function QuickForm({ source = "quick_form" }: { source?: string }) {
     });
 
     try {
-      await submitQuickLead({ data: parsed.data });
+      const serverResult = await submitQuickLead({ data: parsed.data });
+      if (!serverResult?.ok) {
+        await fetch("/api/lead", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            leadType: "Quick Form",
+            name: parsed.data.name,
+            email: parsed.data.email,
+            phone: parsed.data.phone || "",
+            company: parsed.data.company || "",
+            requirement: parsed.data.requirement,
+            message: parsed.data.message,
+            source: source || "quick_form",
+            pageUrl: page,
+          }),
+        });
+      }
     } catch (e) {
-      console.warn("Direct lead fallback to Google Sheets active:", e);
+      console.warn("ServerFn notice, using direct /api/lead:", e);
+      try {
+        await fetch("/api/lead", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            leadType: "Quick Form",
+            name: parsed.data.name,
+            email: parsed.data.email,
+            phone: parsed.data.phone || "",
+            company: parsed.data.company || "",
+            requirement: parsed.data.requirement,
+            message: parsed.data.message,
+            source: source || "quick_form",
+            pageUrl: page,
+          }),
+        });
+      } catch (err) {
+        console.warn("Direct lead fallback error:", err);
+      }
     }
 
     setStatus("success");

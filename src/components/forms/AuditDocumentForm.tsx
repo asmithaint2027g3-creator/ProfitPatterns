@@ -252,8 +252,35 @@ export function AuditDocumentForm({ source = "audit_submission_page" }: { source
         fileName,
         fileMimeType,
         docType: values.docType,
-        referenceId: generatedRef
+        referenceId: generatedRef,
       });
+    } catch { /* non-blocking */ }
+
+    // Send to /api/lead for Jira task and subtask creation
+    try {
+      fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadType: "Process Audit",
+          fullName,
+          workEmail: emailVal,
+          phone: values.phone.trim(),
+          company,
+          jobTitle,
+          industry,
+          docType: values.docType,
+          weeklyHoursSpent: values.weeklyHoursSpent,
+          primaryGoal: values.primaryGoal,
+          processSummary,
+          filesCount: files.length,
+          fileName,
+          referenceId: generatedRef,
+          ndaRequested: values.ndaRequested,
+          source: source || "audit_submission",
+          pageUrl: page,
+        }),
+      }).catch((e) => console.warn("Audit lead Jira dispatch notice:", e));
     } catch { /* non-blocking */ }
 
     setStatus("success");

@@ -13,7 +13,7 @@ import { sendLeadEmails } from "./email";
 
 // ─── Rate Limiting ────────────────────────────────────────────────────────────
 
-const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_MAX = 100;
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const submissions = new Map<string, number[]>();
 

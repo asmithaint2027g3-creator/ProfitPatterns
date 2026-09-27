@@ -1,0 +1,283 @@
+// api/_jira.js
+// Self-contained Jira Integration Helper for Vercel Serverless Functions
+
+const DEFAULT_BASE_URL = "https://asmithaint2027g3.atlassian.net";
+const DEFAULT_EMAIL = "asmitha.int2027g3@gmail.com";
+const DEFAULT_API_TOKEN =
+  "ATATT3xFfGF0JoxzMyLRSgTCMFyHLwpwAq0IUJ9m-v_tV5rGF9H0vd__j1kDJw4PxztxdGvX46dB2u0WtTTxdqysjPR06GjLNF0iUigNmWymn4I1lEtf55v4Gym1uSkpynSayg9EKujVlUPJIyL0R2lpvRKRyzISCtP1J-w4mzT7HYvT40VFIZM=874B6BD6";
+const DEFAULT_PROJECT_KEY = "PP";
+const DEFAULT_ASSIGNEE_ID = "712020:cbf4c9bb-d905-45d9-ac86-02601a54dea4"; // Asmitha V
+
+// In-memory deduplication cache: key -> { key: string, timestamp: number }
+const recentLeads = new Map();
+
+export function getJiraConfig() {
+  const baseUrl =
+    process.env.JIRA_BASE_URL ||
+    process.env.VITE_JIRA_BASE_URL ||
+    DEFAULT_BASE_URL;
+  const email =
+    process.env.JIRA_EMAIL ||
+    process.env.VITE_JIRA_EMAIL ||
+    DEFAULT_EMAIL;
+  const apiToken =
+    process.env.JIRA_API_TOKEN ||
+    process.env.VITE_JIRA_API_TOKEN ||
+    DEFAULT_API_TOKEN;
+  const projectKey =
+    process.env.JIRA_PROJECT_KEY ||
+    process.env.VITE_JIRA_PROJECT_KEY ||
+    DEFAULT_PROJECT_KEY;
+
+  return { baseUrl, email, apiToken, projectKey };
+}
+
+function getAuthHeader() {
+  const cfg = getJiraConfig();
+  const creds = `${cfg.email}:${cfg.apiToken}`;
+  return `Basic ${Buffer.from(creds).toString("base64")}`;
+}
+
+function formatDate() {
+  return new Date().toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Kolkata",
+  });
+}
+
+function textDoc(text) {
+  return {
+    type: "doc",
+    version: 1,
+    content: [
+      {
+        type: "paragraph",
+        content: [{ type: "text", text: String(text || "—") }],
+      },
+    ],
+  };
+}
+
+async function jiraPost(endpoint, body) {
+  const cfg = getJiraConfig();
+  try {
+    const res = await fetch(`${cfg.baseUrl}/rest/api/3/${endpoint}`, {
+      method: "POST",
+      headers: {
+        Authorization: getAuthHeader(),
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = text;
+    }
+
+    if (!res.ok) {
+      console.error(`Jira API error [${res.status}]:`, text.slice(0, 500));
+      return { ok: false, error: `Jira API returned ${res.status}: ${text.slice(0, 200)}`, status: res.status };
+    }
+
+    return { ok: true, data };
+  } catch (err) {
+    console.error("Jira network error:", err);
+    return { ok: false, error: String(err) };
+  }
+}
+
+async function addToActiveSprint(issueKey) {
+  try {
+    const cfg = getJiraConfig();
+    const auth = getAuthHeader();
+    // Sprint 2 is ProfitPatterns Sprint 1 (active)
+    await fetch(`${cfg.baseUrl}/rest/agile/1.0/sprint/2/issue`, {
+      method: "POST",
+      headers: {
+        Authorization: auth,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ issues: [issueKey] }),
+    });
+  } catch (err) {
+    console.warn("Could not add to active sprint:", err);
+  }
+}
+
+async function createIssue(summary, description, issueType, parentKey) {
+  const cfg = getJiraConfig();
+  const fields = {
+    project: { key: cfg.projectKey },
+    summary: summary.slice(0, 250),
+    description,
+    issuetype: { name: issueType === "Subtask" ? "Subtask" : "Task" },
+  };
+
+  if (issueType === "Subtask" && parentKey) {
+    fields["parent"] = { key: parentKey };
+  } else {
+    fields["assignee"] = { id: DEFAULT_ASSIGNEE_ID };
+  }
+
+  let result = await jiraPost("issue", { fields });
+
+  // If failed with 400 and assignee was set, retry without assignee as fallback
+  if (!result.ok && fields["assignee"]) {
+    delete fields["assignee"];
+    result = await jiraPost("issue", { fields });
+  }
+
+  if (!result.ok || !result.data) {
+    return { ok: false, error: result.error || "Failed to create issue" };
+  }
+
+  const data = result.data;
+
+  if (issueType === "Task") {
+    void addToActiveSprint(data.key);
+  }
+
+  return {
+    ok: true,
+    key: data.key,
+    url: `${cfg.baseUrl}/browse/${data.key}`,
+  };
+}
+
+export async function createJiraLeadTask(p) {
+  const leadName = p.name || p.fullName || "Inbound Lead";
+  const leadEmail = (p.email || p.workEmail || "").toLowerCase();
+  const leadType = p.leadType || (p.docType ? "Process Audit" : p.workEmail ? "Consultation" : "Quick Form");
+
+  // Deduplication check: 15 second window
+  const dedupKey = `${leadEmail}_${leadType}`;
+  const now = Date.now();
+  const cached = recentLeads.get(dedupKey);
+  if (cached && now - cached.timestamp < 15000) {
+    console.log(`⚡ Deduplication hit: returning existing Jira key ${cached.key} for ${dedupKey}`);
+    return { ok: true, parentIssueKey: cached.key, deduplicated: true };
+  }
+
+  const dateStr = formatDate();
+  const emoji =
+    leadType === "Quick Form"
+      ? "⚡"
+      : leadType === "Consultation"
+      ? "🤝"
+      : leadType === "Process Audit"
+      ? "🔍"
+      : "🤖";
+
+  const parentSummary = `${emoji} [${leadType}] ${leadName} — ${dateStr}`;
+
+  // 1. Parent Task Description
+  const parentDesc = textDoc(
+    `📊 LEAD OVERVIEW\n` +
+      `Lead Type: ${leadType}\n` +
+      `Contact Name: ${leadName}\n` +
+      `Email: ${leadEmail || "—"}\n` +
+      `Phone: ${p.phone || "—"}\n` +
+      `Company: ${p.company || "—"}\n` +
+      `Job Title: ${p.jobTitle || "—"}\n` +
+      `Source Page: ${p.pageUrl || p.page_url || "—"}\n` +
+      `Submitted: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}\n\n` +
+      `Sub-tasks below contain Contact Information, Detailed Requirements, and Follow-up Actions.`
+  );
+
+  // 2. Create Parent Task
+  const parent = await createIssue(parentSummary, parentDesc, "Task");
+  if (!parent.ok || !parent.key) {
+    console.error("❌ Failed to create Jira parent task:", parent.error);
+    return { ok: false, error: parent.error };
+  }
+
+  // Cache for deduplication
+  recentLeads.set(dedupKey, { key: parent.key, timestamp: now });
+
+  // 3. Sub-task 1: Contact Information
+  const contactDesc = textDoc(
+    `📋 CONTACT INFORMATION\n\n` +
+      `Full Name: ${leadName}\n` +
+      `Email: ${leadEmail || "—"}\n` +
+      `Phone: ${p.phone || "—"}\n` +
+      `Company: ${p.company || "—"}\n` +
+      `Job Title: ${p.jobTitle || "—"}\n` +
+      `Industry: ${p.industry || "—"}\n` +
+      `Company Size: ${p.companySize || "—"}\n` +
+      `Website: ${p.website || "—"}\n` +
+      `Preferred Contact Time: ${p.preferredContactTime || "—"}`
+  );
+
+  // 4. Sub-task 2: Requirement & Context
+  const reqDesc = textDoc(
+    `📝 REQUIREMENT & BUSINESS CONTEXT\n\n` +
+      `Requirement: ${p.requirement || p.primaryChallenge || p.primaryGoal || "—"}\n` +
+      `Challenge / Message: ${p.challenge || p.currentChallenge || p.message || p.processSummary || "—"}\n` +
+      `Desired Outcome: ${p.desiredOutcome || p.desired_outcome || "—"}\n` +
+      `Current Tools: ${p.currentTools || "—"}\n` +
+      `Existing AI Usage: ${p.existingAIUsage || "—"}\n` +
+      `Project Scope: ${p.projectScope || "—"}\n` +
+      `Budget Range: ${p.budgetRange || "—"}\n` +
+      `Audit Doc Type: ${p.docType || p.auditDocType || "—"}\n` +
+      `Weekly Hours Spent: ${p.weeklyHoursSpent || "—"}`
+  );
+
+  // 5. Sub-task 3: Follow-up Actions
+  const actionList =
+    leadType === "Process Audit"
+      ? "1. Review uploaded documents\n2. Prepare Process Feasibility Audit Dossier\n3. Schedule discovery consultation\n4. Dispatch mutual NDA"
+      : leadType === "Consultation"
+      ? "1. Review consultation brief & requirements\n2. Qualify budget, timeline & scope\n3. Schedule executive strategy session\n4. Prepare engagement proposal"
+      : leadType === "Chatbot"
+      ? "1. Review assistant conversation history\n2. Contact lead within 24 hours\n3. Route to relevant domain specialist"
+      : "1. Respond within 2 business hours\n2. Confirm requirement details\n3. Schedule introductory discussion";
+
+  const followUpDesc = textDoc(
+    `✅ FOLLOW-UP ACTION CHECKLIST\n\n` +
+      `Lead: ${leadName} (${leadEmail})\n` +
+      `Form Type: ${leadType}\n\n` +
+      `Action Steps:\n${actionList}`
+  );
+
+  const subTasks = [
+    { summary: `📋 Contact Info — ${leadName}`, desc: contactDesc },
+    { summary: `📝 Requirement Details — ${leadType}`, desc: reqDesc },
+    { summary: `✅ Follow-up Actions — ${leadName}`, desc: followUpDesc },
+  ];
+
+  if (leadType === "Process Audit" || p.filesCount || p.fileName) {
+    const docDesc = textDoc(
+      `📁 NDA & ATTACHED DOCUMENTS\n\n` +
+        `NDA Requested: ${p.ndaRequested ? "✅ Yes (Mutual NDA required)" : "❌ No"}\n` +
+        `Files Count: ${p.filesCount || (p.fileName ? 1 : 0)}\n` +
+        `File Name: ${p.fileName || p.filesList || "—"}\n` +
+        `Reference ID: ${p.referenceId || "—"}\n` +
+        `Document Type: ${p.docType || "—"}`
+    );
+    subTasks.push({ summary: `📁 NDA & Documents — ${leadName}`, desc: docDesc });
+  }
+
+  // Create sub-tasks in parallel
+  const subTaskResults = await Promise.all(
+    subTasks.map((st) => createIssue(st.summary, st.desc, "Subtask", parent.key))
+  );
+
+  const subTaskKeys = subTaskResults.filter((r) => r.ok && r.key).map((r) => r.key);
+
+  console.log(`✅ Jira Lead Created: ${parent.key} with sub-tasks: [${subTaskKeys.join(", ")}]`);
+
+  return {
+    ok: true,
+    parentIssueKey: parent.key,
+    parentIssueUrl: parent.url,
+    subTaskKeys,
+  };
+}

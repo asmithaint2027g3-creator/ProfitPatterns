@@ -87,10 +87,10 @@ export const honeypotSchema = z.object({
 export const quickLeadSchema = honeypotSchema.extend({
   name: trimmed(100).min(2, { message: "Please enter your name." }),
   email: trimmed(255).email({ message: "Please enter a valid email address." }),
-  phone: trimmed(30).min(6, { message: "Please enter a valid phone number." }),
+  phone: trimmed(30).min(4, { message: "Please enter a valid phone number." }).optional().or(z.literal("")),
   company: trimmed(120).min(2, { message: "Please enter your company." }),
   requirement: trimmed(120).min(1, { message: "Please choose what you need help with." }),
-  message: trimmed(1500).min(10, { message: "Please add a little more detail (10+ characters)." }),
+  message: trimmed(1500).min(3, { message: "Please add a brief message (at least 3 characters)." }),
   page: trimmed(200).optional(),
   source: trimmed(120).optional(),
 });
@@ -99,18 +99,18 @@ export type QuickLeadInput = z.infer<typeof quickLeadSchema>;
 export const consultationLeadSchema = honeypotSchema.extend({
   fullName: trimmed(100).min(2, { message: "Please enter your full name." }),
   workEmail: trimmed(255).email({ message: "Please enter a valid work email." }),
-  phone: trimmed(30).min(6, { message: "Please enter a valid phone number." }),
+  phone: trimmed(30).min(4, { message: "Please enter a valid phone number." }).optional().or(z.literal("")),
   company: trimmed(120).min(2, { message: "Please enter your company." }),
   jobTitle: trimmed(120).min(2, { message: "Please enter your job title." }),
   industry: trimmed(120).min(2, { message: "Please enter your industry." }),
   companySize: trimmed(40).min(1, { message: "Please select a company size." }),
   website: trimmed(200).optional().or(z.literal("")),
   primaryChallenge: trimmed(80).min(1, { message: "Please select a primary challenge." }),
-  currentChallenge: trimmed(2000).min(20, {
-    message: "Please describe the challenge in a little more detail (20+ characters).",
+  currentChallenge: trimmed(2000).min(5, {
+    message: "Please describe the challenge in a little more detail (5+ characters).",
   }),
-  desiredOutcome: trimmed(2000).min(20, {
-    message: "Please describe the outcome you want (20+ characters).",
+  desiredOutcome: trimmed(2000).min(5, {
+    message: "Please describe the outcome you want (5+ characters).",
   }),
   currentTools: trimmed(500).optional().or(z.literal("")),
   existingAIUsage: trimmed(80).min(1, { message: "Please select an option." }),
@@ -125,9 +125,9 @@ export type ConsultationLeadInput = z.infer<typeof consultationLeadSchema>;
 export const chatLeadSchema = honeypotSchema.extend({
   name: trimmed(100).min(2, { message: "Please enter your name." }),
   email: trimmed(255).email({ message: "Please enter a valid email address." }),
-  phone: trimmed(30).min(6, { message: "Please enter a valid phone number." }),
+  phone: trimmed(30).min(4, { message: "Please enter a valid phone number." }).optional().or(z.literal("")),
   company: trimmed(120).min(2, { message: "Please enter your company." }),
-  businessProblem: trimmed(2000).min(5, { message: "Please describe the problem briefly." }),
+  businessProblem: trimmed(2000).min(3, { message: "Please describe the problem briefly." }),
   intent: trimmed(120).optional(),
   page: trimmed(200).optional(),
 });

@@ -107,9 +107,63 @@ export function LongForm({ source = "long_form" }: { source?: string }) {
     });
 
     try {
-      await submitConsultationLead({ data: parsed.data });
+      const serverResult = await submitConsultationLead({ data: parsed.data });
+      if (!serverResult?.ok) {
+        await fetch("/api/lead", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            leadType: "Consultation",
+            name: parsed.data.fullName,
+            email: parsed.data.workEmail,
+            phone: parsed.data.phone || "",
+            company: parsed.data.company || "",
+            jobTitle: parsed.data.jobTitle || "",
+            industry: parsed.data.industry || "",
+            companySize: parsed.data.companySize || "",
+            requirement: parsed.data.primaryChallenge || "",
+            challenge: parsed.data.currentChallenge || "",
+            desiredOutcome: parsed.data.desiredOutcome || "",
+            currentTools: parsed.data.currentTools || "",
+            existingAIUsage: parsed.data.existingAIUsage || "",
+            projectScope: parsed.data.projectScope || "",
+            budgetRange: parsed.data.budgetRange || "",
+            preferredContactTime: parsed.data.preferredContactTime || "",
+            source: source || "long_form",
+            pageUrl: page,
+          }),
+        });
+      }
     } catch (e) {
-      console.warn("Direct lead fallback to Google Sheets active:", e);
+      console.warn("ServerFn notice, using direct /api/lead:", e);
+      try {
+        await fetch("/api/lead", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            leadType: "Consultation",
+            name: parsed.data.fullName,
+            email: parsed.data.workEmail,
+            phone: parsed.data.phone || "",
+            company: parsed.data.company || "",
+            jobTitle: parsed.data.jobTitle || "",
+            industry: parsed.data.industry || "",
+            companySize: parsed.data.companySize || "",
+            requirement: parsed.data.primaryChallenge || "",
+            challenge: parsed.data.currentChallenge || "",
+            desiredOutcome: parsed.data.desiredOutcome || "",
+            currentTools: parsed.data.currentTools || "",
+            existingAIUsage: parsed.data.existingAIUsage || "",
+            projectScope: parsed.data.projectScope || "",
+            budgetRange: parsed.data.budgetRange || "",
+            preferredContactTime: parsed.data.preferredContactTime || "",
+            source: source || "long_form",
+            pageUrl: page,
+          }),
+        });
+      } catch (err) {
+        console.warn("Direct lead fallback error:", err);
+      }
     }
 
     setStatus("success");

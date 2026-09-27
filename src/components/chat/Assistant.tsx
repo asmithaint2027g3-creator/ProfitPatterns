@@ -71,7 +71,7 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
         });
 
         try {
-          await submitChatLead({
+          const res = await submitChatLead({
             data: {
               name,
               email,
@@ -82,8 +82,44 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
               page: typeof window !== "undefined" ? window.location.pathname : "/",
             },
           });
+          if (!res?.ok) {
+            await fetch("/api/lead", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                leadType: "Chatbot",
+                name,
+                email,
+                phone: phone || "",
+                company: company || "",
+                requirement: finalState.intent || "",
+                challenge: businessProblem || "",
+                source: "assistant_chatbot",
+                pageUrl: typeof window !== "undefined" ? window.location.pathname : "/",
+              }),
+            });
+          }
         } catch (e) {
-          console.warn("Direct lead fallback to Google Sheets active:", e);
+          console.warn("Direct lead fallback to /api/lead active:", e);
+          try {
+            await fetch("/api/lead", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                leadType: "Chatbot",
+                name,
+                email,
+                phone: phone || "",
+                company: company || "",
+                requirement: finalState.intent || "",
+                challenge: businessProblem || "",
+                source: "assistant_chatbot",
+                pageUrl: typeof window !== "undefined" ? window.location.pathname : "/",
+              }),
+            });
+          } catch (err) {
+            console.warn("Chat lead fallback notice:", err);
+          }
         }
 
         setSavedLead(true);
