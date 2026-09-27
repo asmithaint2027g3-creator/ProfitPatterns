@@ -159,69 +159,74 @@ interface AutomationPayload {
 }
 
 async function runLeadAutomations(p: AutomationPayload): Promise<void> {
-  // 1. Google Sheets (fire and forget)
-  void forwardLeadToGoogleSheets(p.sheetsPayload);
-
-  // 2. Airtable (fire and forget)
-  void saveToAirtable({
-    name: p.name,
-    email: p.email,
-    phone: p.phone || undefined,
-    company: p.company || undefined,
-    leadType: p.leadType,
-    requirement: p.requirement || p.primaryGoal || undefined,
-    message: p.challenge || p.message || p.processSummary || undefined,
-    pageUrl: p.pageUrl,
-  });
-
-  // 3. Jira Task + Sub-tasks → then 4. Email with Jira link attached
-  try {
-    const jiraResult = await createJiraLeadTask({
-      leadType: p.leadType,
+  // Run all destinations concurrently with Promise.allSettled so serverless functions don't terminate prematurely
+  const promises: Promise<unknown>[] = [
+    // 1. Google Sheets
+    forwardLeadToGoogleSheets(p.sheetsPayload).catch((err) =>
+      console.error("Google Sheets error:", err),
+    ),
+    // 2. Airtable
+    saveToAirtable({
       name: p.name,
       email: p.email,
-      phone: p.phone,
-      company: p.company,
-      jobTitle: p.jobTitle,
-      industry: p.industry,
-      companySize: p.companySize,
-      website: p.website,
-      requirement: p.requirement,
-      challenge: p.challenge,
-      desiredOutcome: p.desiredOutcome,
-      currentTools: p.currentTools,
-      existingAIUsage: p.existingAIUsage,
-      projectScope: p.projectScope,
-      budgetRange: p.budgetRange,
-      preferredContactTime: p.preferredContactTime,
-      message: p.message,
-      auditDocType: p.auditDocType,
-      weeklyHoursSpent: p.weeklyHoursSpent,
-      primaryGoal: p.primaryGoal,
-      processSummary: p.processSummary,
-      filesCount: p.filesCount,
-      filesList: p.filesList,
-      ndaRequested: p.ndaRequested,
-      driveLink: p.driveLink,
+      phone: p.phone || undefined,
+      company: p.company || undefined,
+      leadType: p.leadType,
+      requirement: p.requirement || p.primaryGoal || undefined,
+      message: p.challenge || p.message || p.processSummary || undefined,
       pageUrl: p.pageUrl,
-      leadStatus: "New",
-    });
+    }).catch((err) => console.error("Airtable error:", err)),
+    // 3. Jira Task + Subtasks → then Email
+    (async () => {
+      try {
+        const jiraResult = await createJiraLeadTask({
+          leadType: p.leadType,
+          name: p.name,
+          email: p.email,
+          phone: p.phone,
+          company: p.company,
+          jobTitle: p.jobTitle,
+          industry: p.industry,
+          companySize: p.companySize,
+          website: p.website,
+          requirement: p.requirement,
+          challenge: p.challenge,
+          desiredOutcome: p.desiredOutcome,
+          currentTools: p.currentTools,
+          existingAIUsage: p.existingAIUsage,
+          projectScope: p.projectScope,
+          budgetRange: p.budgetRange,
+          preferredContactTime: p.preferredContactTime,
+          message: p.message,
+          auditDocType: p.auditDocType,
+          weeklyHoursSpent: p.weeklyHoursSpent,
+          primaryGoal: p.primaryGoal,
+          processSummary: p.processSummary,
+          filesCount: p.filesCount,
+          filesList: p.filesList,
+          ndaRequested: p.ndaRequested,
+          driveLink: p.driveLink,
+          pageUrl: p.pageUrl,
+          leadStatus: "New",
+        });
 
-    if (jiraResult.ok) {
-      console.log(`✅ Jira: ${jiraResult.parentIssueKey} | Sub-tasks: [${jiraResult.subTaskKeys?.join(", ")}]`);
-    }
+        if (jiraResult.ok) {
+          console.log(`✅ Jira: ${jiraResult.parentIssueKey} | Sub-tasks: [${jiraResult.subTaskKeys?.join(", ")}]`);
+        }
 
-    // 4. Email — includes Jira task link if successfully created
-    await sendLeadEmails({
-      ...p,
-      jiraTaskKey: jiraResult.ok ? jiraResult.parentIssueKey : undefined,
-      jiraTaskUrl: jiraResult.ok ? jiraResult.parentIssueUrl : undefined,
-    });
-  } catch (e) {
-    console.error("Jira/Email automation error:", e);
-    // Fallback: still send email even if Jira failed
-    void sendLeadEmails({ ...p });
-  }
+        await sendLeadEmails({
+          ...p,
+          jiraTaskKey: jiraResult.ok ? jiraResult.parentIssueKey : undefined,
+          jiraTaskUrl: jiraResult.ok ? jiraResult.parentIssueUrl : undefined,
+        });
+      } catch (e) {
+        console.error("Jira/Email automation error:", e);
+        await sendLeadEmails({ ...p });
+      }
+    })(),
+  ];
+
+  await Promise.allSettled(promises);
 }
 
 // ─── Form Handlers ────────────────────────────────────────────────────────────
@@ -235,7 +240,7 @@ export const submitQuickLead = createServerFn({ method: "POST" })
 
     const pageUrl = `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/contact"}`;
 
-    void runLeadAutomations({
+    await runLeadAutomations({
       leadType: "Quick Form",
       name: data.name,
       email: data.email.toLowerCase(),
@@ -281,7 +286,7 @@ export const submitConsultationLead = createServerFn({ method: "POST" })
 
     const pageUrl = `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/contact"}`;
 
-    void runLeadAutomations({
+    await runLeadAutomations({
       leadType: "Consultation",
       name: data.fullName,
       email: data.workEmail.toLowerCase(),
@@ -347,7 +352,7 @@ export const submitChatLead = createServerFn({ method: "POST" })
 
     const pageUrl = `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/"}`;
 
-    void runLeadAutomations({
+    await runLeadAutomations({
       leadType: "Chatbot",
       name: data.name,
       email: data.email.toLowerCase(),
@@ -397,7 +402,7 @@ export const submitAuditLead = createServerFn({ method: "POST" })
 
     const pageUrl = `https://profit-patterns-xi.vercel.app${clean(data.page) ?? "/audit-submission"}`;
 
-    void runLeadAutomations({
+    await runLeadAutomations({
       leadType: "Process Audit",
       name: data.fullName,
       email: data.workEmail.toLowerCase(),
