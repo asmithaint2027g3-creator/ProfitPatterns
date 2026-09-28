@@ -397,7 +397,33 @@ function Home() {
             description="Why executive leadership and private equity sponsors choose ProfitPatterns over traditional IT agencies."
           />
 
-          <div className="mt-8 overflow-x-auto rounded-xl border border-border bg-card shadow-xs">
+          {/* Mobile: stacked cards */}
+          <div className="mt-8 space-y-3 md:hidden">
+            {COMPARISON.map((row, i) => (
+              <div key={i} className="rounded-xl border border-border bg-card p-4 shadow-xs">
+                <p className="font-display text-xs font-bold uppercase tracking-wider text-primary mb-3">{row.dimension}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-lg bg-muted/40 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Traditional</p>
+                    <div className="flex items-start gap-1.5">
+                      <X className="size-3.5 shrink-0 text-muted-foreground/60 mt-0.5" />
+                      <span className="text-xs text-muted-foreground leading-relaxed">{row.traditional}</span>
+                    </div>
+                  </div>
+                  <div className="rounded-lg bg-primary/5 border border-primary/20 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1.5">ProfitPatterns</p>
+                    <div className="flex items-start gap-1.5">
+                      <Check className="size-3.5 shrink-0 text-primary mt-0.5" />
+                      <span className="text-xs text-foreground font-medium leading-relaxed">{row.profitPatterns}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: comparison table */}
+          <div className="mt-8 hidden md:block overflow-x-auto rounded-xl border border-border bg-card shadow-xs">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-border bg-[#F5F2EB] text-xs uppercase tracking-wider text-foreground font-display">
                 <tr>

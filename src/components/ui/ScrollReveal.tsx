@@ -75,13 +75,13 @@ export function ScrollReveal({
   const getTransform = () => {
     switch (direction) {
       case "up":
-        return "translateY(24px)";
+        return "translateY(16px)";
       case "down":
-        return "translateY(-24px)";
+        return "translateY(-16px)";
       case "left":
-        return "translateX(24px)";
+        return "translateX(16px)";
       case "right":
-        return "translateX(-24px)";
+        return "translateX(-16px)";
       case "fade":
       default:
         return "none";
@@ -95,7 +95,8 @@ export function ScrollReveal({
     transitionDelay: `${delay}ms`,
     opacity: isVisible ? 1 : 0,
     transform: isVisible ? "none" : getTransform(),
-    willChange: "opacity, transform",
+    // willChange intentionally omitted: it forces GPU layer promotion on every element
+    // and is a primary cause of mobile repaint cost. Only use on specific known-animated els.
   };
 
   return (

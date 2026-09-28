@@ -120,8 +120,8 @@ export function Header() {
       className={cn(
         "sticky top-0 z-40 border-b transition-all duration-300 ease-out",
         isScrolled
-          ? "border-border bg-[#FAFAF8]/98 shadow-sm shadow-black/5 backdrop-blur-md"
-          : "border-border/70 bg-[#FAFAF8]/90 backdrop-blur-sm",
+          ? "border-border bg-[#FAFAF8]/98 shadow-sm shadow-black/5 lg:backdrop-blur-md"
+          : "border-border/70 bg-[#FAFAF8]/95 lg:backdrop-blur-sm",
       )}
     >
       {/* Main Bar with balanced padding, smooth compact height transition */}
@@ -142,6 +142,8 @@ export function Header() {
             alt="ProfitPatterns"
             width={32}
             height={32}
+            loading="lazy"
+            decoding="async"
             className="size-8 rounded-md border border-primary/40 object-cover shadow-xs transition-transform duration-200 group-hover:scale-105"
           />
           <span className="font-display text-[22px] font-bold tracking-tight text-foreground whitespace-nowrap">

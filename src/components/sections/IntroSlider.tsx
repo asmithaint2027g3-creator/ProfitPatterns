@@ -107,9 +107,11 @@ export function IntroSlider() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
 
-  // Auto-play slider
+  // Auto-play slider — disabled on mobile to save battery & JS thread
   useEffect(() => {
     if (!isPlaying) return;
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    if (isMobile) return;
     const timer = setInterval(() => {
       setCurrentIdx((prev) => (prev + 1) % SLIDES.length);
     }, 5500);
@@ -164,9 +166,9 @@ export function IntroSlider() {
                 {s.title}
               </p>
 
-              {/* Progress bar line for active item */}
+              {/* Active indicator line */}
               {isActive && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-primary animate-pulse" />
+                <span className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-primary" />
               )}
             </button>
           );
