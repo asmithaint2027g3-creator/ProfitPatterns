@@ -10,7 +10,7 @@ export function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className={cn("relative mx-auto max-w-7xl px-5 py-10 sm:py-14 lg:py-16", className)}>
+    <section id={id} className={cn("relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10", className)}>
       {children}
     </section>
   );
@@ -28,18 +28,18 @@ export function SectionHeading({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+    <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-end">
       <div className="max-w-2xl">
         {eyebrow ? (
           <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-primary">
             {eyebrow}
           </p>
         ) : null}
-        <h2 className="mt-2.5 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+        <h2 className="mt-1.5 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
           {title}
         </h2>
         {description ? (
-          <p className="mt-3.5 text-base leading-relaxed text-muted-foreground">{description}</p>
+          <p className="mt-2 text-sm sm:text-base leading-relaxed text-muted-foreground">{description}</p>
         ) : null}
       </div>
       {action && <div className="shrink-0">{action}</div>}
@@ -63,9 +63,9 @@ export function PageHero({
       {/* Subtle decorative corner accent */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute right-0 top-0 h-64 w-64 translate-x-1/3 -translate-y-1/3 rounded-full bg-primary/5"
+        className="pointer-events-none absolute right-0 top-0 h-48 w-48 translate-x-1/3 -translate-y-1/3 rounded-full bg-primary/5"
       />
-      <div className="relative mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-24">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-14">
         <p
           style={{ animationDelay: "0ms" }}
           className="animate-rise font-display text-xs font-semibold uppercase tracking-[0.22em] text-primary"

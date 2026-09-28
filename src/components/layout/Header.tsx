@@ -18,7 +18,6 @@ interface MenuItemConfig {
 }
 
 const navItems: MenuItemConfig[] = [
-  { key: "home", label: "Home", to: "/", hasMegaMenu: false },
   { key: "about", label: "About", to: "/about", hasMegaMenu: true },
   { key: "solutions", label: "Solutions", to: "/solutions", hasMegaMenu: true },
   { key: "industries", label: "Industries", to: "/industries", hasMegaMenu: true },
@@ -351,18 +350,20 @@ export function Header() {
                               key={subItem.id}
                               to={subItem.to as "/"}
                               onClick={() => setMobileOpen(false)}
-                              className="flex items-start gap-3 rounded border border-border/60 bg-secondary/50 p-2.5 transition-colors hover:bg-secondary"
+                              className="flex items-center gap-3 rounded border border-border/60 bg-secondary/50 p-2.5 transition-colors hover:bg-secondary"
                             >
-                              <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded border border-border bg-card text-primary">
+                              <span className="flex size-7 shrink-0 items-center justify-center rounded border border-border bg-card text-primary">
                                 <MegaMenuIcon name={subItem.iconName} className="size-3.5" />
                               </span>
-                              <div>
-                                <p className="font-display text-[16px] font-semibold text-foreground">
+                              <div className="flex-1 flex items-center justify-between gap-2">
+                                <p className="font-display text-[15px] font-semibold text-foreground">
                                   {subItem.title}
                                 </p>
-                                <p className="text-[13px] text-muted-foreground line-clamp-1">
-                                  {subItem.description}
-                                </p>
+                                {subItem.categoryRef ? (
+                                  <span className="text-[10px] uppercase font-semibold text-primary/80 tracking-wider">
+                                    {subItem.categoryRef}
+                                  </span>
+                                ) : null}
                               </div>
                             </Link>
                           ))}

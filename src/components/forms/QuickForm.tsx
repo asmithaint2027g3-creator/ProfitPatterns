@@ -1,4 +1,4 @@
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Lock, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -9,13 +9,12 @@ import { submitQuickLead } from "@/lib/leads.functions";
 import { trackLead } from "@/utils/analytics";
 
 const REQUIREMENTS = [
-  "AI Strategy",
-  "Business Automation",
-  "Data & Analytics",
-  "Process Optimization",
-  "Digital Transformation",
-  "Profit & Growth Strategy",
-  "Not sure yet",
+  "AI Opportunity Diagnostic",
+  "Process & Workflow Automation",
+  "Data Architecture & Analytics",
+  "Enterprise LLM & Agent Pipelines",
+  "Strategic Margin & EBITDA Advisory",
+  "General Inquiry / Not Sure Yet",
 ] as const;
 
 const EMPTY = {
@@ -42,7 +41,12 @@ export function QuickForm({ source = "quick_form" }: { source?: string }) {
 
   function set(field: keyof typeof EMPTY, value: string) {
     setValues((v) => ({ ...v, [field]: value }));
-    setErrors((e) => { const next = { ...e }; delete next[field]; delete next.form; return next; });
+    setErrors((e) => {
+      const next = { ...e };
+      delete next[field];
+      delete next.form;
+      return next;
+    });
   }
 
   async function onSubmit(event: React.FormEvent) {
@@ -77,6 +81,7 @@ export function QuickForm({ source = "quick_form" }: { source?: string }) {
       email: parsed.data.email,
       phone: parsed.data.phone || "",
       company: parsed.data.company || "",
+      requirement: parsed.data.requirement,
       form_name: "Quick Contact Form",
       source: source || "quick_form",
     });
@@ -101,26 +106,7 @@ export function QuickForm({ source = "quick_form" }: { source?: string }) {
         });
       }
     } catch (e) {
-      console.warn("ServerFn notice, using direct /api/lead:", e);
-      try {
-        await fetch("/api/lead", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            leadType: "Quick Form",
-            name: parsed.data.name,
-            email: parsed.data.email,
-            phone: parsed.data.phone || "",
-            company: parsed.data.company || "",
-            requirement: parsed.data.requirement,
-            message: parsed.data.message,
-            source: source || "quick_form",
-            pageUrl: page,
-          }),
-        });
-      } catch (err) {
-        console.warn("Direct lead fallback error:", err);
-      }
+      console.warn("Direct lead fallback notice:", e);
     }
 
     setStatus("success");
@@ -131,49 +117,65 @@ export function QuickForm({ source = "quick_form" }: { source?: string }) {
 
   if (status === "success") {
     return (
-      <div
-        role="status"
-        className="glass rounded-2xl p-8 text-center"
-      >
-        <CheckCircle2 className="mx-auto size-10 text-accent" aria-hidden="true" />
-        <h3 className="mt-4 text-xl font-semibold">Message received</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Thank you. We'll be in touch within one business day.
+      <div role="status" className="rounded-xl border border-border bg-card p-7 text-center shadow-xs">
+        <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20">
+          <CheckCircle2 className="size-6" aria-hidden="true" />
+        </div>
+        <h3 className="mt-3 font-display text-xl font-bold text-foreground">
+          Inquiry Received
+        </h3>
+        <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
+          Thank you. Our practice leaders will review your request and connect within 1 business day.
         </p>
-        <Button variant="outline" size="sm" className="mt-5" onClick={() => setStatus("idle")}>
-          Send another message
+        <Button variant="outline" size="sm" className="mt-4 text-xs" onClick={() => setStatus("idle")}>
+          Send Another Inquiry
         </Button>
       </div>
     );
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="glass relative space-y-4 rounded-2xl p-6">
+    <form
+      onSubmit={onSubmit}
+      noValidate
+      className="relative space-y-4 rounded-xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs"
+    >
       <Honeypot value={hp} onChange={setHp} />
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-border/70 pb-3">
+        <div>
+          <span className="font-display text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+            Quick Inquiry
+          </span>
+          <p className="text-sm font-semibold text-foreground">Start the Conversation</p>
+        </div>
+        <span className="text-[11px] font-medium text-muted-foreground">Response in 24h</span>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
         <TextField
           id="qf-name"
-          label="Name"
+          label="Your name"
           autoComplete="name"
-          placeholder="Your name"
+          placeholder="Jane Doe"
           value={values.name}
           error={errors.name}
           onChange={(e) => set("name", e.target.value)}
         />
         <TextField
           id="qf-email"
-          label="Email"
+          label="Work email"
           type="email"
           autoComplete="email"
-          placeholder="you@company.com"
+          placeholder="jane@company.com"
           value={values.email}
           error={errors.email}
           onChange={(e) => set("email", e.target.value)}
         />
         <TextField
           id="qf-phone"
-          label="Phone"
+          label="Phone number"
           type="tel"
           autoComplete="tel"
           placeholder="+1 555 000 0000"
@@ -183,9 +185,9 @@ export function QuickForm({ source = "quick_form" }: { source?: string }) {
         />
         <TextField
           id="qf-company"
-          label="Company"
+          label="Company name"
           autoComplete="organization"
-          placeholder="Company name"
+          placeholder="Acme Corp"
           value={values.company}
           error={errors.company}
           onChange={(e) => set("company", e.target.value)}
@@ -194,9 +196,9 @@ export function QuickForm({ source = "quick_form" }: { source?: string }) {
 
       <SelectField
         id="qf-requirement"
-        label="What do you need help with?"
+        label="Strategic focus area"
         options={REQUIREMENTS}
-        placeholder="Select an area"
+        placeholder="Select practice focus"
         value={values.requirement}
         error={errors.requirement}
         onChange={(e) => set("requirement", e.target.value)}
@@ -204,33 +206,34 @@ export function QuickForm({ source = "quick_form" }: { source?: string }) {
 
       <TextAreaField
         id="qf-message"
-        label="Message"
-        rows={4}
-        placeholder="A sentence or two about what you're trying to improve."
+        label="Brief objective or challenge"
+        rows={3}
+        placeholder="What business process or AI initiative would you like to discuss?"
         value={values.message}
         error={errors.message}
         onChange={(e) => set("message", e.target.value)}
       />
 
       {errors.form ? (
-        <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        <p role="alert" className="rounded border border-destructive/40 bg-destructive/10 p-2.5 text-xs text-destructive">
           {errors.form}
         </p>
       ) : null}
 
-      <Button type="submit" variant="accent" size="block" disabled={status === "loading"}>
-        {status === "loading" ? (
-          <>
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            Sending…
-          </>
-        ) : (
-          "Get Started"
-        )}
+      <Button
+        type="submit"
+        variant="primary"
+        size="lg"
+        disabled={status === "loading"}
+        className="w-full"
+      >
+        {status === "loading" ? "Submitting Inquiry…" : "Submit Diagnostic Inquiry →"}
       </Button>
-      <p className="text-center text-[11px] text-muted-foreground">
-        No spam. We respond within one business day.
-      </p>
+
+      <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+        <Lock className="size-3 text-primary" />
+        <span>Confidential advisory • No spam guaranteed</span>
+      </div>
     </form>
   );
 }

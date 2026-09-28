@@ -1,14 +1,12 @@
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Lock, ShieldCheck, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Honeypot, SelectField, TextAreaField, TextField } from "@/components/ui/field";
 import { track } from "@/lib/analytics";
 import {
-  AI_USAGE_LEVELS,
   BUDGET_RANGES,
   COMPANY_SIZES,
-  CONTACT_TIMES,
   PRIMARY_CHALLENGES,
   PROJECT_SCOPES,
   consultationLeadSchema,
@@ -32,20 +30,11 @@ const EMPTY = {
   existingAIUsage: "",
   projectScope: "",
   budgetRange: "",
-  preferredContactTime: "",
+  preferredContactTime: "Any time",
 };
 
 type Field = keyof typeof EMPTY;
 type Errors = Partial<Record<Field | "form", string>>;
-
-function Fieldset({ legend, children }: { legend: string; children: React.ReactNode }) {
-  return (
-    <fieldset className="space-y-4">
-      <legend className="mb-3 text-xs uppercase tracking-[0.2em] text-accent">{legend}</legend>
-      {children}
-    </fieldset>
-  );
-}
 
 export function LongForm({ source = "long_form" }: { source?: string }) {
   const [values, setValues] = useState(EMPTY);
@@ -60,7 +49,12 @@ export function LongForm({ source = "long_form" }: { source?: string }) {
 
   function set(field: Field, value: string) {
     setValues((v) => ({ ...v, [field]: value }));
-    setErrors((e) => { const next = { ...e }; delete next[field]; delete next.form; return next; });
+    setErrors((e) => {
+      const next = { ...e };
+      delete next[field];
+      delete next.form;
+      return next;
+    });
   }
 
   async function onSubmit(event: React.FormEvent) {
@@ -93,12 +87,14 @@ export function LongForm({ source = "long_form" }: { source?: string }) {
     setStatus("loading");
     track("long_form_submit", { source });
 
-    // Explicitly record consultation lead into Lead_Management & Conversion_Events
+    // Explicitly record consultation lead
     trackLead({
       fullName: parsed.data.fullName,
       workEmail: parsed.data.workEmail,
       phone: parsed.data.phone || "",
       company: parsed.data.company || "",
+      jobTitle: parsed.data.jobTitle || "",
+      industry: parsed.data.industry || "",
       requirement: parsed.data.primaryChallenge || "",
       challenge: parsed.data.currentChallenge || "",
       desired_outcome: parsed.data.desiredOutcome || "",
@@ -124,46 +120,15 @@ export function LongForm({ source = "long_form" }: { source?: string }) {
             requirement: parsed.data.primaryChallenge || "",
             challenge: parsed.data.currentChallenge || "",
             desiredOutcome: parsed.data.desiredOutcome || "",
-            currentTools: parsed.data.currentTools || "",
-            existingAIUsage: parsed.data.existingAIUsage || "",
             projectScope: parsed.data.projectScope || "",
             budgetRange: parsed.data.budgetRange || "",
-            preferredContactTime: parsed.data.preferredContactTime || "",
             source: source || "long_form",
             pageUrl: page,
           }),
         });
       }
     } catch (e) {
-      console.warn("ServerFn notice, using direct /api/lead:", e);
-      try {
-        await fetch("/api/lead", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            leadType: "Consultation",
-            name: parsed.data.fullName,
-            email: parsed.data.workEmail,
-            phone: parsed.data.phone || "",
-            company: parsed.data.company || "",
-            jobTitle: parsed.data.jobTitle || "",
-            industry: parsed.data.industry || "",
-            companySize: parsed.data.companySize || "",
-            requirement: parsed.data.primaryChallenge || "",
-            challenge: parsed.data.currentChallenge || "",
-            desiredOutcome: parsed.data.desiredOutcome || "",
-            currentTools: parsed.data.currentTools || "",
-            existingAIUsage: parsed.data.existingAIUsage || "",
-            projectScope: parsed.data.projectScope || "",
-            budgetRange: parsed.data.budgetRange || "",
-            preferredContactTime: parsed.data.preferredContactTime || "",
-            source: source || "long_form",
-            pageUrl: page,
-          }),
-        });
-      } catch (err) {
-        console.warn("Direct lead fallback error:", err);
-      }
+      console.warn("Direct lead fallback notice:", e);
     }
 
     setStatus("success");
@@ -174,29 +139,60 @@ export function LongForm({ source = "long_form" }: { source?: string }) {
 
   if (status === "success") {
     return (
-      <div role="status" className="glass rounded-2xl p-8 text-center">
-        <CheckCircle2 className="mx-auto size-10 text-accent" aria-hidden="true" />
-        <h3 className="mt-4 text-xl font-semibold">Consultation request received</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Thank you. We'll review your brief and reply within one business day with next steps.
+      <div role="status" className="rounded-xl border border-border bg-card p-8 sm:p-10 text-center shadow-xs">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20">
+          <CheckCircle2 className="size-7" aria-hidden="true" />
+        </div>
+        <h3 className="mt-4 font-display text-2xl font-bold text-foreground">
+          Consultation Request Confirmed
+        </h3>
+        <p className="mx-auto mt-2.5 max-w-md text-sm text-muted-foreground leading-relaxed">
+          Thank you. Our Senior Practice Director will review your strategic brief and reply within one business day.
         </p>
-        <Button variant="outline" size="sm" className="mt-5" onClick={() => setStatus("idle")}>
-          Submit another request
-        </Button>
+        <div className="mt-6 flex justify-center">
+          <Button variant="outline" size="sm" onClick={() => setStatus("idle")}>
+            Submit Another Request
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="glass relative space-y-8 rounded-2xl p-6 sm:p-8">
+    <form
+      onSubmit={onSubmit}
+      noValidate
+      className="relative space-y-6 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs"
+    >
       <Honeypot value={hp} onChange={setHp} />
 
-      <Fieldset legend="Personal">
+      {/* Top Header Card Info */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-4">
+        <div>
+          <span className="font-display text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
+            Executive Briefing
+          </span>
+          <h2 className="mt-1 font-display text-xl font-bold text-foreground">
+            Schedule Strategic Diagnostic
+          </h2>
+        </div>
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-[#F5F2EB] px-3 py-1 text-xs font-medium text-foreground">
+          <ShieldCheck className="size-3.5 text-primary" />
+          <span>Confidential Intake</span>
+        </div>
+      </div>
+
+      {/* SECTION 1: Leadership & Organization */}
+      <div>
+        <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-primary">
+          1. Leadership & Organization
+        </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField
             id="lf-fullName"
             label="Full name"
             autoComplete="name"
+            placeholder="Jane Doe"
             value={values.fullName}
             error={errors.fullName}
             onChange={(e) => set("fullName", e.target.value)}
@@ -206,120 +202,79 @@ export function LongForm({ source = "long_form" }: { source?: string }) {
             label="Work email"
             type="email"
             autoComplete="email"
+            placeholder="jane@company.com"
             value={values.workEmail}
             error={errors.workEmail}
             onChange={(e) => set("workEmail", e.target.value)}
           />
           <TextField
             id="lf-phone"
-            label="Phone"
+            label="Direct phone"
             type="tel"
             autoComplete="tel"
+            placeholder="+1 555 000 0000"
             value={values.phone}
             error={errors.phone}
             onChange={(e) => set("phone", e.target.value)}
           />
           <TextField
             id="lf-company"
-            label="Company"
+            label="Company name"
             autoComplete="organization"
+            placeholder="Acme Corp"
             value={values.company}
             error={errors.company}
             onChange={(e) => set("company", e.target.value)}
           />
           <TextField
             id="lf-jobTitle"
-            label="Job title"
+            label="Executive role / Title"
             autoComplete="organization-title"
+            placeholder="Managing Director / VP Operations"
             value={values.jobTitle}
             error={errors.jobTitle}
             onChange={(e) => set("jobTitle", e.target.value)}
-            className="sm:col-span-2"
           />
+          <div className="grid grid-cols-2 gap-3">
+            <TextField
+              id="lf-industry"
+              label="Industry"
+              placeholder="e.g. Healthcare, B2B SaaS"
+              value={values.industry}
+              error={errors.industry}
+              onChange={(e) => set("industry", e.target.value)}
+            />
+            <SelectField
+              id="lf-companySize"
+              label="Company size"
+              options={COMPANY_SIZES}
+              placeholder="Headcount"
+              value={values.companySize}
+              error={errors.companySize}
+              onChange={(e) => set("companySize", e.target.value)}
+            />
+          </div>
         </div>
-      </Fieldset>
+      </div>
 
-      <Fieldset legend="Business">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextField
-            id="lf-industry"
-            label="Industry"
-            value={values.industry}
-            error={errors.industry}
-            onChange={(e) => set("industry", e.target.value)}
-          />
-          <SelectField
-            id="lf-companySize"
-            label="Company size"
-            options={COMPANY_SIZES}
-            placeholder="Select size"
-            value={values.companySize}
-            error={errors.companySize}
-            onChange={(e) => set("companySize", e.target.value)}
-          />
-          <TextField
-            id="lf-website"
-            label="Website"
-            optional
-            placeholder="company.com"
-            value={values.website}
-            error={errors.website}
-            onChange={(e) => set("website", e.target.value)}
-            className="sm:col-span-2"
-          />
-        </div>
-      </Fieldset>
-
-      <Fieldset legend="Challenge">
+      {/* SECTION 2: Strategic Priority */}
+      <div className="border-t border-border/70 pt-5">
+        <p className="mb-3 font-display text-xs font-bold uppercase tracking-wider text-primary">
+          2. Strategic Priority & Challenge
+        </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <SelectField
             id="lf-primaryChallenge"
-            label="Primary challenge"
+            label="Primary initiative"
             options={PRIMARY_CHALLENGES}
-            placeholder="Select a challenge"
+            placeholder="Select primary challenge"
             value={values.primaryChallenge}
             error={errors.primaryChallenge}
             onChange={(e) => set("primaryChallenge", e.target.value)}
           />
           <SelectField
-            id="lf-existingAIUsage"
-            label="Existing AI usage"
-            options={AI_USAGE_LEVELS}
-            placeholder="Select a level"
-            value={values.existingAIUsage}
-            error={errors.existingAIUsage}
-            onChange={(e) => set("existingAIUsage", e.target.value)}
-          />
-        </div>
-        <TextAreaField
-          id="lf-currentChallenge"
-          label="Describe the current challenge"
-          rows={4}
-          value={values.currentChallenge}
-          error={errors.currentChallenge}
-          onChange={(e) => set("currentChallenge", e.target.value)}
-        />
-        <TextAreaField
-          id="lf-desiredOutcome"
-          label="Desired outcome"
-          rows={3}
-          value={values.desiredOutcome}
-          error={errors.desiredOutcome}
-          onChange={(e) => set("desiredOutcome", e.target.value)}
-        />
-        <TextAreaField
-          id="lf-currentTools"
-          label="Current tools and systems"
-          optional
-          rows={2}
-          value={values.currentTools}
-          error={errors.currentTools}
-          onChange={(e) => set("currentTools", e.target.value)}
-        />
-        <div className="grid gap-4 sm:grid-cols-3">
-          <SelectField
             id="lf-projectScope"
-            label="Project scope"
+            label="Target engagement scope"
             options={PROJECT_SCOPES}
             placeholder="Select scope"
             value={values.projectScope}
@@ -328,44 +283,52 @@ export function LongForm({ source = "long_form" }: { source?: string }) {
           />
           <SelectField
             id="lf-budgetRange"
-            label="Budget range"
+            label="Target investment range (Optional)"
             options={BUDGET_RANGES}
-            placeholder="Select range"
+            placeholder="Select budget range"
             value={values.budgetRange}
             error={errors.budgetRange}
             onChange={(e) => set("budgetRange", e.target.value)}
-          />
-          <SelectField
-            id="lf-preferredContactTime"
-            label="Preferred contact time"
-            options={CONTACT_TIMES}
-            placeholder="Select time"
-            value={values.preferredContactTime}
-            error={errors.preferredContactTime}
-            onChange={(e) => set("preferredContactTime", e.target.value)}
+            className="sm:col-span-2"
           />
         </div>
-      </Fieldset>
+
+        <div className="mt-4">
+          <TextAreaField
+            id="lf-currentChallenge"
+            label="Operational bottleneck or objective"
+            rows={3}
+            placeholder="Briefly describe the business workflow, manual bottleneck, or growth objective you want to solve."
+            value={values.currentChallenge}
+            error={errors.currentChallenge}
+            onChange={(e) => set("currentChallenge", e.target.value)}
+          />
+        </div>
+      </div>
 
       {errors.form ? (
-        <p
-          role="alert"
-          className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
-        >
+        <p role="alert" className="rounded border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
           {errors.form}
         </p>
       ) : null}
 
-      <Button type="submit" variant="primary" size="block" disabled={status === "loading"}>
-        {status === "loading" ? (
-          <>
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            Sending…
-          </>
-        ) : (
-          "Request a Strategy Consultation"
-        )}
-      </Button>
+      {/* Submission CTA & Trust Footer */}
+      <div className="border-t border-border/70 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Lock className="size-3.5 text-primary shrink-0" />
+          <span>Strict client confidentiality • Mutual NDA on request</span>
+        </div>
+
+        <Button
+          type="submit"
+          variant="primary"
+          size="lg"
+          disabled={status === "loading"}
+          className="w-full sm:w-auto px-8"
+        >
+          {status === "loading" ? "Submitting Briefing…" : "Request Strategic Consultation →"}
+        </Button>
+      </div>
     </form>
   );
 }

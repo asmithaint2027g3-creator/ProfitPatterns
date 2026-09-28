@@ -1,5 +1,21 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowRight, Compass, Layers } from "lucide-react";
+import {
+  ArrowRight,
+  BarChart3,
+  Bot,
+  BrainCircuit,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  Compass,
+  Cpu,
+  Layers,
+  ShieldCheck,
+  Sparkles,
+  TrendingUp,
+  X,
+  Zap,
+} from "lucide-react";
 import { useState } from "react";
 
 import { WhatsAppCTA } from "@/components/cta/WhatsAppCTA";
@@ -7,22 +23,18 @@ import { FaqAccordion } from "@/components/FaqAccordion";
 import { Section, SectionHeading } from "@/components/layout/Section";
 import { BusinessFlowVisual } from "@/components/sections/BusinessFlowVisual";
 import { FinalCTA } from "@/components/sections/FinalCTA";
-import { FrameworkSection } from "@/components/sections/FrameworkSection";
 import { HeroVisualCarousel } from "@/components/sections/HeroVisualCarousel";
-import { IdealCustomerProfileSection } from "@/components/sections/IdealCustomerProfileSection";
-import { ProblemDiscovery } from "@/components/sections/ProblemDiscovery";
+import { IntroSlider } from "@/components/sections/IntroSlider";
 import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { siteConfig } from "@/config/site";
 import { faqs } from "@/content/faqs";
-import { processSteps } from "@/content/framework";
 import { services } from "@/content/services";
-import { workingPrinciples } from "@/content/trust";
 import { track } from "@/lib/analytics";
 import { canonical, faqSchema, organizationSchema, pageMeta } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
-const homeFaqs = faqs.slice(0, 6);
+const homeFaqs = faqs.slice(0, 5);
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -37,317 +49,365 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const whatWeDo = [
+const STEPS = [
   {
-    step: "01",
-    title: "Understand",
-    body: "Understand the business model, unit economics, workflows, operational friction, and organizational bottlenecks.",
+    num: "01",
+    label: "Understand",
+    sub: "Unit Economics & Bottlenecks",
+    desc: "We analyze workflows, cost centers, and manual friction points across operations.",
   },
   {
-    step: "02",
-    title: "Identify",
-    body: "Identify high-leverage opportunities where AI, automation, data architecture, or process re-engineering drive direct profit.",
+    num: "02",
+    label: "Identify",
+    sub: "High-Leverage AI Targets",
+    desc: "We isolate high-ROI opportunities where automation directly protects or expands gross margins.",
   },
   {
-    step: "03",
-    title: "Act",
-    body: "Turn identified opportunities into pragmatic roadmaps, production-grade solutions, and measured business improvements.",
+    num: "03",
+    label: "Act",
+    sub: "Production & Measurement",
+    desc: "We engineer production-grade pipelines, train internal teams, and verify P&L improvements.",
+  },
+];
+
+const COMPARISON = [
+  {
+    dimension: "Core Objective",
+    traditional: "Billable developer hours & tech stack implementation",
+    profitPatterns: "Direct EBITDA margin expansion & measurable ROI",
+  },
+  {
+    dimension: "Diagnostic Speed",
+    traditional: "3 to 6 months of theoretical slide decks",
+    profitPatterns: "14-day production feasibility audit & scorecard",
+  },
+  {
+    dimension: "Solution Approach",
+    traditional: "Generic SaaS tools & off-the-shelf bots",
+    profitPatterns: "Custom deterministic pipelines tailored to your unit economics",
+  },
+  {
+    dimension: "Attribution",
+    traditional: "Vague productivity metrics and vanity stats",
+    profitPatterns: "Auditable financial impact logged directly in your CRM",
   },
 ];
 
 function Home() {
   const [heroMode, setHeroMode] = useState<"flow" | "carousel">("flow");
+  const [selectedServiceIdx, setSelectedServiceIdx] = useState(0);
+
+  const activeService = services[selectedServiceIdx] || services[0];
 
   return (
-    <>
-      {/* Two-Column Editorial Hero with Staggered Entrance Animation */}
+    <div className="flex flex-col">
+      {/* 1. Concise Editorial Hero */}
       <section className="relative border-b border-border bg-background overflow-hidden">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 pb-12 sm:pt-8 sm:pb-14 lg:pt-8 lg:pb-14">
-          <div className="grid items-start gap-10 lg:grid-cols-12 lg:gap-12">
-            {/* Left Column: Value Proposition & CTAs (Staggered load sequence) */}
-            <div className="lg:col-span-7 pt-1 sm:pt-2">
-              {/* 1. Eyebrow badge */}
-              <div
-                style={{ animationDelay: "0ms" }}
-                className="inline-flex items-center gap-2 rounded border border-primary/30 bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary animate-rise"
-              >
-                AI Profit Strategy Consulting
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
+          <div className="grid items-center gap-8 lg:grid-cols-12 lg:gap-10">
+            {/* Left Column: Focused Executive Copy */}
+            <div className="lg:col-span-7">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary animate-rise">
+                <Sparkles className="size-3.5" />
+                <span>AI Profit Strategy Advisory</span>
               </div>
 
-              {/* 2. Headline with slide-up entrance */}
-              <h1
-                style={{ animationDelay: "120ms" }}
-                className="mt-5 font-display text-4xl font-semibold leading-[1.08] tracking-tight text-foreground sm:text-5xl lg:text-6xl animate-rise"
-              >
+              <h1 className="mt-4 font-display text-4xl font-semibold leading-[1.08] tracking-tight text-foreground sm:text-5xl lg:text-6xl animate-rise">
                 Turn AI Into a <span className="text-primary italic font-normal">Profit Advantage.</span>
               </h1>
 
-              {/* 3. Supporting Paragraph */}
-              <p
-                style={{ animationDelay: "240ms" }}
-                className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground animate-rise"
-              >
-                {siteConfig.description}
+              <p className="mt-4 max-w-2xl text-base sm:text-lg leading-relaxed text-muted-foreground animate-rise">
+                We eliminate AI speculation. ProfitPatterns analyzes your workflows, identifies high-margin automation targets, and engineers production systems that generate measurable business returns.
               </p>
 
-              {/* 4. Action Buttons with Micro-interactions */}
-              <div
-                style={{ animationDelay: "360ms" }}
-                className="mt-8 flex flex-wrap items-center gap-3.5 animate-rise"
-              >
+              <div className="mt-6 flex flex-wrap items-center gap-3 animate-rise">
                 <Button asChild size="lg" variant="primary">
                   <Link
                     to="/contact"
                     onClick={() => track("cta_click", { location: "hero", cta: "talk_to_expert" })}
                   >
-                    Talk to an Expert
+                    Schedule Diagnostic
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline">
                   <Link
-                    to="/solutions"
-                    onClick={() => track("cta_click", { location: "hero", cta: "explore_solutions" })}
+                    to="/audit-submission"
+                    onClick={() => track("cta_click", { location: "hero", cta: "audit_submission" })}
                   >
-                    Explore Our Solutions
+                    Submit Process Document
                   </Link>
                 </Button>
                 <WhatsAppCTA location="hero" size="lg" variant="outline" />
               </div>
 
-              {/* 5. Sub-quote */}
-              <p
-                style={{ animationDelay: "450ms" }}
-                className="mt-6 border-l-2 border-primary/40 pl-3.5 text-xs uppercase tracking-wider text-muted-foreground animate-rise"
-              >
-                Start with the business problem. Find the right technology. Measure the impact.
-              </p>
+              <div className="mt-6 flex items-center gap-5 text-xs text-muted-foreground animate-rise">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <CheckCircle2 className="size-3.5 text-primary" /> 14-Day Delivery
+                </span>
+                <span className="flex items-center gap-1.5 font-medium">
+                  <CheckCircle2 className="size-3.5 text-primary" /> Mutual NDA Guaranteed
+                </span>
+                <span className="flex items-center gap-1.5 font-medium">
+                  <CheckCircle2 className="size-3.5 text-primary" /> Verified P&L ROI
+                </span>
+              </div>
             </div>
 
-            {/* Right Column: Hero Visual with Switcher between Value Flow & Strategic Focus */}
-            <div
-              style={{ animationDelay: "300ms" }}
-              className="lg:col-span-5 animate-mega-menu"
-            >
-              {/* Mode Toggle Switcher */}
-              <div className="mb-3 flex items-center justify-end gap-2">
-                <span className="text-xs text-muted-foreground font-display">View:</span>
-                <div className="inline-flex rounded border border-border bg-secondary/70 p-0.5">
+            {/* Right Column: Visual Switcher */}
+            <div className="lg:col-span-5">
+              <div className="mb-2 flex items-center justify-end gap-2">
+                <div className="inline-flex rounded border border-border bg-secondary/80 p-0.5 text-xs font-semibold">
                   <button
                     type="button"
                     onClick={() => setHeroMode("flow")}
                     className={cn(
-                      "flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded transition-all cursor-pointer",
-                      heroMode === "flow"
-                        ? "bg-card text-primary shadow-xs"
-                        : "text-muted-foreground hover:text-foreground"
+                      "flex items-center gap-1 px-2.5 py-1 rounded transition-all cursor-pointer",
+                      heroMode === "flow" ? "bg-card text-primary shadow-xs" : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    <Layers className="size-3" />
-                    Value Flow
+                    <Layers className="size-3" /> Value Flow
                   </button>
                   <button
                     type="button"
                     onClick={() => setHeroMode("carousel")}
                     className={cn(
-                      "flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded transition-all cursor-pointer",
-                      heroMode === "carousel"
-                        ? "bg-card text-primary shadow-xs"
-                        : "text-muted-foreground hover:text-foreground"
+                      "flex items-center gap-1 px-2.5 py-1 rounded transition-all cursor-pointer",
+                      heroMode === "carousel" ? "bg-card text-primary shadow-xs" : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    <Compass className="size-3" />
-                    Capabilities
+                    <Compass className="size-3" /> Capabilities
                   </button>
                 </div>
               </div>
 
-              {/* Render Selected Visual */}
               {heroMode === "flow" ? <BusinessFlowVisual /> : <HeroVisualCarousel />}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Problem Discovery with Scroll Reveal */}
-      <Section id="problems">
-        <ScrollReveal direction="up" threshold={0.02}>
-          <ProblemDiscovery />
+      {/* 2. Interactive Introduction Slider (Requirement #3) */}
+      <Section className="border-b border-border bg-[#FBF9F5]">
+        <ScrollReveal direction="up">
+          <div className="mb-5 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+            <div>
+              <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                Executive Overview
+              </p>
+              <h2 className="mt-1 font-display text-2xl sm:text-3xl font-bold text-foreground">
+                How ProfitPatterns Drives Transformation
+              </h2>
+            </div>
+            <p className="text-xs text-muted-foreground font-medium">
+              Explore 4 phases of margin expansion
+            </p>
+          </div>
+          <IntroSlider />
         </ScrollReveal>
       </Section>
 
-      {/* What We Do / Approach with Staggered Scroll Reveal */}
-      <Section className="border-y border-border bg-[#FBF9F5]">
+      {/* 3. Our Approach: Stepper Timeline (Visual alternative to 3 repetitive cards) */}
+      <Section className="border-b border-border bg-background">
         <ScrollReveal direction="up">
           <SectionHeading
-            eyebrow="OUR APPROACH"
-            title="Start With the Business. Then Find the Technology."
-            description="We believe the best technology decisions begin with a clear understanding of the business. ProfitPatterns examines your objectives, processes, data and challenges to identify where AI, automation and strategic improvement can create practical value."
+            eyebrow="OUR METHODOLOGY"
+            title="Start With the Business. Then Engineer the AI."
+            description="Technology decisions only succeed when anchored to unit economics. We follow a disciplined three-stage progression from operational discovery to production impact."
           />
-        </ScrollReveal>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
-          {whatWeDo.map((item, idx) => (
-            <ScrollReveal key={item.title} delay={idx * 100} direction="up">
-              <div className="flex h-full flex-col justify-between rounded border border-border bg-card p-7 shadow-xs transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/50 hover:shadow-md">
-                <div>
-                  <span className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                    {item.step}
-                  </span>
-                  <h3 className="mt-3 font-display text-2xl font-bold tracking-tight text-foreground">
-                    {item.title}
-                  </h3>
-                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.body}</p>
-                </div>
-                <div className="mt-6 border-t border-border pt-4">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-                    Stage {item.step} Objective
-                  </span>
-                </div>
-              </div>
-            </ScrollReveal>
-          ))}
-        </div>
+          <div className="mt-8 relative">
+            {/* Desktop Connector Line */}
+            <div className="hidden md:block absolute top-7 left-12 right-12 h-0.5 bg-gradient-to-r from-primary/30 via-primary/50 to-primary/30" />
 
-        <ScrollReveal delay={300} direction="up">
-          <div className="mt-10 flex justify-center">
-            <Button asChild size="md">
-              <Link to="/contact" onClick={() => track("cta_click", { location: "what_we_do", cta: "talk_to_expert" })}>
-                Talk to an Expert
-              </Link>
-            </Button>
+            <div className="grid gap-6 md:grid-cols-3">
+              {STEPS.map((step) => (
+                <div
+                  key={step.num}
+                  className="relative flex flex-col rounded-xl border border-border/70 bg-card p-6 shadow-xs transition-all hover:border-primary/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-11 items-center justify-center rounded-full border-2 border-primary bg-[#F9F7F2] font-display text-base font-bold text-primary shadow-xs">
+                      {step.num}
+                    </span>
+                    <div>
+                      <p className="font-display text-xs font-semibold uppercase tracking-wider text-primary">
+                        {step.sub}
+                      </p>
+                      <h3 className="font-display text-lg font-bold text-foreground">
+                        {step.label}
+                      </h3>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                    {step.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </ScrollReveal>
       </Section>
 
-      {/* The ProfitPatterns Framework with Progressive Animation */}
-      <Section id="framework">
-        <ScrollReveal direction="up">
-          <FrameworkSection />
-        </ScrollReveal>
-      </Section>
-
-      {/* Solutions Preview with Staggered Scroll Reveal and Interactive Hover Cards */}
-      <Section id="solutions" className="border-y border-border bg-[#FBF9F5]">
+      {/* 4. Solutions: Interactive Tabbed Matrix (Visual alternative to 6 identical cards) */}
+      <Section id="solutions" className="border-b border-border bg-[#FBF9F5]">
         <ScrollReveal direction="up">
           <SectionHeading
-            eyebrow="WHAT WE DO"
-            title="Solutions Built Around Business Problems."
-            description="Every business has different priorities. Instead of forcing every organization into the same technology stack, ProfitPatterns focuses on identifying the solution that fits the business need."
+            eyebrow="STRATEGIC PRACTICES"
+            title="Solutions Built Around Real Business Problems."
+            description="Select a practice area to examine its strategic application, typical deliverables, and operational ROI."
             action={
               <Button asChild variant="outline" size="sm">
-                <Link to="/solutions">Explore All Solutions</Link>
+                <Link to="/solutions">Explore All Solutions →</Link>
               </Button>
             }
           />
-        </ScrollReveal>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {services.map((service, idx) => (
-            <ScrollReveal key={service.slug} delay={idx * 80} direction="up">
-              <Link
-                to="/solutions/$slug"
-                params={{ slug: service.slug }}
-                onClick={() => track("service_view", { service: service.slug, from: "home" })}
-                className="group flex h-full flex-col justify-between rounded border border-border bg-card p-6 shadow-xs transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/50 hover:shadow-md cursor-pointer"
-              >
-                <div>
-                  <span className="font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">
-                    {service.code}
-                  </span>
-                  <h3 className="mt-2.5 font-display text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors duration-200">
-                    {service.title}
-                  </h3>
-                  <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">{service.tagline}</p>
+          {/* Interactive Split Navigator */}
+          <div className="mt-8 grid gap-6 lg:grid-cols-12 rounded-xl border border-border bg-card shadow-xs overflow-hidden">
+            {/* Left Nav Tabs */}
+            <div className="lg:col-span-5 border-b lg:border-b-0 lg:border-r border-border bg-[#F8F6F0]/60 p-4 space-y-1.5">
+              <p className="px-3 py-1 font-display text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                Select Practice Area
+              </p>
+              {services.map((svc, idx) => {
+                const isSelected = idx === selectedServiceIdx;
+                return (
+                  <button
+                    key={svc.slug}
+                    type="button"
+                    onClick={() => setSelectedServiceIdx(idx)}
+                    className={cn(
+                      "w-full flex items-center justify-between rounded-lg px-3.5 py-3 text-left transition-all cursor-pointer",
+                      isSelected
+                        ? "bg-card text-foreground font-semibold shadow-xs border border-primary/40 translate-x-1"
+                        : "text-muted-foreground hover:bg-card/70 hover:text-foreground"
+                    )}
+                  >
+                    <div className="min-w-0 pr-2">
+                      <span className="font-display text-[10px] font-bold uppercase text-primary tracking-wider">
+                        {svc.code}
+                      </span>
+                      <p className="text-sm font-semibold truncate text-foreground">
+                        {svc.title}
+                      </p>
+                    </div>
+                    <ChevronRight
+                      className={cn(
+                        "size-4 shrink-0 transition-transform",
+                        isSelected ? "text-primary translate-x-0.5" : "text-muted-foreground/40"
+                      )}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Right Dynamic Preview */}
+            <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-between">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-0.5 text-xs font-bold uppercase tracking-wider text-primary">
+                  <span>{activeService.code}</span>
+                  <span>•</span>
+                  <span>Practice Overview</span>
                 </div>
-                <div className="mt-6 flex items-center gap-1.5 border-t border-border pt-4 text-xs font-semibold text-primary">
-                  Explore Solution
-                  <ArrowRight
-                    className="size-3.5 transition-transform duration-200 group-hover:translate-x-1.5"
-                    aria-hidden="true"
-                  />
+
+                <h3 className="mt-3 font-display text-2xl sm:text-3xl font-bold text-foreground">
+                  {activeService.title}
+                </h3>
+
+                <p className="mt-2.5 text-base text-muted-foreground leading-relaxed">
+                  {activeService.tagline}
+                </p>
+
+                <div className="mt-6 rounded-lg border border-border/80 bg-[#F9F7F2] p-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-foreground">
+                    Core Business Outcome
+                  </p>
+                  <p className="mt-1 text-sm text-foreground/90 font-medium">
+                    {activeService.metaDescription}
+                  </p>
                 </div>
-              </Link>
-            </ScrollReveal>
-          ))}
-        </div>
-      </Section>
-
-      {/* Why ProfitPatterns */}
-      <Section>
-        <ScrollReveal direction="up">
-          <SectionHeading
-            eyebrow="Why ProfitPatterns"
-            title="Technology With a Business Reason."
-            description="The goal is not to add more technology to your business. The goal is to find where technology can make your business work better."
-          />
-        </ScrollReveal>
-
-        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {workingPrinciples.map((item, idx) => (
-            <ScrollReveal key={item.title} delay={idx * 75} direction="up">
-              <div className="h-full rounded border border-border bg-card p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-sm">
-                <h3 className="font-display text-base font-bold tracking-tight text-foreground">{item.title}</h3>
-                <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">{item.body}</p>
               </div>
-            </ScrollReveal>
-          ))}
-        </div>
-      </Section>
 
-      {/* Ideal Customer Profile (ICP) Strategic Qualification Framework */}
-      <IdealCustomerProfileSection />
-
-      {/* How It Works */}
-      <Section>
-        <ScrollReveal direction="up">
-          <SectionHeading
-            eyebrow="How It Works"
-            title="A Clear Path From Problem to Solution."
-            action={
-              <Button asChild variant="outline" size="sm">
-                <Link to="/how-it-works">See the detail</Link>
-              </Button>
-            }
-          />
+              <div className="mt-6 pt-4 border-t border-border flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Tailored engagement scoping available</span>
+                <Button asChild size="sm" variant="primary">
+                  <Link
+                    to="/solutions/$slug"
+                    params={{ slug: activeService.slug }}
+                    onClick={() => track("service_view", { service: activeService.slug, from: "home_matrix" })}
+                  >
+                    View Practice Details →
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
         </ScrollReveal>
-
-        <ol className="mt-12 grid gap-6 md:grid-cols-3 lg:grid-cols-5">
-          {processSteps.map((step, idx) => (
-            <ScrollReveal key={step.number} delay={idx * 80} direction="up">
-              <li className="flex h-full flex-col justify-between rounded border border-border bg-card p-6 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-primary/40">
-                <div>
-                  <span className="font-display text-xl font-bold text-primary">{step.number}</span>
-                  <h3 className="mt-3 font-display text-base font-bold tracking-tight text-foreground">{step.title}</h3>
-                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{step.description}</p>
-                </div>
-              </li>
-            </ScrollReveal>
-          ))}
-        </ol>
       </Section>
 
-      {/* Case Studies — Coming Soon with Scroll Reveal */}
-      <Section className="border-y border-border bg-[#FBF9F5]">
+      {/* 5. Why ProfitPatterns: Comparative Advantage Table (Visual alternative to 6 repetitive cards) */}
+      <Section className="border-b border-border bg-background">
         <ScrollReveal direction="up">
           <SectionHeading
-            eyebrow="Case Studies"
-            title="See the Thinking Behind the Work."
-            description="Explore how business challenges can be translated into practical strategies, technology solutions and measurable outcomes."
+            eyebrow="THE PROFITPATTERNS ADVANTAGE"
+            title="Strategic Consulting vs. Technology Speculation"
+            description="Why executive leadership and private equity sponsors choose ProfitPatterns over traditional IT agencies."
           />
-          <div className="mt-12 rounded border border-border bg-card p-12 text-center shadow-xs transition-all hover:shadow-sm">
-            <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-              Curated Evidence
-            </p>
-            <p className="mt-2 font-display text-2xl font-bold text-foreground">
-              Case Studies Coming Soon
-            </p>
-            <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
-              We are assembling a rigorous collection of real-world engagements that demonstrate how strategic analysis, custom intelligence pipelines, and direct business objectives unite to produce defensible margin expansions.
-            </p>
-            <div className="mt-8 flex justify-center">
-              <Button asChild size="md">
-                <Link to="/contact" onClick={() => track("cta_click", { location: "case_studies", cta: "discuss_challenge" })}>
-                  Discuss Your Business Challenge
+
+          <div className="mt-8 overflow-x-auto rounded-xl border border-border bg-card shadow-xs">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-border bg-[#F5F2EB] text-xs uppercase tracking-wider text-foreground font-display">
+                <tr>
+                  <th scope="col" className="p-4 sm:p-5 font-bold">Strategic Criteria</th>
+                  <th scope="col" className="p-4 sm:p-5 font-bold text-muted-foreground">Traditional Advisory</th>
+                  <th scope="col" className="p-4 sm:p-5 font-bold text-primary bg-primary/5">ProfitPatterns Model</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/70">
+                {COMPARISON.map((row, i) => (
+                  <tr key={i} className="hover:bg-muted/20 transition-colors">
+                    <td className="p-4 sm:p-5 font-bold text-foreground font-display">
+                      {row.dimension}
+                    </td>
+                    <td className="p-4 sm:p-5 text-muted-foreground flex items-center gap-2">
+                      <X className="size-4 shrink-0 text-muted-foreground/60" />
+                      <span>{row.traditional}</span>
+                    </td>
+                    <td className="p-4 sm:p-5 text-foreground font-medium bg-primary/[0.02]">
+                      <div className="flex items-center gap-2">
+                        <Check className="size-4 shrink-0 text-primary font-bold" />
+                        <span>{row.profitPatterns}</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </ScrollReveal>
+      </Section>
+
+      {/* 6. Executive Strategic Qualification Banner (Replaces bulky 800-line card grid) */}
+      <Section className="border-b border-border bg-[#FBF9F5]">
+        <ScrollReveal direction="up">
+          <div className="rounded-xl border border-border bg-gradient-to-r from-[#1A1A1A] via-[#242424] to-[#1A1A1A] p-6 sm:p-8 text-[#FAFAF8] flex flex-col md:flex-row items-center justify-between gap-6 shadow-md">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#C4B296]/30 bg-[#C4B296]/10 px-3 py-0.5 text-xs font-semibold text-[#C4B296]">
+                <span>Executive Governance & ICP</span>
+              </div>
+              <h3 className="mt-2 font-display text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                Engineered for Key Decision-Makers
+              </h3>
+              <p className="mt-2 max-w-xl text-sm text-[#A8A29E] leading-relaxed">
+                Specialized diagnostic tracks for Private Equity Operating Partners, Founder-Led Businesses, Operations Leaders, and Technical Executives.
+              </p>
+            </div>
+
+            <div className="shrink-0 flex flex-col sm:flex-row items-center gap-3">
+              <Button asChild size="md" className="bg-[#C4B296] text-[#1A1A1A] hover:bg-[#EAE5DC] font-semibold w-full sm:w-auto">
+                <Link to="/who-we-serve">
+                  View Strategic Profiles <ArrowRight className="ml-1.5 size-4" />
                 </Link>
               </Button>
             </div>
@@ -355,35 +415,35 @@ function Home() {
         </ScrollReveal>
       </Section>
 
-      {/* FAQ */}
-      <Section>
+      {/* 7. FAQs */}
+      <Section className="border-b border-border bg-background">
         <ScrollReveal direction="up">
           <SectionHeading
             eyebrow="FAQ"
             title="Common Questions, Answered."
             action={
               <Button asChild variant="outline" size="sm">
-                <Link to="/faq">All questions</Link>
+                <Link to="/faq">All Questions →</Link>
               </Button>
             }
           />
-          <div className="mt-10">
+          <div className="mt-8">
             <FaqAccordion items={homeFaqs} />
           </div>
         </ScrollReveal>
       </Section>
 
-      {/* Final CTA Band with Scroll Reveal */}
-      <Section>
+      {/* 8. Final CTA */}
+      <Section className="bg-[#FBF9F5]">
         <ScrollReveal direction="up">
           <FinalCTA
             location="home_final_cta"
-            eyebrow="YOUR NEXT OPPORTUNITY MAY ALREADY BE IN YOUR BUSINESS."
+            eyebrow="YOUR NEXT PROFIT OPPORTUNITY MAY ALREADY BE IN YOUR WORKFLOW."
             title="Let's Find It."
-            description="Tell us what is slowing your business down, where you see an opportunity or where you believe AI could make a difference. We will start with the business problem and work toward the right path forward."
+            description="Tell us what is slowing your business down, where you see manual friction or where you believe AI could make a difference. We start with the business problem and deliver measured outcomes."
           />
         </ScrollReveal>
       </Section>
-    </>
+    </div>
   );
 }

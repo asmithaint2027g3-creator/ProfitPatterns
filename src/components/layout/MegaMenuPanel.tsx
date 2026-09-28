@@ -24,49 +24,49 @@ export function MegaMenuPanel({ section, onClose }: MegaMenuPanelProps) {
         className="absolute left-0 right-0 top-full z-50 mt-1 mx-auto max-w-7xl px-5 lg:px-8 pointer-events-auto"
       >
         <div className="w-full overflow-hidden rounded-lg border border-border bg-card shadow-2xl shadow-black/10 animate-mega-menu">
-          <div className="grid grid-cols-12 min-h-[380px]">
-            {/* Left Panel — Introduction */}
-            <div className="col-span-4 bg-[#1A1A1A] p-7 lg:p-8 text-[#FAFAF8] flex flex-col justify-between border-r border-[#2C2C2C]">
+          <div className="grid grid-cols-12">
+            {/* Left Panel — Clean Title & Direct Link */}
+            <div className="col-span-3 bg-[#1A1A1A] p-6 lg:p-7 text-[#FAFAF8] flex flex-col justify-between border-r border-[#2C2C2C]">
               <div>
                 <p className="font-display text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C4B296]">
                   STRATEGIC SEGMENTS
                 </p>
-                <h3 className="mt-3 font-display text-2xl lg:text-3xl font-bold tracking-tight text-white">
+                <h3 className="mt-2 font-display text-2xl font-bold tracking-tight text-white">
                   Who We Serve
                 </h3>
-                <p className="mt-4 text-[14px] leading-relaxed text-[#A8A29E]">
-                  AI disruption, profitability pressure, and strategic uncertainty demand more than technology decisions. ProfitPatterns helps decision-makers translate AI into measurable business value and long-term competitive advantage.
+                <p className="mt-1.5 text-xs text-[#A8A29E] font-medium">
+                  Executive Profiles & Governance
                 </p>
               </div>
 
-              <div className="pt-6 border-t border-[#333333]">
+              <div className="pt-4 border-t border-[#333333]">
                 <Link
                   to="/who-we-serve"
                   onClick={() => {
                     track("nav_click", { menu: "Who We Serve", item: "View All Segments" });
                     onClose();
                   }}
-                  className="inline-flex items-center gap-1.5 text-[14px] font-medium text-[#C4B296] hover:text-[#EAE5DC] transition-colors"
+                  className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#C4B296] hover:text-[#EAE5DC] transition-colors"
                 >
-                  Explore All Customer Segments
+                  All Segments
                   <ArrowRight className="size-3.5" aria-hidden="true" />
                 </Link>
               </div>
             </div>
 
-            {/* Right Panel — Four ICP Categories in a 2x2 Grid */}
-            <div className="col-span-8 bg-card p-6 lg:p-7 flex flex-col justify-between">
+            {/* Right Panel — 4 Strategic Segments: Title & Subtitle only */}
+            <div className="col-span-9 bg-card p-6 flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between border-b border-border/80 pb-3 mb-4">
+                <div className="flex items-center justify-between border-b border-border/80 pb-2.5 mb-4">
                   <span className="font-display text-[12px] font-bold uppercase tracking-[0.18em] text-primary">
                     Ideal Customer Profiles
                   </span>
-                  <span className="text-[12px] text-muted-foreground">
-                    4 Strategic Segments
+                  <span className="text-[12px] text-muted-foreground font-medium">
+                    4 Profiles
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   {whoWeServeSegments.map((segment) => (
                     <a
                       key={segment.id}
@@ -75,26 +75,17 @@ export function MegaMenuPanel({ section, onClose }: MegaMenuPanelProps) {
                         track("nav_click", { menu: "Who We Serve", item: segment.title });
                         onClose();
                       }}
-                      className="group flex flex-col justify-between rounded-lg border border-border bg-[#FBF9F5]/80 p-5 transition-all duration-200 hover:border-primary/50 hover:bg-card hover:shadow-sm cursor-pointer"
+                      className="group flex items-center justify-between rounded-lg border border-border bg-[#FBF9F5]/70 p-4 transition-all duration-200 hover:border-primary/50 hover:bg-card hover:shadow-xs cursor-pointer"
                     >
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-display text-[17px] font-bold text-foreground group-hover:text-primary transition-colors">
-                            {segment.title}
-                          </h4>
-                          <ArrowRight className="size-3.5 text-primary opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0.5" />
-                        </div>
-                        <p className="mt-1 font-display text-[11px] font-semibold uppercase tracking-wider text-primary">
+                      <div className="min-w-0 pr-3">
+                        <h4 className="font-display text-[15px] font-bold text-foreground group-hover:text-primary transition-colors truncate">
+                          {segment.title}
+                        </h4>
+                        <p className="mt-0.5 font-display text-[11px] font-medium uppercase tracking-wider text-primary/80">
                           {segment.positioning}
                         </p>
-                        <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground line-clamp-3">
-                          {segment.supportingDescription}
-                        </p>
                       </div>
-
-                      <div className="mt-4 pt-3 border-t border-border/60 flex items-center gap-1 text-[12px] font-bold text-primary group-hover:underline underline-offset-4">
-                        <span>Explore {segment.title} →</span>
-                      </div>
+                      <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-all duration-200 group-hover:text-primary group-hover:translate-x-1" />
                     </a>
                   ))}
                 </div>
@@ -102,7 +93,7 @@ export function MegaMenuPanel({ section, onClose }: MegaMenuPanelProps) {
 
               {/* Bottom bar */}
               <div className="mt-4 pt-3 border-t border-border/80 flex items-center justify-between text-xs text-muted-foreground">
-                <span>Executive-level diagnostic frameworks tailored to governance and capital structure</span>
+                <span className="font-medium">Governance & Decision Frameworks</span>
                 <Link
                   to="/contact"
                   onClick={onClose}
@@ -139,20 +130,20 @@ export function MegaMenuPanel({ section, onClose }: MegaMenuPanelProps) {
       className="absolute left-0 right-0 top-full z-50 mt-1 mx-auto max-w-7xl px-5 lg:px-8 pointer-events-auto"
     >
       <div className="w-full overflow-hidden rounded-lg border border-border bg-card shadow-2xl shadow-black/10 animate-mega-menu">
-        {/* 3-Column Body */}
-        <div className="grid grid-cols-12 min-h-[380px]">
-          {/* LEFT COLUMN: Visually distinct dark advisory section */}
-          <div className="col-span-3 bg-[#1A1A1A] p-6 lg:p-7 text-[#FAFAF8] flex flex-col justify-between border-r border-[#2C2C2C]">
+        {/* 2-Column Body: Clean Navigation with Titles & Subtitles Only */}
+        <div className="grid grid-cols-12 min-h-[300px]">
+          {/* LEFT COLUMN: Visually distinct dark category selector */}
+          <div className="col-span-3 bg-[#1A1A1A] p-6 text-[#FAFAF8] flex flex-col justify-between border-r border-[#2C2C2C]">
             <div>
               <p className="font-display text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C4B296]">
                 {section.leftCategoryLabel}
               </p>
-              <p className="mt-2.5 text-[14px] leading-relaxed text-[#A8A29E]">
-                {section.leftDescription}
-              </p>
+              <h3 className="mt-1.5 font-display text-xl font-bold tracking-tight text-white">
+                {section.label}
+              </h3>
 
               {/* Category Links List */}
-              <div className="mt-6 space-y-1.5" role="tablist">
+              <div className="mt-5 space-y-1" role="tablist">
                 {section.categories.map((cat) => {
                   const isSelected = cat.id === activeCategoryId;
                   return (
@@ -170,7 +161,7 @@ export function MegaMenuPanel({ section, onClose }: MegaMenuPanelProps) {
                         setHoveredItem(null);
                       }}
                       className={cn(
-                        "group w-full flex items-center justify-between rounded px-3 py-2.5 text-left text-[15px] font-medium transition-all duration-150 cursor-pointer",
+                        "group w-full flex items-center justify-between rounded px-3 py-2 text-left text-[14px] font-medium transition-all duration-150 cursor-pointer",
                         isSelected
                           ? "bg-[#8B7355]/25 border-l-2 border-[#8B7355] text-[#FAFAF8] font-semibold"
                           : "text-[#D4CEBF] hover:bg-[#262626] hover:text-[#FAFAF8]",
@@ -179,7 +170,7 @@ export function MegaMenuPanel({ section, onClose }: MegaMenuPanelProps) {
                       <span className="truncate">{cat.label}</span>
                       <ChevronRight
                         className={cn(
-                          "size-4 shrink-0 transition-transform duration-150",
+                          "size-3.5 shrink-0 transition-transform duration-150",
                           isSelected
                             ? "text-[#C4B296] translate-x-0.5"
                             : "text-[#78716C] group-hover:text-[#D4CEBF]",
@@ -193,11 +184,11 @@ export function MegaMenuPanel({ section, onClose }: MegaMenuPanelProps) {
             </div>
 
             {/* Direct Section Root Link */}
-            <div className="mt-6 pt-5 border-t border-[#333333]">
+            <div className="mt-5 pt-4 border-t border-[#333333]">
               <Link
                 to={section.to as "/"}
                 onClick={onClose}
-                className="inline-flex items-center gap-1.5 text-[14px] font-medium text-[#C4B296] hover:text-[#EAE5DC] transition-colors"
+                className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#C4B296] hover:text-[#EAE5DC] transition-colors"
               >
                 View all {section.label.toLowerCase()}
                 <ArrowRight className="size-3.5" aria-hidden="true" />
@@ -205,20 +196,20 @@ export function MegaMenuPanel({ section, onClose }: MegaMenuPanelProps) {
             </div>
           </div>
 
-          {/* MIDDLE COLUMN: Submenu items grid */}
-          <div className="col-span-5 lg:col-span-6 bg-card p-6 lg:p-7 flex flex-col justify-between">
+          {/* RIGHT COLUMN: Submenu items grid (Title & Subtitle Only) */}
+          <div className="col-span-9 bg-card p-6 flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between border-b border-border/80 pb-3 mb-4">
+              <div className="flex items-center justify-between border-b border-border/80 pb-2.5 mb-4">
                 <span className="font-display text-[12px] font-bold uppercase tracking-[0.18em] text-primary">
-                  {activeCategory ? activeCategory.label : "Featured Practices"}
+                  {activeCategory ? activeCategory.label : section.label}
                 </span>
-                <span className="text-[12px] text-muted-foreground">
+                <span className="text-[12px] text-muted-foreground font-medium">
                   {section.items.length} items
                 </span>
               </div>
 
-              {/* Items List with staggered animation */}
-              <div className={cn("grid gap-2", section.items.length > 5 ? "grid-cols-2" : "grid-cols-1")}>
+              {/* Items List with Title and Subtitle Only */}
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
                 {section.items.map((item, idx) => {
                   const isItemHovered = hoveredItem?.id === item.id;
                   const isItemActiveCategory = item.categoryRef === activeCategoryId;
@@ -227,7 +218,7 @@ export function MegaMenuPanel({ section, onClose }: MegaMenuPanelProps) {
                     <Link
                       key={item.id}
                       to={item.to as "/"}
-                      style={{ animationDelay: `${idx * 35}ms` }}
+                      style={{ animationDelay: `${idx * 25}ms` }}
                       onClick={() => {
                         track("nav_click", { menu: section.label, item: item.title });
                         onClose();
@@ -235,38 +226,38 @@ export function MegaMenuPanel({ section, onClose }: MegaMenuPanelProps) {
                       onMouseEnter={() => setHoveredItem(item)}
                       onMouseLeave={() => setHoveredItem(null)}
                       className={cn(
-                        "group flex items-start gap-3.5 rounded p-2.5 transition-all duration-200 cursor-pointer animate-rise",
+                        "group flex items-center gap-3 rounded-lg border border-border/70 p-3 transition-all duration-200 cursor-pointer animate-rise",
                         isItemHovered
-                          ? "bg-secondary translate-x-1 shadow-xs"
+                          ? "border-primary bg-secondary shadow-xs translate-x-0.5"
                           : isItemActiveCategory
-                            ? "hover:bg-secondary"
-                            : "hover:bg-secondary/70 opacity-90 hover:opacity-100",
+                            ? "border-primary/40 bg-card hover:bg-secondary"
+                            : "bg-[#FBF9F5]/70 hover:bg-secondary hover:border-primary/40",
                       )}
                     >
-                      {/* Icon with micro-movement */}
+                      {/* Icon */}
                       <span
                         className={cn(
-                          "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded border transition-all duration-200",
+                          "flex size-8 shrink-0 items-center justify-center rounded-md border transition-all duration-200",
                           isItemHovered
-                            ? "border-primary bg-primary text-white scale-105"
-                            : "border-border bg-secondary text-primary group-hover:border-primary/50 group-hover:scale-105",
+                            ? "border-primary bg-primary text-white"
+                            : "border-border bg-card text-primary group-hover:border-primary/50",
                         )}
                       >
-                        <MegaMenuIcon name={item.iconName} className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                        <MegaMenuIcon name={item.iconName} className="size-4" />
                       </span>
 
-                      {/* Text */}
+                      {/* Title & Subtitle Only */}
                       <div className="min-w-0 flex-1">
                         <p
                           className={cn(
-                            "font-display text-[16px] font-semibold tracking-tight text-foreground transition-colors duration-150",
+                            "font-display text-[14px] font-semibold tracking-tight text-foreground transition-colors duration-150 truncate",
                             isItemHovered && "text-primary",
                           )}
                         >
                           {item.title}
                         </p>
-                        <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground line-clamp-1">
-                          {item.description}
+                        <p className="font-display text-[11px] font-medium uppercase tracking-wider text-muted-foreground group-hover:text-primary/70 transition-colors">
+                          {item.categoryRef ? item.categoryRef.replace(/-/g, " ") : "Practice"}
                         </p>
                       </div>
                     </Link>
@@ -274,65 +265,24 @@ export function MegaMenuPanel({ section, onClose }: MegaMenuPanelProps) {
                 })}
               </div>
             </div>
-          </div>
 
-          {/* RIGHT CONTENT AREA: Dynamic context & preview card */}
-          <div className="col-span-4 lg:col-span-3 bg-[#FBF9F5] border-l border-border p-6 lg:p-7 flex flex-col justify-between">
-            {currentPreview ? (
-              <div className="animate-rise">
-                <span className="inline-block rounded border border-primary/30 bg-primary/10 px-2.5 py-0.5 font-display text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
-                  Context Brief
-                </span>
-
-                <h4 className="mt-3 font-display text-[18px] font-bold tracking-tight text-foreground leading-snug">
-                  {currentPreview.title}
-                </h4>
-
-                <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
-                  {currentPreview.description}
-                </p>
-
-                {/* Highlights */}
-                {currentPreview.highlights && currentPreview.highlights.length > 0 && (
-                  <div className="mt-4 border-t border-border/80 pt-3">
-                    <p className="font-display text-[11px] font-semibold uppercase tracking-wider text-foreground">
-                      Key Highlights:
-                    </p>
-                    <ul className="mt-2 space-y-1.5">
-                      {currentPreview.highlights.map((h, i) => (
-                        <li key={i} className="flex items-start gap-2 text-[13px] text-foreground/85">
-                          <Check className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden="true" />
-                          <span>{h}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ) : null}
-
-            {/* Right Card CTA */}
-            {currentPreview && (
-              <div className="mt-6 border-t border-border pt-4">
-                <Link
-                  to={(currentPreview.ctaTo || section.to) as "/"}
-                  onClick={onClose}
-                  className="inline-flex items-center gap-1.5 font-display text-[15px] font-semibold text-primary hover:text-foreground transition-colors group"
-                >
-                  {currentPreview.ctaText || "Explore Details"}
-                  <ArrowRight
-                    className="size-4 transition-transform group-hover:translate-x-1"
-                    aria-hidden="true"
-                  />
-                </Link>
-              </div>
-            )}
+            {/* Bottom Info & Quick Action */}
+            <div className="mt-4 pt-3 border-t border-border/80 flex items-center justify-between text-xs text-muted-foreground">
+              <span className="font-medium">Direct practice access</span>
+              <Link
+                to={section.to as "/"}
+                onClick={onClose}
+                className="font-semibold text-primary hover:underline"
+              >
+                Browse all {section.label} →
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* BOTTOM STRIP: Full-width CTA strip */}
-        <div className="border-t border-border bg-[#F5F2EB] px-6 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="font-display text-[15px] font-medium text-foreground text-center sm:text-left">
+        <div className="border-t border-border bg-[#F5F2EB] px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="font-display text-[14px] font-medium text-foreground text-center sm:text-left">
             {section.bottomCta.text}
           </p>
 
@@ -340,7 +290,7 @@ export function MegaMenuPanel({ section, onClose }: MegaMenuPanelProps) {
             asChild
             size="sm"
             variant="accent"
-            className="hover:-translate-y-0.5 shadow-sm transition-transform text-[14px]"
+            className="hover:-translate-y-0.5 shadow-sm transition-transform text-[13px]"
           >
             <Link
               to={section.bottomCta.to as "/"}
