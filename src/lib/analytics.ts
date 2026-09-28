@@ -109,8 +109,22 @@ export const metaPixelAdapter: AnalyticsAdapter = {
   },
 };
 
+export const microsoftClarityAdapter: AnalyticsAdapter = {
+  name: "clarity",
+  track: (event) => {
+    const w = window as AnyWindow & { clarity?: (action: string, eventName: string) => void };
+    if (typeof w.clarity !== "function") return;
+    try {
+      w.clarity("event", event);
+    } catch {
+      /* Clarity event must never break the UI */
+    }
+  },
+};
+
 export function initAnalytics() {
   registerAdapter(googleTagManagerAdapter);
   registerAdapter(googleAnalyticsAdapter);
   registerAdapter(metaPixelAdapter);
+  registerAdapter(microsoftClarityAdapter);
 }
