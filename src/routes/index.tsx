@@ -302,42 +302,84 @@ function Home() {
               })}
             </div>
 
-            {/* Right Dynamic Preview */}
-            <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-between">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-0.5 text-xs font-bold uppercase tracking-wider text-primary">
-                  <span>{activeService.code}</span>
-                  <span>•</span>
-                  <span>Practice Overview</span>
+            {/* Right Dynamic Preview — Rich Executive Briefing */}
+            <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-between bg-card">
+              <div className="space-y-5">
+                {/* Header Badge & Title */}
+                <div>
+                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-0.5 text-xs font-bold uppercase tracking-wider text-primary">
+                    <span className="font-mono">{activeService.code}</span>
+                    <span>•</span>
+                    <span>Strategic Practice Overview</span>
+                  </div>
+
+                  <h3 className="mt-2.5 font-display text-2xl sm:text-3xl font-bold text-foreground">
+                    {activeService.title}
+                  </h3>
+
+                  <p className="mt-1.5 text-sm sm:text-base text-muted-foreground leading-relaxed font-medium">
+                    {activeService.tagline}
+                  </p>
                 </div>
 
-                <h3 className="mt-3 font-display text-2xl sm:text-3xl font-bold text-foreground">
-                  {activeService.title}
-                </h3>
-
-                <p className="mt-2.5 text-base text-muted-foreground leading-relaxed">
-                  {activeService.tagline}
-                </p>
-
-                <div className="mt-6 rounded-lg border border-border/80 bg-[#F9F7F2] p-4">
-                  <p className="text-xs font-bold uppercase tracking-wider text-foreground">
-                    Core Business Outcome
+                {/* Primary Objective Banner */}
+                <div className="rounded-lg border border-border/80 bg-[#F9F7F2] p-4">
+                  <p className="font-display text-[11px] font-bold uppercase tracking-wider text-primary">
+                    Strategic Objective
                   </p>
-                  <p className="mt-1 text-sm text-foreground/90 font-medium">
-                    {activeService.metaDescription}
+                  <p className="mt-1 text-sm text-foreground font-semibold leading-relaxed">
+                    {activeService.objective}
+                  </p>
+                </div>
+
+                {/* The Challenge We Address */}
+                <div className="text-sm text-muted-foreground leading-relaxed">
+                  <span className="font-display text-xs font-bold uppercase tracking-wider text-foreground block mb-1">
+                    Operational Challenge Addressed:
+                  </span>
+                  <p>{activeService.problem}</p>
+                </div>
+
+                {/* Key Deliverables Grid */}
+                <div>
+                  <span className="font-display text-xs font-bold uppercase tracking-wider text-foreground block mb-2">
+                    Key Practice Deliverables:
+                  </span>
+                  <div className="grid sm:grid-cols-2 gap-2">
+                    {activeService.deliverables.slice(0, 4).map((d, i) => (
+                      <div
+                        key={i}
+                        className="flex items-start gap-2 rounded-md border border-border/70 bg-[#FBF9F5] p-2.5 text-xs text-foreground/90 font-medium"
+                      >
+                        <CheckCircle2 className="size-4 shrink-0 text-primary mt-0.5" />
+                        <span>{d}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Business Opportunity / Outcome */}
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-3.5 flex items-start gap-2.5">
+                  <Sparkles className="size-4 shrink-0 text-primary mt-0.5" />
+                  <p className="text-xs text-foreground/90 leading-relaxed">
+                    <strong className="text-foreground font-bold">Business Opportunity: </strong>
+                    {activeService.opportunity}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-border flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Tailored engagement scoping available</span>
+              {/* Action Bottom Bar */}
+              <div className="mt-6 pt-4 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <span className="text-xs text-muted-foreground font-medium">
+                  Custom scoping & fixed-fee options available
+                </span>
                 <Button asChild size="sm" variant="primary">
                   <Link
                     to="/solutions/$slug"
                     params={{ slug: activeService.slug }}
                     onClick={() => track("service_view", { service: activeService.slug, from: "home_matrix" })}
                   >
-                    View Practice Details →
+                    View Practice Roadmap →
                   </Link>
                 </Button>
               </div>
