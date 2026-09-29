@@ -2,7 +2,7 @@
 // Vercel Serverless Function Proxy for Google Sheets Analytics & Jira Automation
 
 import { createJiraLeadTask } from "../_jira.js";
-import { saveLeadToAirtable, saveBehaviorToAirtable } from "../_airtable.js";
+import { routeEventToAirtable } from "../_airtable.js";
 
 const DEFAULT_APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbyOIQwm57GAUL1Jo_d_yP3ELGHTYXulzkqWV9KHOx7DXLloBLs430EL3dbmhZP89FQ/exec";
@@ -92,35 +92,11 @@ export default async function handler(req, res) {
       } catch (jiraErr) {
         console.warn("Jira creation in analytics proxy notice:", jiraErr);
       }
-
-      try {
-        await saveLeadToAirtable({
-          name: payload.name || payload.fullName,
-          email: payload.email || payload.workEmail,
-          phone: payload.phone,
-          company: payload.company,
-          jobTitle: payload.jobTitle || payload.job_title,
-          industry: payload.industry,
-          requirement: payload.requirement || payload.primaryChallenge || payload.primaryGoal,
-          challenge: payload.challenge || payload.currentChallenge || payload.message || payload.processSummary,
-          pageUrl: payload.page_url || payload.pageUrl,
-          leadType:
-            payload.lead_type === "PROCESS_AUDIT_SUBMISSION" || payload.docType
-              ? "Process Audit"
-              : payload.lead_type === "LONG_FORM" || payload.jobTitle
-              ? "Consultation"
-              : payload.lead_type === "CHATBOT"
-              ? "Chatbot"
-              : "Quick Form",
-        });
-      } catch (airtableLeadErr) {
-        console.warn("Airtable lead forwarding notice:", airtableLeadErr);
-      }
     }
 
-    // Forward user behavior event to Airtable (User Behavior table)
-    saveBehaviorToAirtable(payload).catch((atErr) => {
-      console.warn("Airtable behavior tracking notice:", atErr);
+    // Route ALL events to the correct Airtable table via smart router
+    routeEventToAirtable(payload).catch((atErr) => {
+      console.warn("Airtable routing notice:", atErr);
     });
 
     // Forward the event from Vercel to Google Apps Script
