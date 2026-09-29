@@ -431,7 +431,20 @@ export function trackPageView(title) {
 // 6. EXPLICIT LEAD SUBMISSION TRACKER
 // --------------------------------------------------
 
+const recentTrackedLeads = new Map();
+
 export function trackLead(leadData = {}) {
+  const email = (leadData.email || leadData.workEmail || "").trim().toLowerCase();
+  const phone = (leadData.phone || "").trim();
+  const key = email || phone;
+  if (key) {
+    const last = recentTrackedLeads.get(key);
+    if (last && Date.now() - last < 15_000) {
+      return; // Debounce duplicates within 15 seconds
+    }
+    recentTrackedLeads.set(key, Date.now());
+  }
+
   trackEvent("lead_submit", {
     ...leadData,
     event_type: "lead",
@@ -657,10 +670,10 @@ export function enableFormTracking() {
 
     const isActualLead = !!(extractedEmail || extractedPhone || extractedName);
 
-    // 1. Form Interaction Event
+    // 1. Form Interaction Event (strictly tracks form completion)
     trackEvent("form_submit", {
-      event_type: isActualLead ? "lead" : "form",
-      event_category: isActualLead ? "Lead" : "Form",
+      event_type: "form",
+      event_category: "Form",
       event_action: "submit",
       event_label: formName,
       form_name: formName,
@@ -676,18 +689,6 @@ export function enableFormTracking() {
       conversion_name: `Form Submit: ${formName}`,
       conversion_value: 1
     });
-
-    // 2. Explicit Lead Event if contact fields were provided
-    if (isActualLead) {
-      trackLead({
-        name: extractedName,
-        email: extractedEmail,
-        phone: extractedPhone,
-        company: extractedCompany,
-        form_name: formName,
-        source: "website_inbound_form"
-      });
-    }
   }, { capture: true });
 }
 

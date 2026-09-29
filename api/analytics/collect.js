@@ -54,43 +54,52 @@ export default async function handler(req, res) {
       payload.source_environment = process.env.NODE_ENV === "development" ? "development" : "production";
     }
 
-    // If this event is a lead submission, automatically trigger Jira task & subtask creation
-    const isLeadEvent =
-      payload.event_type === "lead" ||
+    // Debounce Jira task creation so duplicates within 60 seconds are ignored
+    const cleanEmail = (payload.email || payload.workEmail || "").trim().toLowerCase();
+    const isExplicitLead =
       payload.event_name === "lead_submit" ||
-      payload.event_name === "form_submit";
+      (payload.event_type === "lead" && payload.event_name !== "form_submit" && payload.event_name !== "form_start");
 
-    const hasContactDetails = Boolean(payload.email || payload.phone || payload.name);
+    const hasContactDetails = Boolean(cleanEmail || payload.phone || payload.name);
 
-    if (isLeadEvent && hasContactDetails) {
-      try {
-        await createJiraLeadTask({
-          name: payload.name || payload.fullName,
-          email: payload.email || payload.workEmail,
-          phone: payload.phone,
-          company: payload.company,
-          jobTitle: payload.jobTitle || payload.job_title,
-          industry: payload.industry,
-          companySize: payload.companySize || payload.company_size,
-          requirement: payload.requirement || payload.primaryChallenge || payload.primaryGoal,
-          challenge: payload.challenge || payload.currentChallenge || payload.message || payload.processSummary,
-          desiredOutcome: payload.desiredOutcome || payload.desired_outcome,
-          docType: payload.docType || payload.audit_doc_type,
-          filesCount: payload.filesCount || payload.files_count,
-          fileName: payload.fileName,
-          referenceId: payload.referenceId,
-          pageUrl: payload.page_url || payload.pageUrl,
-          leadType:
-            payload.lead_type === "PROCESS_AUDIT_SUBMISSION" || payload.docType
-              ? "Process Audit"
-              : payload.lead_type === "LONG_FORM" || payload.jobTitle
-              ? "Consultation"
-              : payload.lead_type === "CHATBOT"
-              ? "Chatbot"
-              : "Quick Form",
-        });
-      } catch (jiraErr) {
-        console.warn("Jira creation in analytics proxy notice:", jiraErr);
+    if (isExplicitLead && hasContactDetails) {
+      const now = Date.now();
+      const lastJiraTime = global.__recentJiraTasks?.get(cleanEmail);
+      if (!global.__recentJiraTasks) global.__recentJiraTasks = new Map();
+
+      if (!lastJiraTime || now - lastJiraTime > 60_000) {
+        if (cleanEmail) global.__recentJiraTasks.set(cleanEmail, now);
+        try {
+          await createJiraLeadTask({
+            name: payload.name || payload.fullName,
+            email: cleanEmail,
+            phone: payload.phone,
+            company: payload.company,
+            jobTitle: payload.jobTitle || payload.job_title,
+            industry: payload.industry,
+            companySize: payload.companySize || payload.company_size,
+            requirement: payload.requirement || payload.primaryChallenge || payload.primaryGoal,
+            challenge: payload.challenge || payload.currentChallenge || payload.message || payload.processSummary,
+            desiredOutcome: payload.desiredOutcome || payload.desired_outcome,
+            docType: payload.docType || payload.audit_doc_type,
+            filesCount: payload.filesCount || payload.files_count,
+            fileName: payload.fileName,
+            referenceId: payload.referenceId,
+            pageUrl: payload.page_url || payload.pageUrl,
+            leadType:
+              payload.lead_type === "PROCESS_AUDIT_SUBMISSION" || payload.docType
+                ? "Process Audit"
+                : payload.lead_type === "LONG_FORM" || payload.jobTitle
+                ? "Consultation"
+                : payload.lead_type === "CHATBOT"
+                ? "Chatbot"
+                : "Quick Form",
+          });
+        } catch (jiraErr) {
+          console.warn("Jira creation in analytics proxy notice:", jiraErr);
+        }
+      } else {
+        console.log(`[Jira] Debouncing duplicate Jira task creation for: ${cleanEmail}`);
       }
     }
 

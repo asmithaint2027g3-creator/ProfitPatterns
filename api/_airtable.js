@@ -40,15 +40,69 @@ async function insertRecord(tableName, fields, creds) {
   }
 }
 
-// ─── 1. LEADS ─────────────────────────────────────────────────────────────────
+// Cache to debounce identical submissions within 30 seconds
+const recentLeadSubmissions = new Map();
 
 export async function saveLeadToAirtable(lead) {
   const creds = getCredentials();
   if (!creds) { console.warn("[Airtable] Missing credentials for Leads."); return { ok: false }; }
 
+  const cleanEmail = (lead.email || "").trim().toLowerCase();
+  const cleanPhone = (lead.phone || "").trim();
+  const leadKey = cleanEmail || cleanPhone;
+
+  // 1. Debounce rapid simultaneous submissions (within 30 seconds)
+  if (leadKey) {
+    const lastTime = recentLeadSubmissions.get(leadKey);
+    if (lastTime && Date.now() - lastTime < 30_000) {
+      console.log(`[Airtable] Debouncing duplicate lead submission for: ${leadKey}`);
+      return { ok: true, duplicate: true };
+    }
+    recentLeadSubmissions.set(leadKey, Date.now());
+  }
+
+  // 2. Query Airtable to prevent creating duplicate records for the same email
+  if (cleanEmail) {
+    try {
+      const filter = encodeURIComponent(`LOWER({Email}) = "${cleanEmail}"`);
+      const checkRes = await fetch(
+        `https://api.airtable.com/v0/${creds.baseId}/Leads?filterByFormula=${filter}&maxRecords=1`,
+        { headers: { Authorization: `Bearer ${creds.token}` } }
+      );
+      if (checkRes.ok) {
+        const checkData = await checkRes.json();
+        if (checkData.records && checkData.records.length > 0) {
+          const existing = checkData.records[0];
+          console.log(`[Airtable] Lead already exists (${existing.id}) for ${cleanEmail}. Updating record instead of duplicating.`);
+          
+          const updateFields = {};
+          if (lead.phone && !existing.fields["Phone"]) updateFields["Phone"] = String(lead.phone).slice(0, 50);
+          if (lead.company && !existing.fields["Company"]) updateFields["Company"] = String(lead.company).slice(0, 255);
+          if ((lead.jobTitle || lead.job_title) && !existing.fields["Job Title"]) 
+            updateFields["Job Title"] = String(lead.jobTitle || lead.job_title).slice(0, 255);
+          if (lead.requirement && !existing.fields["Requirement"]) 
+            updateFields["Requirement"] = String(lead.requirement).slice(0, 2000);
+          if ((lead.challenge || lead.message) && !existing.fields["Message"]) 
+            updateFields["Message"] = String(lead.challenge || lead.message).slice(0, 2000);
+
+          if (Object.keys(updateFields).length > 0) {
+            await fetch(`https://api.airtable.com/v0/${creds.baseId}/Leads/${existing.id}`, {
+              method: "PATCH",
+              headers: { Authorization: `Bearer ${creds.token}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ fields: updateFields, typecast: true }),
+            });
+          }
+          return { ok: true, id: existing.id, updated: true };
+        }
+      }
+    } catch (e) {
+      console.warn("[Airtable] Lead deduplication lookup error:", e.message);
+    }
+  }
+
   const fields = {
     Name:   (lead.name  || "Inbound Lead").slice(0, 255),
-    Email:  (lead.email || "").toLowerCase().slice(0, 255),
+    Email:  cleanEmail.slice(0, 255),
     Status: "New",
   };
 
@@ -276,7 +330,8 @@ export async function routeEventToAirtable(event) {
   const type = String(event.event_type || "");
   const promises = [];
 
-  if ((type === "lead" || name === "lead_submit") && (event.email || event.phone || event.name))
+  const isExplicitLead = (name === "lead_submit" || type === "lead") && name !== "form_submit" && name !== "form_start";
+  if (isExplicitLead && (event.email || event.phone || event.name))
     promises.push(saveLeadToAirtable(event).catch(e => console.warn("[Airtable] Lead:", e.message)));
   if (name === "page_view" || name === "pageview")
     promises.push(savePageViewToAirtable(event).catch(e => console.warn("[Airtable] PageView:", e.message)));
