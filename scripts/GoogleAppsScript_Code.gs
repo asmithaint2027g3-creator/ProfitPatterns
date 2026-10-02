@@ -344,37 +344,40 @@ function doPost(e) {
       upsertIPSecurityIntelligence(ss, p, receivedAt);
     }
 
-    // ── 4. LAYER 3: Lead Management & Predictive Classification ──
+    // ── 4. LAYER 3: Lead Management & Predictive Classification (DEDUPLICATED) ──
     var isLead = detectIsLead(p);
     if (isLead) {
-      appendRowToTab(ss, "Lead_Management", p);
+      var isDuplicateLead = checkAndUpdateExistingLead(ss, p, receivedAt);
+      if (!isDuplicateLead) {
+        appendRowToTab(ss, "Lead_Management", p);
 
-      var leadType = String(p.lead_type || "").toUpperCase();
-      var formName = String(p.form_name || "").toLowerCase();
+        var leadType = String(p.lead_type || "").toUpperCase();
+        var formName = String(p.form_name || "").toLowerCase();
 
-      if (leadType === "QUICK_FORM" || formName.includes("quick")) {
-        p.lead_type = "QUICK_FORM";
-        appendRowToTab(ss, "Quick_Form_Leads", p);
-      } else if (leadType === "LONG_FORM" || formName.includes("consultation")) {
-        p.lead_type = "LONG_FORM";
-        appendRowToTab(ss, "Long_Form_Leads", p);
-      } else if (leadType === "PROCESS_AUDIT_SUBMISSION" || formName.includes("audit") || attachments.length > 0) {
-        p.lead_type = "PROCESS_AUDIT_SUBMISSION";
-        appendRowToTab(ss, "Audit_Document_Leads", p);
-      } else if (leadType === "CHATBOT" || formName.includes("chat") || formName.includes("assistant")) {
-        p.lead_type = "CHATBOT";
-        appendRowToTab(ss, "Chatbot_Leads", p);
+        if (leadType === "CHATBOT" || formName.includes("chat") || formName.includes("assistant")) {
+          p.lead_type = "CHATBOT";
+          appendRowToTab(ss, "Chatbot_Leads", p);
+        } else if (leadType === "LONG_FORM" || formName.includes("consultation")) {
+          p.lead_type = "LONG_FORM";
+          appendRowToTab(ss, "Long_Form_Leads", p);
+        } else if (leadType === "PROCESS_AUDIT_SUBMISSION" || formName.includes("audit") || attachments.length > 0) {
+          p.lead_type = "PROCESS_AUDIT_SUBMISSION";
+          appendRowToTab(ss, "Audit_Document_Leads", p);
+        } else {
+          p.lead_type = "QUICK_FORM";
+          appendRowToTab(ss, "Quick_Form_Leads", p);
+        }
+
+        // Send Instant VIP Notification Email (with 15 telemetry fields + Drive Link + Attachment)
+        sendLeadAlertEmail(p, attachments);
       } else {
-        appendRowToTab(ss, "Quick_Form_Leads", p);
+        console.log("ℹ️ Lead already recorded. Updated existing record without adding duplicates: " + (p.email || p.phone || p.lead_id));
       }
-
-      // Send Instant VIP Notification Email (with 15 telemetry fields + Drive Link + Attachment)
-      sendLeadAlertEmail(p, attachments);
     }
 
-    // ── 5. Auxiliary Behavioral Telemetry Routing ──
-    if (p.event_type === "session" || p.event_name === "session_start" || p.event_name === "session_end") {
-      appendRowToTab(ss, "Visitor_Sessions", p);
+    // ── 5. Auxiliary Behavioral Telemetry Routing (DEDUPLICATED UPSERT) ──
+    if (p.event_type === "session" || p.event_name === "session_start" || p.event_name === "session_end" || p.session_id) {
+      upsertVisitorSession(ss, p, receivedAt);
     }
 
     if (p.event_type === "page_view" || p.event_name === "page_view") {
@@ -387,7 +390,7 @@ function doPost(e) {
     }
 
     if (p.event_type === "scroll" || p.scroll_percentage > 0) {
-      appendRowToTab(ss, "Scroll_Engagement", p);
+      upsertScrollEngagement(ss, p, receivedAt);
     }
 
     if (p.event_type === "form" || /form/.test(p.event_name) || p.form_status === "submitted" || p.form_status === "in_progress") {
@@ -496,28 +499,52 @@ function upsertGeoTimezoneIntelligence(ss, p, receivedAt) {
   var visitorId = p.visitor_id || "";
   var rowIndex = findRowByValue(sheet, 2, visitorId);
 
+  // Preserve visitor's real detected location without forced city override
   var city = p.geo_city || "";
-  if (!city || city === "Coimbatore" || city === "Kanchipuram" || city === "Madurai" || city === "Tamil Nadu" || city === "Chennai" || city === "India") {
-    city = "Thoothukudi";
+  if (!city || city === "Unknown" || city === "(Detecting...)") {
+    city = p.geo_country ? (p.geo_country + " Regional Visitor") : "Direct / Global Access";
+  }
+
+  var country = p.geo_country || "India";
+  var countryCode = p.geo_country_code || (country === "India" ? "IN" : "US");
+  var region = p.geo_region || (country === "India" ? "National" : "Global");
+  var continent = p.geo_continent || (country === "India" ? "Asia" : "North America");
+  var currency = p.geo_currency || (country === "India" ? "INR (₹)" : "USD ($)");
+  var marketTier = p.geo_market_tier || (country === "India" ? "APAC Growth Hub" : "North America Tier 1");
+
+  // Dynamic Advisory Desk
+  var desk = p.active_advisory_desk;
+  if (!desk || desk.includes("Thoothukudi Strategic Operations")) {
+    if (country === "India") {
+      desk = city && city !== "India" ? (city + " Advisory Operations Desk") : "India Strategy & Advisory Desk";
+    } else if (countryCode === "US") {
+      desk = "New York Advisory Hub";
+    } else if (countryCode === "GB") {
+      desk = "London Strategy Desk";
+    } else if (continent === "Asia") {
+      desk = "Singapore APAC Center";
+    } else {
+      desk = "Global Executive Advisory Hub";
+    }
   }
 
   var rowData = [
     receivedAt,
     visitorId,
-    p.geo_country || "India",
-    p.geo_country_code || "IN",
+    country,
+    countryCode,
     city,
-    p.geo_region || "Tamil Nadu",
-    p.geo_continent || "Asia",
-    p.geo_currency || "INR (₹)",
-    p.geo_market_tier || "APAC Growth Hub",
+    region,
+    continent,
+    currency,
+    marketTier,
     p.compliance_mode || "Global Standard",
     p.timezone_local_time || Utilities.formatDate(new Date(), CONFIG.TIMEZONE, "hh:mm a"),
-    p.timezone_iana || p.timezone || "Asia/Kolkata",
+    p.timezone_iana || p.timezone || CONFIG.TIMEZONE,
     p.timezone_utc_offset || "UTC+5:30",
     p.timezone_day_phase || "Active Business Hours",
     p.peak_engagement_status || "Peak Business Decision Hours",
-    p.active_advisory_desk || "Thoothukudi Strategic Operations Desk"
+    desk
   ];
 
   if (rowIndex > 1) {
@@ -653,25 +680,21 @@ function enrichPayload(raw, receivedAt) {
   p.average_position = p.average_position || "2.1";
   p.device = p.device || p.device_type;
 
-  // GEO & LOCATION INTELLIGENCE (Guaranteed Accurate to Thoothukudi)
-  var city = p.geo_city || "";
-  if (!city || city === "Coimbatore" || city === "Kanchipuram" || city === "Madurai" || city === "Tamil Nadu" || city === "Chennai" || city === "India") {
-    city = "Thoothukudi";
-  }
-  p.geo_city = city;
+  // GEO & LOCATION INTELLIGENCE (Dynamic visitor location)
   p.geo_country = p.geo_country || "India";
-  p.geo_country_code = p.geo_country_code || "IN";
-  p.geo_region = p.geo_region || "Tamil Nadu";
-  p.geo_continent = p.geo_continent || "Asia";
-  p.geo_currency = p.geo_currency || "INR (₹)";
-  p.geo_market_tier = p.geo_market_tier || "APAC Growth Hub";
+  p.geo_country_code = p.geo_country_code || (p.geo_country === "India" ? "IN" : "US");
+  p.geo_city = p.geo_city || (p.geo_country === "India" ? "India" : "Global Visitor");
+  p.geo_region = p.geo_region || (p.geo_country === "India" ? "National" : "Global");
+  p.geo_continent = p.geo_continent || (p.geo_country === "India" ? "Asia" : "North America");
+  p.geo_currency = p.geo_currency || (p.geo_country === "India" ? "INR (₹)" : "USD ($)");
+  p.geo_market_tier = p.geo_market_tier || (p.geo_country === "India" ? "APAC Growth Hub" : "North America Tier 1");
   p.compliance_mode = p.compliance_mode || "Global Standard";
-  p.timezone_iana = p.timezone_iana || p.timezone || "Asia/Kolkata";
+  p.timezone_iana = p.timezone_iana || p.timezone || CONFIG.TIMEZONE;
   p.timezone_utc_offset = p.timezone_utc_offset || "UTC+5:30";
   p.timezone_local_time = p.timezone_local_time || Utilities.formatDate(now, CONFIG.TIMEZONE, "hh:mm a");
   p.timezone_day_phase = p.timezone_day_phase || "Active Business Hours";
   p.peak_engagement_status = p.peak_engagement_status || "Peak Business Decision Hours";
-  p.active_advisory_desk = p.active_advisory_desk || "Thoothukudi Strategic Operations Desk";
+  p.active_advisory_desk = p.active_advisory_desk || (p.geo_country === "India" ? "India Strategy & Advisory Desk" : "Global Advisory Desk");
 
   // IP & SECURITY INTELLIGENCE
   p.ip_network_carrier = p.ip_network_carrier || p.network_type || "Bharti Airtel Broadband";
@@ -811,7 +834,7 @@ function getWeekStartDate(d) {
 }
 
 // =========================================================================================
-// APPEND ROW WITH RECENT DEDUPLICATION
+// APPEND ROW WITH RECENT DEDUPLICATION & ZERO BLANK COLUMNS
 // =========================================================================================
 function appendRowToTab(ss, tabName, p) {
   try {
@@ -821,22 +844,89 @@ function appendRowToTab(ss, tabName, p) {
     if (!headers.length) return;
 
     var lastRow = sheet.getLastRow();
-    if (lastRow > 1 && p.event_id) {
-      var checkRows = Math.min(60, lastRow - 1);
-      var eventIdCol = headers.indexOf("event_id") + 1;
-      if (eventIdCol > 0) {
-        var recentIds = sheet.getRange(lastRow - checkRows + 1, eventIdCol, checkRows, 1).getValues();
-        for (var i = 0; i < recentIds.length; i++) {
-          if (String(recentIds[i][0]) === String(p.event_id)) {
-            return;
+
+    // ── RECENT DEDUPLICATION CHECK ──
+    if (lastRow > 1) {
+      var checkRows = Math.min(50, lastRow - 1);
+      var startRow = lastRow - checkRows + 1;
+
+      // 1. By event_id if present
+      if (p.event_id) {
+        var eventIdCol = headers.indexOf("event_id") + 1;
+        if (eventIdCol > 0) {
+          var recentIds = sheet.getRange(startRow, eventIdCol, checkRows, 1).getValues();
+          for (var i = 0; i < recentIds.length; i++) {
+            if (String(recentIds[i][0]).trim() === String(p.event_id).trim()) {
+              return; // Duplicate event_id, ignore
+            }
+          }
+        }
+      }
+
+      // 2. By lead_id if present
+      if (p.lead_id) {
+        var leadIdCol = headers.indexOf("lead_id") + 1;
+        if (leadIdCol > 0) {
+          var recentLeadIds = sheet.getRange(startRow, leadIdCol, checkRows, 1).getValues();
+          for (var j = 0; j < recentLeadIds.length; j++) {
+            if (String(recentLeadIds[j][0]).trim() === String(p.lead_id).trim()) {
+              return; // Duplicate lead_id, ignore
+            }
+          }
+        }
+      }
+
+      // 3. Tab specific deduplication
+      if (tabName === "Live_Traffic_Events" && p.session_id && p.event_name) {
+        var sessCol = headers.indexOf("session_id") + 1;
+        var nameCol = headers.indexOf("event_name") + 1;
+        var pathCol = headers.indexOf("page_path") + 1;
+        if (sessCol > 0 && nameCol > 0 && pathCol > 0) {
+          var trafficVals = sheet.getRange(startRow, 1, checkRows, headers.length).getValues();
+          for (var k = trafficVals.length - 1; k >= 0; k--) {
+            if (trafficVals[k][sessCol - 1] === p.session_id &&
+                trafficVals[k][nameCol - 1] === p.event_name &&
+                trafficVals[k][pathCol - 1] === p.page_path &&
+                (p.element_id ? trafficVals[k][headers.indexOf("element_id")] === p.element_id : true)) {
+              return; // Duplicate telemetry interaction within last few events, ignore
+            }
+          }
+        }
+      }
+
+      if ((tabName === "Page_Performance" || tabName === "Traffic_Sources") && p.session_id && p.page_path) {
+        var pageSessCol = headers.indexOf("session_id") + 1;
+        var pagePathCol = headers.indexOf("page_path") + 1;
+        if (pageSessCol > 0 && pagePathCol > 0) {
+          var pageVals = sheet.getRange(startRow, 1, checkRows, headers.length).getValues();
+          for (var m = pageVals.length - 1; m >= 0; m--) {
+            if (pageVals[m][pageSessCol - 1] === p.session_id && pageVals[m][pagePathCol - 1] === p.page_path) {
+              return; // Duplicate page event for this session, ignore
+            }
+          }
+        }
+      }
+
+      if (tabName === "Click_Interactions" && p.session_id && p.element_id) {
+        var clickSessCol = headers.indexOf("session_id") + 1;
+        var clickElemCol = headers.indexOf("element_id") + 1;
+        if (clickSessCol > 0 && clickElemCol > 0) {
+          var clickVals = sheet.getRange(startRow, 1, checkRows, headers.length).getValues();
+          for (var n = clickVals.length - 1; n >= 0; n--) {
+            if (clickVals[n][clickSessCol - 1] === p.session_id && clickVals[n][clickElemCol - 1] === p.element_id) {
+              return; // Duplicate click, ignore
+            }
           }
         }
       }
     }
 
+    // ── FILL EVERY COLUMN CLEANLY (Zero empty cells) ──
     var row = headers.map(function(h) {
       var val = p[h];
-      if (val === undefined || val === null) val = "";
+      if (val === undefined || val === null || String(val).trim() === "") {
+        val = getDefaultValueForHeader(h, p);
+      }
       if (typeof val === "object") {
         try { val = JSON.stringify(val); } catch (e) { val = ""; }
       }
@@ -847,6 +937,509 @@ function appendRowToTab(ss, tabName, p) {
   } catch (err) {
     console.warn("Could not append row to " + tabName + ": " + err.toString());
   }
+}
+
+// =========================================================================================
+// INTELLIGENT DEFAULTS GENERATOR (GUARANTEES 100% FILLED COLUMNS ACROSS ALL TABS)
+// =========================================================================================
+function getDefaultValueForHeader(header, p) {
+  p = p || {};
+  var now = new Date();
+  var tsStr = p.received_at || Utilities.formatDate(now, CONFIG.TIMEZONE, "yyyy-MM-dd HH:mm:ss") + " IST";
+  var dateStr = Utilities.formatDate(now, CONFIG.TIMEZONE, "yyyy-MM-dd");
+
+  switch (header) {
+    // Timestamps and IDs
+    case "received_at":
+    case "Timestamp":
+      return tsStr;
+    case "client_timestamp":
+      return p.client_timestamp || now.toISOString();
+    case "record_date":
+    case "Date":
+    case "Week_Start":
+    case "Month":
+      return dateStr;
+    case "event_id":
+      return p.event_id || ("evt_" + Date.now());
+    case "lead_id":
+      return p.lead_id || ("lead_" + Date.now());
+    case "visitor_id":
+    case "Visitor ID":
+      return p.visitor_id || "vis_verified_visitor";
+    case "session_id":
+    case "Session ID":
+      return p.session_id || "ses_active_session";
+    case "user_id":
+      return p.user_id || p.visitor_id || "usr_verified";
+
+    // URLs and Routing
+    case "page_url":
+    case "site_url":
+      return p.page_url || "https://profit-patterns-xi.vercel.app/";
+    case "page_path":
+    case "Entry Point":
+    case "Current Page":
+      return p.page_path || "/";
+    case "previous_page":
+    case "referrer_url":
+      return p.referrer_url || p.previous_page || "(direct_entry)";
+    case "Referrer Domain":
+      return p.referrer_domain || "(direct)";
+    case "Navigation Flow":
+      return p.navigation_flow || '["/"]';
+
+    // Events and Actions
+    case "event_type":
+      return p.event_type || (p.lead_type ? "lead" : "page_view");
+    case "event_name":
+      return p.event_name || (p.lead_type ? "lead_submit" : "page_view");
+    case "event_category":
+      return p.event_category || (p.lead_type ? "Lead" : "Engagement");
+    case "event_action":
+      return p.event_action || (p.lead_type ? "submit" : "view");
+    case "event_label":
+    case "page_title":
+      return p.page_title || p.event_label || "ProfitPatterns | AI Profit Strategy Consulting";
+    case "section":
+      return p.section || "main_content";
+
+    // Elements and Interaction
+    case "element_type":
+      return p.element_type || "button";
+    case "element_id":
+      return p.element_id || "cta_element";
+    case "element_class":
+      return p.element_class || "interactive-element";
+    case "element_text":
+      return p.element_text || "Explore Strategy";
+    case "click_position_x":
+      return p.click_position_x !== undefined ? p.click_position_x : 480;
+    case "click_position_y":
+      return p.click_position_y !== undefined ? p.click_position_y : 320;
+    case "hand_zone":
+      return p.hand_zone || "Desktop Pointer";
+    case "scroll_percentage":
+    case "max_scroll_depth":
+      return 50;
+    case "time_on_page_seconds":
+    case "Page Dwell (s)":
+      return p.time_on_page_seconds || 25;
+    case "session_duration_seconds":
+    case "Session Dwell (s)":
+      return p.session_duration_seconds || 45;
+    case "interaction_count":
+    case "Interactions Count":
+      return p.interaction_count || 1;
+    case "tab_visibility_status":
+      return "visible";
+    case "is_returning_visitor":
+      return false;
+
+    // Traffic and Sources
+    case "traffic_source":
+    case "Traffic Category":
+      return p.traffic_source || "Direct Inbound";
+    case "raw_source":
+    case "Raw Source":
+      return p.raw_source || p.utm_source || "direct";
+    case "utm_source":
+      return p.utm_source || "direct";
+    case "utm_medium":
+    case "Medium":
+      return p.utm_medium || "none";
+    case "utm_campaign":
+    case "Campaign":
+      return p.utm_campaign || "(organic)";
+    case "utm_term":
+    case "Search Term":
+    case "search_query":
+      return p.utm_term || "ai profit strategy consulting";
+    case "utm_content":
+    case "Ad Content":
+      return p.utm_content || "standard";
+    case "click_id":
+    case "Click ID / Tag":
+      return p.click_id || "direct_inbound";
+    case "first_touch_attribution":
+    case "First-Touch Attribution":
+      return p.first_touch_attribution || "Direct Entry";
+    case "last_touch_attribution":
+    case "Last-Touch Attribution":
+      return p.last_touch_attribution || "Direct Navigation";
+    case "channel_roi_score":
+    case "Channel ROI Score":
+      return p.channel_roi_score || "88%";
+
+    // Device and Environment
+    case "device_type":
+    case "Device Type":
+    case "device":
+      return p.device_type || "Desktop";
+    case "browser":
+      return p.browser || "Chrome";
+    case "browser_version":
+      return p.browser_version || "Latest";
+    case "operating_system":
+      return p.operating_system || "Windows";
+    case "Browser / OS":
+      return (p.browser || "Chrome") + " (" + (p.operating_system || "Windows") + ")";
+    case "screen_width":
+      return 1920;
+    case "screen_height":
+      return 1080;
+    case "viewport_width":
+      return 1280;
+    case "viewport_height":
+      return 800;
+    case "language":
+      return "en-US";
+    case "timezone":
+    case "Timezone (IANA)":
+      return p.timezone_iana || p.timezone || CONFIG.TIMEZONE;
+    case "network_type":
+    case "Network Type":
+      return p.network_type || "Broadband / 5G";
+    case "source_environment":
+      return p.source_environment || CONFIG.DEFAULT_ENVIRONMENT;
+
+    // Geo and Location (REAL VISITOR GEOLOCATION)
+    case "Country":
+    case "geo_country":
+      return p.geo_country || "India";
+    case "Country Code":
+    case "geo_country_code":
+      return p.geo_country_code || (p.geo_country === "India" ? "IN" : "US");
+    case "City":
+    case "geo_city":
+      return p.geo_city || (p.geo_country ? (p.geo_country + " Visitor") : "Visitor Location");
+    case "Region":
+    case "geo_region":
+      return p.geo_region || (p.geo_country === "India" ? "National" : "Global");
+    case "Continent":
+    case "geo_continent":
+      return p.geo_continent || (p.geo_country === "India" ? "Asia" : "North America");
+    case "Currency":
+    case "geo_currency":
+      return p.geo_currency || (p.geo_country === "India" ? "INR (₹)" : "USD ($)");
+    case "Market Tier":
+    case "geo_market_tier":
+    case "regional_market":
+      return p.geo_market_tier || (p.geo_country === "India" ? "APAC Growth Hub" : "North America Tier 1");
+    case "Compliance Mode":
+    case "compliance_mode":
+      return p.compliance_mode || "Global Standard";
+    case "Local Clock Time":
+    case "timezone_local_time":
+      return Utilities.formatDate(now, CONFIG.TIMEZONE, "hh:mm a");
+    case "UTC Offset":
+    case "timezone_utc_offset":
+      return p.timezone_utc_offset || "UTC+5:30";
+    case "Day Phase":
+    case "timezone_day_phase":
+      return "Active Business Hours";
+    case "Peak Hours Status":
+    case "peak_engagement_status":
+      return "Peak Business Decision Hours";
+    case "Active Advisory Desk":
+    case "active_advisory_desk":
+      return p.active_advisory_desk || (p.geo_country === "India" ? "India Strategy & Advisory Desk" : "Global Advisory Desk");
+
+    // IP and Security
+    case "Network Carrier / ISP":
+    case "ip_network_carrier":
+      return p.ip_network_carrier || "Broadband Provider";
+    case "ip_network_type":
+      return "Enterprise B2B";
+    case "Corporate Intent":
+    case "ip_corporate_intent":
+      return "Strategic Inbound";
+    case "Fraud Risk Score":
+    case "ip_fraud_risk_score":
+      return "0.02";
+    case "Fraud Status":
+    case "ip_fraud_status":
+      return "Verified Human";
+    case "Repeat Visits Velocity":
+    case "ip_visit_velocity":
+      return 1;
+    case "Security Tier":
+    case "security_tier":
+      return "Tier 1 Enterprise Verified";
+
+    // Behavioral Intelligence
+    case "Bounce Risk":
+    case "bounce_risk":
+      return "Low";
+    case "Funnel Stage":
+    case "funnel_stage":
+      return "Discovery & Strategy Exploration";
+    case "User Intent":
+    case "user_intent":
+      return "AI Profit Optimization Evaluation";
+
+    // Forms and Conversions
+    case "form_name":
+      return p.form_name || (p.lead_type === "CHATBOT" ? "Interactive AI Assistant" : "Quick Contact Form");
+    case "form_id":
+      return p.form_id || "lead_form";
+    case "form_field_name":
+      return "(none)";
+    case "form_status":
+      return "submitted";
+    case "conversion_name":
+      return p.conversion_name || (p.lead_type === "CHATBOT" ? "Assistant Lead Submission" : "Strategic Inbound Inquiry");
+    case "conversion_value":
+      return 1;
+
+    // Leads & Contact Info (CHATBOT & FORMS)
+    case "name":
+      return p.name || "Executive Prospect";
+    case "email":
+      return p.email || "prospect@lead.inbound";
+    case "phone":
+      return p.phone || "(Not Provided)";
+    case "company":
+      return p.company || (p.email && p.email.includes("@") && !p.email.includes("lead.inbound") ? p.email.split("@")[1].split(".")[0].toUpperCase() : "Enterprise Partner");
+    case "job_title":
+      return p.job_title || "Executive Director / Decision-Maker";
+    case "industry":
+      return p.industry || "Enterprise Technology / Services";
+    case "company_size":
+      return p.company_size || "20 - 250 Employees";
+    case "website":
+      return p.website || "https://client-company.com";
+    case "requirement":
+      return p.requirement || "Executive AI Strategy & Workflow Automation";
+    case "challenge":
+    case "message":
+      return p.challenge || p.message || "Manual operational bottleneck elimination and profit margin scaling";
+    case "desired_outcome":
+      return "Accelerated operating margins and autonomous reporting";
+    case "current_tools":
+      return "Cloud ERP, CRM & Spreadsheets";
+    case "existing_ai_usage":
+      return "Ad-hoc experimentation seeking systematic scaling";
+    case "project_scope":
+      return "Full-cycle AI automation & strategic advisory";
+    case "budget_range":
+      return "Strategic Enterprise Tier";
+    case "preferred_contact_time":
+      return "Business Hours (IST)";
+    case "lead_type":
+      return p.lead_type || "QUICK_FORM";
+    case "lead_source":
+      return p.lead_source || (p.lead_type === "CHATBOT" ? "assistant_chatbot" : "Website Inbound");
+    case "lead_status":
+      return "New";
+    case "follow_up_status":
+      return "Immediate Action Pending";
+    case "consent_status":
+      return "Granted";
+    case "audit_doc_type":
+      return "Operational Process Blueprint";
+    case "weekly_hours_spent":
+      return "35+ hrs/week";
+    case "files_count":
+      return 0;
+    case "files_list":
+      return "(No files attached)";
+    case "nda_requested":
+      return "Standard Mutual Confidentiality";
+    case "document_drive_link":
+      return p.document_drive_link || "N/A (Direct Submission)";
+    case "drive_file_id":
+      return p.drive_file_id || "N/A";
+    case "predictive_synergy_score":
+    case "predictive_score":
+      return "95%";
+    case "urgency_score":
+      return "High (Tier 1 Priority)";
+    case "tailored_strategy":
+      return "Autonomous Workflow Implementation & Profit Margin Engineering";
+
+    // SEO metrics
+    case "clicks":
+      return 15;
+    case "impressions":
+      return 180;
+    case "ctr":
+      return "8.33%";
+    case "average_position":
+      return "2.1";
+
+    // Summary tabs
+    case "Total_Events":
+      return 1;
+    case "Unique_Visitors":
+      return 1;
+    case "Page_Views":
+      return 1;
+    case "Quick_Leads":
+      return 0;
+    case "Consultation_Leads":
+      return 0;
+    case "Audit_Dossiers":
+      return 0;
+    case "Chatbot_Leads":
+      return 0;
+    case "Total_Leads":
+      return 0;
+    case "Conversion_Rate":
+      return "0.0%";
+    case "Avg_Engagement_Sec":
+      return "45";
+
+    case "event_data_json":
+      try { return JSON.stringify(p); } catch (e) { return "{}"; }
+
+    default:
+      return "-";
+  }
+}
+
+// =========================================================================================
+// LEAD DEDUPLICATION & IN-PLACE ROW UPDATER
+// =========================================================================================
+function checkAndUpdateExistingLead(ss, p, receivedAt) {
+  var sheet = getTab(ss, "Lead_Management");
+  if (!sheet) return false;
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return false;
+
+  var checkRows = Math.min(100, lastRow - 1);
+  var startRow = lastRow - checkRows + 1;
+  // Columns in Lead_Management:
+  // 1: received_at, 2: lead_id, 3: lead_type, 4: visitor_id, 5: session_id,
+  // 6: name, 7: email, 8: phone, 9: company
+  var dataRange = sheet.getRange(startRow, 1, checkRows, 9);
+  var values = dataRange.getValues();
+
+  var cleanEmail = String(p.email || "").trim().toLowerCase();
+  var isDummyEmail = cleanEmail.includes("@chat.lead") || cleanEmail.includes("@prospect.lead") || cleanEmail.includes("@lead.inbound") || cleanEmail === "";
+  var cleanPhone = String(p.phone || "").replace(/\D/g, "");
+  var hasPhone = cleanPhone.length >= 7;
+  var cleanLeadId = String(p.lead_id || "").trim();
+
+  for (var i = values.length - 1; i >= 0; i--) {
+    var rowEmail = String(values[i][6] || "").trim().toLowerCase();
+    var rowPhone = String(values[i][7] || "").replace(/\D/g, "");
+    var rowLeadId = String(values[i][1] || "").trim();
+    var rowSession = String(values[i][4] || "").trim();
+
+    var isMatch = false;
+
+    // 1. Match by exact lead_id
+    if (cleanLeadId && cleanLeadId === rowLeadId) {
+      isMatch = true;
+    }
+    // 2. Match by genuine email
+    else if (!isDummyEmail && cleanEmail && cleanEmail === rowEmail) {
+      isMatch = true;
+    }
+    // 3. Match by valid phone number
+    else if (hasPhone && rowPhone && (cleanPhone === rowPhone || cleanPhone.endsWith(rowPhone) || rowPhone.endsWith(cleanPhone))) {
+      isMatch = true;
+    }
+    // 4. Match by session_id + lead_type within recent submissions
+    else if (p.session_id && p.session_id === rowSession && values[i][2] === p.lead_type) {
+      isMatch = true;
+    }
+
+    if (isMatch) {
+      // Update any fields in existing row that are newly provided
+      var actualRow = startRow + i;
+      var fullRowRange = sheet.getRange(actualRow, 1, 1, TAB_HEADERS.Lead_Management.length);
+      var rowVals = fullRowRange.getValues()[0];
+      var headers = TAB_HEADERS.Lead_Management;
+      var updated = false;
+
+      for (var h = 0; h < headers.length; h++) {
+        var hName = headers[h];
+        if ((rowVals[h] === "" || rowVals[h] === null || String(rowVals[h]).includes("Not Provided") || String(rowVals[h]).includes("not provided")) && p[hName]) {
+          rowVals[h] = p[hName];
+          updated = true;
+        }
+      }
+      if (updated) {
+        fullRowRange.setValues([rowVals]);
+      }
+      return true; // Already recorded, do not duplicate!
+    }
+  }
+  return false;
+}
+
+// =========================================================================================
+// VISITOR SESSION UPSERT (1 UNIQUE ROW PER SESSION)
+// =========================================================================================
+function upsertVisitorSession(ss, p, receivedAt) {
+  var sheet = getTab(ss, "Visitor_Sessions");
+  if (!sheet) return;
+
+  var sessionId = p.session_id || "";
+  var rowIndex = findRowByValue(sheet, 4, sessionId); // Column 4 is session_id
+
+  var headers = TAB_HEADERS.Visitor_Sessions;
+  var rowData = headers.map(function(h) {
+    var val = p[h];
+    if (val === undefined || val === null || String(val).trim() === "") {
+      val = getDefaultValueForHeader(h, p);
+    }
+    if (typeof val === "object") {
+      try { val = JSON.stringify(val); } catch (e) { val = ""; }
+    }
+    return val;
+  });
+
+  if (rowIndex > 1) {
+    sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
+  } else {
+    sheet.appendRow(rowData);
+  }
+}
+
+// =========================================================================================
+// SCROLL ENGAGEMENT UPSERT (1 ROW PER PAGE PER SESSION)
+// =========================================================================================
+function upsertScrollEngagement(ss, p, receivedAt) {
+  var sheet = getTab(ss, "Scroll_Engagement");
+  if (!sheet) return;
+
+  var sessionId = String(p.session_id || "").trim();
+  var pagePath = String(p.page_path || "/").trim();
+  var lastRow = sheet.getLastRow();
+
+  if (lastRow > 1) {
+    var checkRows = Math.min(80, lastRow - 1);
+    var startRow = lastRow - checkRows + 1;
+    // Column 4 is session_id, Column 6 is page_path
+    var range = sheet.getRange(startRow, 1, checkRows, 11);
+    var values = range.getValues();
+
+    for (var i = values.length - 1; i >= 0; i--) {
+      var rowSession = String(values[i][3] || "").trim();
+      var rowPath = String(values[i][5] || "").trim();
+
+      if (rowSession === sessionId && rowPath === pagePath) {
+        var existingScroll = Number(values[i][7]) || 0;
+        var newScroll = Number(p.scroll_percentage) || 50;
+        var existingMax = Number(values[i][8]) || 0;
+        var newMax = Number(p.max_scroll_depth) || newScroll;
+
+        values[i][0] = receivedAt;
+        values[i][7] = Math.max(existingScroll, newScroll);
+        values[i][8] = Math.max(existingMax, newMax);
+        values[i][9] = Math.max(Number(values[i][9]) || 0, Number(p.time_on_page_seconds) || 10);
+
+        sheet.getRange(startRow + i, 1, 1, 11).setValues([values[i]]);
+        return; // Upserted in place!
+      }
+    }
+  }
+
+  // Not found: append row with all columns filled
+  appendRowToTab(ss, "Scroll_Engagement", p);
 }
 
 // =========================================================================================
@@ -1430,7 +2023,7 @@ function PURGE_DUPLICATES_FROM_ALL_TABS() {
     var sheet = ss.getSheetByName(tabName);
     if (!sheet || sheet.getLastRow() < 3) return;
     var data = sheet.getDataRange().getValues();
-    if (!data || data.length < 2) return;
+    if (!data || data.length < 3) return;
 
     var headers = data[0];
     if (!headers || headers.length === 0) return;
@@ -1439,16 +2032,33 @@ function PURGE_DUPLICATES_FROM_ALL_TABS() {
     if (idCol === -1) idCol = headers.indexOf("lead_id");
     if (idCol === -1) idCol = headers.indexOf("visitor_id");
     if (idCol === -1) idCol = headers.indexOf("Session ID");
+    if (idCol === -1) idCol = headers.indexOf("session_id");
     if (idCol === -1) idCol = headers.indexOf("Visitor ID");
 
-    var seen = new Set();
+    var emailCol = headers.indexOf("email");
+    var phoneCol = headers.indexOf("phone");
+
+    var seen = {};
     var rowsToKeep = [headers];
 
     for (var r = 1; r < data.length; r++) {
-      var key = idCol > -1 && data[r][idCol] ? String(data[r][idCol]) : data[r].join("|");
-      if (!seen.has(key)) {
-        seen.add(key);
-        rowsToKeep.push(data[r]);
+      var row = data[r];
+      var key = "";
+
+      // Deduplicate leads by genuine email or phone
+      if (emailCol !== -1 && row[emailCol] && !String(row[emailCol]).includes("@chat.lead") && !String(row[emailCol]).includes("@prospect.lead")) {
+        key = "email_" + String(row[emailCol]).trim().toLowerCase();
+      } else if (phoneCol !== -1 && row[phoneCol] && String(row[phoneCol]).replace(/\D/g, "").length >= 7) {
+        key = "phone_" + String(row[phoneCol]).replace(/\D/g, "");
+      } else if (idCol > -1 && row[idCol]) {
+        key = "id_" + String(row[idCol]).trim();
+      } else {
+        key = "tuple_" + row.slice(0, 5).join("|");
+      }
+
+      if (!seen[key]) {
+        seen[key] = true;
+        rowsToKeep.push(row);
       } else {
         totalRemoved++;
       }
@@ -1459,7 +2069,9 @@ function PURGE_DUPLICATES_FROM_ALL_TABS() {
       sheet.getRange(1, 1, rowsToKeep.length, headers.length).setValues(rowsToKeep);
     }
   });
+
   console.log("🧹 Duplicates removed: " + totalRemoved);
+  return totalRemoved;
 }
 
 function setupAllProfitPatternsTriggers() {
@@ -1482,18 +2094,18 @@ function setupAllProfitPatternsTriggers() {
 
 function onOpen() {
   SpreadsheetApp.getUi()
-    .createMenu('🚀 PROFITPATTERNS RAW DATA & INTELLIGENCE ENGINE')
-    .addItem('📍 Set Location to Thoothukudi & Fill All Empty Cells', 'BACKFILL_EMPTY_COLUMNS_ACROSS_ALL_TABS')
-    .addItem('🔄 Refresh & Recompute Telemetry & Summaries', 'MASTER_REFRESH_RAW_DATA')
+    .createMenu('🚀 PROFITPATTERNS MULTI-INTELLIGENCE ENGINE')
+    .addItem('✨ Fill All Empty Columns Across All Tabs', 'BACKFILL_EMPTY_COLUMNS_ACROSS_ALL_TABS')
+    .addItem('🧹 Purge All Duplicate Data Across All Tabs', 'PURGE_DUPLICATES_FROM_ALL_TABS')
+    .addItem('🔄 Master Refresh Telemetry & Summaries', 'MASTER_REFRESH_RAW_DATA')
     .addItem('📁 Initialize All Database Tabs', 'INITIALIZE_ALL_TABS')
-    .addItem('🧹 Purge Duplicates Across All Tabs', 'PURGE_DUPLICATES_FROM_ALL_TABS')
     .addSeparator()
     .addItem('⏰ Enable Automated Daily/Weekly/Monthly Reports', 'setupAllProfitPatternsTriggers')
     .addToUi();
 }
 
 // =========================================================================================
-// ONE-CLICK DATA FILLER & LOCATION CORRECTION (THOOTHUKUDI & EMPTY COLUMNS)
+// ONE-CLICK DATA FILLER & DEDUPLICATION (PRESERVES REAL VISITOR LOCATION)
 // =========================================================================================
 function BACKFILL_EMPTY_COLUMNS_ACROSS_ALL_TABS() {
   var ss = getSpreadsheet();
@@ -1502,186 +2114,7 @@ function BACKFILL_EMPTY_COLUMNS_ACROSS_ALL_TABS() {
     return;
   }
 
-  var defaults = {
-    // Geo fields
-    "city": "Thoothukudi",
-    "geo_city": "Thoothukudi",
-    "City": "Thoothukudi",
-    "Top Geo City": "Thoothukudi",
-    "country": "India",
-    "geo_country": "India",
-    "Country": "India",
-    "Top Country": "India",
-    "country_code": "IN",
-    "geo_country_code": "IN",
-    "Country Code": "IN",
-    "region": "Tamil Nadu",
-    "geo_region": "Tamil Nadu",
-    "Region": "Tamil Nadu",
-    "continent": "Asia",
-    "geo_continent": "Asia",
-    "Continent": "Asia",
-    "currency": "INR (₹)",
-    "geo_currency": "INR (₹)",
-    "Currency": "INR (₹)",
-    "market_tier": "APAC Growth Hub",
-    "geo_market_tier": "APAC Growth Hub",
-    "Market Tier": "APAC Growth Hub",
-    "Primary Market": "APAC Growth Hub",
-    "Top Territory": "APAC Growth Hub (India)",
-    "compliance_mode": "Global Standard",
-    "Compliance Mode": "Global Standard",
-    "timezone_local_time": Utilities.formatDate(new Date(), CONFIG.TIMEZONE, "hh:mm a"),
-    "Local Clock Time": Utilities.formatDate(new Date(), CONFIG.TIMEZONE, "hh:mm a"),
-    "timezone_iana": "Asia/Kolkata",
-    "Timezone (IANA)": "Asia/Kolkata",
-    "timezone_utc_offset": "UTC+5:30",
-    "UTC Offset": "UTC+5:30",
-    "timezone_day_phase": "Active Business Hours",
-    "Day Phase": "Active Business Hours",
-    "peak_engagement_status": "Peak Business Decision Hours",
-    "Peak Hours Status": "Peak Business Decision Hours",
-    "active_advisory_desk": "Thoothukudi Strategic Operations Desk",
-    "Active Advisory Desk": "Thoothukudi Strategic Operations Desk",
-
-    // IP Security
-    "ip_network_carrier": "Bharti Airtel Limited / High-Speed Broadband",
-    "Network Carrier / ISP": "Bharti Airtel Limited / High-Speed Broadband",
-    "ip_network_type": "Enterprise B2B",
-    "Network Type": "Enterprise B2B",
-    "ip_corporate_intent": "Strategic Inbound",
-    "Corporate Intent": "Strategic Inbound",
-    "ip_fraud_risk_score": "0.02",
-    "Fraud Risk Score": "0.02",
-    "ip_fraud_status": "Verified Human",
-    "Fraud Status": "Verified Human",
-    "ip_visit_velocity": 1,
-    "Repeat Visits Velocity": 1,
-    "security_tier": "Tier 1 Enterprise Verified",
-    "Security Tier": "Tier 1 Enterprise Verified",
-    "device_type": "Desktop",
-    "Device Type": "Desktop",
-    "device": "Desktop",
-    "Browser / OS": "Chrome (Windows)",
-
-    // Session fields
-    "session_entry_point": "/",
-    "Entry Point": "/",
-    "Current Page": "/",
-    "time_on_page_seconds": 20,
-    "Page Dwell (s)": 20,
-    "session_duration_seconds": 45,
-    "Session Dwell (s)": 45,
-    "navigation_flow": '["/"]',
-    "Navigation Flow": '["/"]',
-    "bounce_risk": "Low",
-    "Bounce Risk": "Low",
-    "funnel_stage": "Discovery",
-    "Funnel Stage": "Discovery",
-    "user_intent": "Strategy Exploration",
-    "User Intent": "Strategy Exploration",
-    "interaction_count": 1,
-    "Interactions Count": 1,
-
-    // Traffic fields
-    "traffic_source": "(direct)",
-    "Traffic Category": "Direct",
-    "Top Traffic Source": "Direct / Organic",
-    "Top Acquisition Source": "Direct / Inbound",
-    "Dominant Acquisition Channel": "Direct Organic Search",
-    "raw_source": "direct",
-    "Raw Source": "direct",
-    "utm_source": "(direct)",
-    "utm_medium": "(none)",
-    "Medium": "(none)",
-    "utm_campaign": "(organic)",
-    "Campaign": "(organic)",
-    "utm_term": "(not_set)",
-    "Search Term": "n/a",
-    "utm_content": "(standard)",
-    "Ad Content": "standard",
-    "click_id": "direct_inbound",
-    "Click ID / Tag": "direct_inbound",
-    "first_touch_attribution": "Direct Entry",
-    "First-Touch Attribution": "Direct Entry",
-    "last_touch_attribution": "Direct Entry",
-    "Last-Touch Attribution": "Direct Entry",
-    "channel_roi_score": "88%",
-    "Channel ROI Score": "88%",
-    "referrer_url": "(direct_entry)",
-    "previous_page": "(direct_entry)",
-    "Referrer Domain": "(direct)",
-
-    // Lead Management & Forms
-    "lead_type": "QUICK_FORM",
-    "lead_source": "website_inbound",
-    "lead_status": "New Opportunity",
-    "follow_up_status": "Immediate Outreach Pending",
-    "consent_status": "Granted",
-    "source_environment": "production",
-    "predictive_synergy_score": "94%",
-    "predictive_score": "94%",
-    "urgency_score": "High (Tier 1 Priority)",
-    "regional_market": "APAC Growth Hub",
-    "tailored_strategy": "Enterprise AI Automation & Profit Strategy",
-    "company": "Enterprise Client",
-    "job_title": "Executive Decision Maker",
-    "industry": "Enterprise & Technology",
-    "company_size": "20 - 250 Employees",
-    "website": "https://client-domain.com",
-    "requirement": "AI Profit Strategy & Operational Optimization",
-    "challenge": "Manual bottlenecks & revenue leakage",
-    "message": "Strategic enterprise inquiry",
-    "desired_outcome": "Accelerated profit margins & automated workflows",
-    "current_tools": "Cloud ERP & Spreadsheets",
-    "existing_ai_usage": "Early Adoption",
-    "project_scope": "Comprehensive Process Assessment",
-    "budget_range": "Strategic Enterprise Tier",
-    "preferred_contact_time": "Business Hours (IST)",
-    "audit_doc_type": "Operational Workflow Blueprint",
-    "weekly_hours_spent": "30+ hrs/week",
-    "files_count": 0,
-    "files_list": "(none)",
-    "nda_requested": "No",
-    "document_drive_link": "N/A (Direct Consultation)",
-    "drive_file_id": "N/A",
-
-    // UI elements & telemetry
-    "hand_zone": "Desktop Pointer",
-    "section": "Main Section",
-    "element_type": "Navigation Link",
-    "element_id": "nav_cta",
-    "element_class": "btn-primary",
-    "element_text": "Interactive Action",
-    "form_name": "(none)",
-    "form_id": "(none)",
-    "form_field_name": "(none)",
-    "form_status": "(none)",
-    "conversion_name": "(none)",
-    "conversion_value": 0,
-    "scroll_percentage": 50,
-    "max_scroll_depth": 65,
-    "tab_visibility_status": "visible",
-    "language": "en-US",
-    "timezone": "Asia/Kolkata",
-    "network_type": "Broadband / 5G",
-    "event_category": "User Engagement",
-    "event_action": "page_view",
-    "event_label": "Navigation",
-    "browser": "Chrome",
-    "browser_version": "Latest",
-    "operating_system": "Windows",
-    "screen_width": 1920,
-    "screen_height": 1080,
-    "viewport_width": 1280,
-    "viewport_height": 800,
-    "page_url": "https://profit-patterns-xi.vercel.app/",
-    "page_path": "/",
-    "page_title": "ProfitPatterns | AI Profit Strategy Consulting"
-  };
-
   var totalFilled = 0;
-  var totalLocationUpdated = 0;
   var tabs = Object.keys(TAB_HEADERS);
 
   tabs.forEach(function(tabName) {
@@ -1696,42 +2129,21 @@ function BACKFILL_EMPTY_COLUMNS_ACROSS_ALL_TABS() {
     var modified = false;
 
     for (var r = 1; r < values.length; r++) {
+      // Build row context object for smart default generation
+      var rowObj = {};
+      for (var c0 = 0; c0 < headers.length; c0++) {
+        rowObj[headers[c0]] = values[r][c0];
+      }
+
       for (var c = 0; c < headers.length; c++) {
         var h = String(headers[c] || "").trim();
         var currentVal = values[r][c];
-        var strVal = String(currentVal || "").trim().toLowerCase();
 
-        // 1. Correct location to Thoothukudi if Kanchipuram / Coimbatore / Madurai / Tamil Nadu / empty
-        if (h === "City" || h === "geo_city" || h === "Top Geo City") {
-          if (!currentVal || strVal === "kanchipuram" || strVal === "coimbatore" || strVal === "madurai" || strVal === "tamil nadu" || strVal === "chennai" || strVal === "india") {
-            values[r][c] = "Thoothukudi";
-            totalLocationUpdated++;
-            modified = true;
-            continue;
-          }
-        }
-
-        // 2. Correct advisory desk if needed
-        if (h === "Active Advisory Desk" || h === "active_advisory_desk") {
-          if (!currentVal || strVal.includes("bengaluru") || strVal.includes("hub")) {
-            values[r][c] = "Thoothukudi Strategic Operations Desk";
-            modified = true;
-            continue;
-          }
-        }
-
-        // 3. Fill empty cells with suitable intelligence defaults
+        // Fill only genuinely empty cells without touching existing valid visitor locations
         if (currentVal === "" || currentVal === null || currentVal === undefined) {
-          if (defaults[h] !== undefined) {
-            values[r][c] = defaults[h];
-            totalFilled++;
-            modified = true;
-          } else {
-            // General fallback
-            values[r][c] = "(standard)";
-            totalFilled++;
-            modified = true;
-          }
+          values[r][c] = getDefaultValueForHeader(h, rowObj);
+          totalFilled++;
+          modified = true;
         }
       }
     }
@@ -1741,12 +2153,16 @@ function BACKFILL_EMPTY_COLUMNS_ACROSS_ALL_TABS() {
     }
   });
 
-  // Rebuild summaries with filled, updated data
+  // Purge any duplicates automatically
+  var dupesRemoved = PURGE_DUPLICATES_FROM_ALL_TABS() || 0;
+
+  // Rebuild summaries with filled, deduplicated data
   BUILD_AGGREGATED_INTERVAL_SUMMARIES();
 
-  var msg = "✅ Data Fill & Location Correction Complete!\n\n" +
-            "• Locations updated to Thoothukudi: " + totalLocationUpdated + " cells\n" +
+  var msg = "✅ Data Fill & Deduplication Complete!\n\n" +
             "• Empty columns/cells filled: " + totalFilled + " cells\n" +
+            "• Duplicate records purged: " + dupesRemoved + " rows\n" +
+            "• Visitor real locations preserved without forced overrides\n" +
             "• Executive Summaries recalculated (Daily, Weekly, Monthly)";
   console.log(msg);
   try {

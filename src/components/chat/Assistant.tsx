@@ -115,28 +115,42 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
         setSavingLead(true);
         const email = emailMatch ? emailMatch[0] : "";
         const phone = phoneMatch ? phoneMatch[0] : "";
-        const nameGuess = text.replace(email, "").replace(phone, "").trim().slice(0, 50) || "Chatbot Prospect";
+        // Clean candidate name from text
+        let cleanName = text.replace(email, "").replace(phone, "").trim();
+        cleanName = cleanName.replace(/^(my\s+(email|phone|number|contact)\s+is|please\s+contact\s+me|call\s+me|reach\s+me\s+at|here\s+is\s+my|contact\s+me\s+at|i\s+am|this\s+is)/i, "").trim();
+        cleanName = cleanName.replace(/^[.,:;!?-]+|[.,:;!?-]+$/g, "").trim();
+        if (!cleanName || cleanName.length < 2 || /^(thanks|thank you|ok|okay|yes|no|hi|hello|hey|call me|email me|contact me)$/i.test(cleanName)) {
+          cleanName = "Executive Prospect";
+        }
+
+        const validEmail = email || (phone ? `${phone.replace(/\D/g, "")}@chatbot.client` : "prospect@chat.lead");
+        const leadId = `lead_chat_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+        const reqGoal = contextNote || "Executive AI Strategy Consultation";
+        const probDesc = text || "Workflow Automation & Margin Acceleration";
 
         trackLead({
-          name: nameGuess,
-          email: email || "prospect@chat.lead",
-          phone: phone,
-          company: "Not specified",
-          requirement: contextNote,
-          challenge: text,
-          form_name: "ProfitAI Assistant",
+          lead_id: leadId,
+          lead_type: "CHATBOT",
+          name: cleanName,
+          email: validEmail,
+          phone: phone || "(Provided in Chat)",
+          company: "Enterprise Partner",
+          requirement: reqGoal,
+          challenge: probDesc,
+          form_name: "Interactive AI Assistant",
           source: "assistant_chatbot",
+          lead_source: "assistant_chatbot",
         });
 
         try {
           await submitChatLead({
             data: {
-              name: nameGuess,
-              email: email || "prospect@chat.lead",
-              phone: phone,
-              company: "Not specified",
-              businessProblem: text,
-              intent: contextNote,
+              name: cleanName,
+              email: validEmail,
+              phone: phone || "",
+              company: "Enterprise Partner",
+              businessProblem: probDesc,
+              intent: reqGoal,
               page: typeof window !== "undefined" ? window.location.pathname : "/",
             },
           });
