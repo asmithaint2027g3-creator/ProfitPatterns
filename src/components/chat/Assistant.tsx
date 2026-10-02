@@ -8,6 +8,7 @@ import {
   Loader2,
   Minus,
   Paperclip,
+  RotateCcw,
   Send,
   Shield,
   Sparkles,
@@ -18,7 +19,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { WhatsAppCTA } from "@/components/cta/WhatsAppCTA";
 import { track } from "@/lib/analytics";
-import { useVisitorIntelligence } from "@/hooks/useVisitorIntelligence";
 import { useVisitorContext } from "@/components/intelligence/VisitorIntelligenceLayer";
 import { submitChatLead } from "@/lib/leads.functions";
 import { trackLead } from "@/utils/analytics";
@@ -50,10 +50,28 @@ function generateId() {
   return Math.random().toString(36).substring(2, 9);
 }
 
-export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const { isRepeatVisitor, visitCount } = useVisitorIntelligence();
+const LS_CHAT_HISTORY = "pp_chat_history";
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const { isRepeatVisitor, visitCount, currentPageLabel } = useVisitorContext();
+
+  // Load chat history from localStorage if available
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const stored = localStorage.getItem(LS_CHAT_HISTORY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load chat history:", e);
+    }
+    return [];
+  });
+
   const [draft, setDraft] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [leadCaptured, setLeadCaptured] = useState(false);
@@ -63,32 +81,85 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize opening message from ProfitAI with live time-based greeting and repeat-visitor detection
+  // Persist messages to localStorage whenever updated
   useEffect(() => {
-    if (!open || messages.length > 0) return;
-    track("chat_open", { isRepeatVisitor, visitCount });
+    if (messages.length > 0) {
+      try {
+        localStorage.setItem(LS_CHAT_HISTORY, JSON.stringify(messages.slice(-25)));
+      } catch (e) {
+        console.warn("Failed to save chat history:", e);
+      }
+    }
+  }, [messages]);
+
+  // Handler to clear chat history and restart with contextual greeting
+  const handleClearHistory = useCallback(() => {
+    try {
+      localStorage.removeItem(LS_CHAT_HISTORY);
+    } catch (e) {}
 
     const liveGreeting = getLiveGreeting();
     const isRepeat = isRepeatVisitor || visitCount > 1;
     const initialText = isRepeat
-      ? `${liveGreeting}! Welcome back 👋\n\nGreat to see you again! I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`
-      : `${liveGreeting}! Welcome to ProfitPatterns. I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`;
+      ? `${liveGreeting}! Welcome back to ProfitPatterns 👋 (Visit #${visitCount})\n\nI see you're currently exploring **${currentPageLabel}**.\n\nGreat to see you again! I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`
+      : `${liveGreeting}! Welcome to ProfitPatterns. I'm ProfitAI, your AI & profit strategist.\n\nI notice you're currently exploring our **${currentPageLabel}** section.\n\nHow can I help you uncover hidden margin leaks, evaluate automation feasibility, or optimize your business workflows?`;
 
     const welcomeMsg: ChatMessage = {
       id: generateId(),
       role: "assistant",
       text: initialText,
       time: getFormattedTime(),
-      options: [
-        { label: "Request a Callback →", value: "request_callback", isPrimary: true },
-        { label: "Our Services", value: "services" },
-        { label: "About ProfitPatterns", value: "about" },
-        { label: "Free AI Audit", value: "audit" },
-      ],
+      options: isRepeat
+        ? [
+            { label: "Request a Callback →", value: "request_callback", isPrimary: true },
+            { label: "Submit Free Audit Form", value: "audit" },
+            { label: "Book a Strategy Call", value: "calendar", link: "/contact" },
+            { label: "WhatsApp Direct Desk", value: "whatsapp" },
+          ]
+        : [
+            { label: "Explore Our Solutions →", value: "services", isPrimary: true },
+            { label: "Free AI Audit", value: "audit" },
+            { label: "About ProfitPatterns", value: "about" },
+            { label: "Book Discovery Call", value: "calendar", link: "/contact" },
+          ],
     };
 
     setMessages([welcomeMsg]);
-  }, [open, messages.length, isRepeatVisitor, visitCount]);
+  }, [isRepeatVisitor, visitCount, currentPageLabel]);
+
+  // Initialize opening message if messages is empty
+  useEffect(() => {
+    if (!open || messages.length > 0) return;
+    track("chat_open", { isRepeatVisitor, visitCount, currentPageLabel });
+
+    const liveGreeting = getLiveGreeting();
+    const isRepeat = isRepeatVisitor || visitCount > 1;
+    const initialText = isRepeat
+      ? `${liveGreeting}! Welcome back to ProfitPatterns 👋 (Visit #${visitCount})\n\nI see you're currently exploring **${currentPageLabel}**.\n\nGreat to see you again! I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`
+      : `${liveGreeting}! Welcome to ProfitPatterns. I'm ProfitAI, your AI & profit strategist.\n\nI notice you're currently exploring our **${currentPageLabel}** section.\n\nHow can I help you uncover hidden margin leaks, evaluate automation feasibility, or optimize your business workflows?`;
+
+    const welcomeMsg: ChatMessage = {
+      id: generateId(),
+      role: "assistant",
+      text: initialText,
+      time: getFormattedTime(),
+      options: isRepeat
+        ? [
+            { label: "Request a Callback →", value: "request_callback", isPrimary: true },
+            { label: "Submit Free Audit Form", value: "audit" },
+            { label: "Book a Strategy Call", value: "calendar", link: "/contact" },
+            { label: "WhatsApp Direct Desk", value: "whatsapp" },
+          ]
+        : [
+            { label: "Explore Our Solutions →", value: "services", isPrimary: true },
+            { label: "Free AI Audit", value: "audit" },
+            { label: "About ProfitPatterns", value: "about" },
+            { label: "Book Discovery Call", value: "calendar", link: "/contact" },
+          ],
+    };
+
+    setMessages([welcomeMsg]);
+  }, [open, messages.length, isRepeatVisitor, visitCount, currentPageLabel]);
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -255,17 +326,63 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
             { label: "Chat on WhatsApp", value: "whatsapp" },
             { label: "Schedule Call", value: "calendar", link: "/contact" },
           ];
+        } else if (
+          query.includes("this page") ||
+          query.includes("current page") ||
+          query.includes("where am i") ||
+          query.includes("what is this") ||
+          query.includes("explain this page") ||
+          query.includes("what should i do") ||
+          query.includes("what do i do") ||
+          query.includes("page help")
+        ) {
+          const lowerLabel = currentPageLabel.toLowerCase();
+          if (lowerLabel.includes("audit")) {
+            replyText = `You are on our **${currentPageLabel}** page.\n\nHere you can upload SOPs, workflows, spreadsheets, or technical specs. Our senior advisory practice performs a complete 14-day AI feasibility audit and computes your exact ROI scorecard at zero cost. Would you like help preparing your submission?`;
+            nextOptions = [
+              { label: "Request a Callback →", value: "request_callback", isPrimary: true },
+              { label: "Chat on WhatsApp", value: "whatsapp" },
+            ];
+          } else if (lowerLabel.includes("contact")) {
+            replyText = `You are on our **${currentPageLabel}** desk.\n\nYou can fill out our quick advisory form on this page or schedule an introductory session on our partner calendar. Prefer immediate direct messaging?`;
+            nextOptions = [
+              { label: "Chat on WhatsApp", value: "whatsapp", isPrimary: true },
+              { label: "Request a Callback →", value: "request_callback" },
+              { label: "Free AI Audit", value: "audit" },
+            ];
+          } else if (lowerLabel.includes("solution") || lowerLabel.includes("service")) {
+            replyText = `You are exploring our **${currentPageLabel}** section.\n\nWe provide 4 high-impact AI pillars: 14-Day AI Diagnostic, Margin Optimization, Workflow Automation, and Executive Analytics. Which operational area represents the biggest opportunity for your team?`;
+            nextOptions = [
+              { label: "Free AI Audit", value: "audit", isPrimary: true },
+              { label: "Request a Callback →", value: "request_callback" },
+              { label: "Schedule Call", value: "calendar", link: "/contact" },
+            ];
+          } else if (lowerLabel.includes("case")) {
+            replyText = `You are reviewing our **${currentPageLabel}**.\n\nHere we document verified client outcomes: 34% margin improvement, 40+ hours saved weekly through automated agents, and positive ROI delivered within 14 to 30 days.`;
+            nextOptions = [
+              { label: "Free AI Audit", value: "audit", isPrimary: true },
+              { label: "Request a Callback", value: "request_callback" },
+            ];
+          } else {
+            replyText = `You are currently viewing **${currentPageLabel}** on ProfitPatterns.\n\nI can answer questions regarding our AI implementation frameworks, margin diagnosis, or help you book an advisory session right now!`;
+            nextOptions = [
+              { label: "Our Services", value: "services" },
+              { label: "Free AI Audit", value: "audit", isPrimary: true },
+              { label: "Request a Callback", value: "request_callback" },
+            ];
+          }
         } else if (query.includes("hello") || query.includes("hi") || query.includes("hey")) {
-          replyText = "Hello! How can I assist with your business AI and profit strategy today?";
+          replyText = `Hello! How can I assist with your business AI and profit strategy while you explore **${currentPageLabel}** today?`;
           nextOptions = [
             { label: "Request a Callback →", value: "request_callback", isPrimary: true },
             { label: "Our Services", value: "services" },
             { label: "Free AI Audit", value: "audit" },
           ];
         } else {
-          // General inquiry response
+          // General inquiry response with page context
           replyText =
-            "Thank you for sharing that! Our consulting team specializes in addressing this exact challenge through automated intelligence and margin optimization. Would you like to speak directly with our senior strategist, or receive our complimentary audit?";
+            `Regarding your inquiry while exploring **${currentPageLabel}**:\n\n` +
+            `Our consulting practice specializes in addressing this exact challenge through custom AI systems, workflow automation, and margin engineering. Would you like to speak directly with our senior strategist, or receive our complimentary 14-day diagnostic?`;
           nextOptions = [
             { label: "Request a Callback →", value: "request_callback", isPrimary: true },
             { label: "Submit Free Audit Form", value: "audit_page", link: "/audit-submission" },
@@ -286,10 +403,10 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
         ]);
 
         // Attempt lead capture in background
-        void tryCaptureLead(userInput, optionValue || "General Assistant Chat");
+        void tryCaptureLead(userInput, optionValue || `Chat on ${currentPageLabel}`);
       }, 550);
     },
-    [tryCaptureLead],
+    [tryCaptureLead, currentPageLabel],
   );
 
   // Send message from user
@@ -382,8 +499,16 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
           </div>
         </div>
 
-        {/* Action icons: Minimize & Close */}
+        {/* Action icons: Clear History, Minimize & Close */}
         <div className="flex items-center gap-1 text-[#A8A29E]">
+          <button
+            onClick={handleClearHistory}
+            title="Reset Chat & Clear History"
+            aria-label="Reset Chat & Clear History"
+            className="rounded p-1.5 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+          >
+            <RotateCcw className="size-3.5" />
+          </button>
           <button
             onClick={() => onOpenChange(false)}
             aria-label="Minimize assistant"
@@ -400,6 +525,26 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
           </button>
         </div>
       </header>
+
+      {/* ── CONTEXT INTELLIGENCE & VISITOR STATUS STRIP ── */}
+      <div className="flex items-center justify-between bg-[#141414] border-b border-[#2D2D2D] px-3.5 py-1.5 text-[11px] select-none">
+        <div className="flex items-center gap-1.5 truncate text-[#A8A29E]">
+          <span className="size-1.5 rounded-full bg-emerald-400 shrink-0" />
+          <span className="text-[#C4B296] font-medium shrink-0">Context:</span>
+          <span className="truncate text-slate-300 font-medium">{currentPageLabel}</span>
+        </div>
+        <div className="shrink-0 pl-2">
+          {isRepeatVisitor || visitCount > 1 ? (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+              Repeat · #{visitCount}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+              New Visitor
+            </span>
+          )}
+        </div>
+      </div>
 
       {/* ── MESSAGE THREAD (Warm Ivory Background matching ProfitPatterns) ── */}
       <div
@@ -577,7 +722,7 @@ export function AssistantLauncher({
     onExternalOpenChange?.(v);
   };
 
-  const { registerChatbotOpener } = useVisitorContext();
+  const { registerChatbotOpener, visitCount, isRepeatVisitor } = useVisitorContext();
   useEffect(() => {
     registerChatbotOpener(() => setOpen(true));
   }, [registerChatbotOpener]);
@@ -606,6 +751,16 @@ export function AssistantLauncher({
         <span className="text-sm font-semibold pr-1 text-[#FAFAF8]">
           {open ? "Close" : "Chat with ProfitAI"}
         </span>
+
+        {/* FEATURE 6 — Visit count badge for repeat visitors */}
+        {!open && (isRepeatVisitor || visitCount >= 2) && (
+          <span
+            title={`You've visited ${visitCount} times!`}
+            className="flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-slate-950 border border-amber-300 shadow-sm animate-in zoom-in-50 duration-200"
+          >
+            #{visitCount}
+          </span>
+        )}
       </button>
     </>
   );

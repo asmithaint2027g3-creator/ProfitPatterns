@@ -1,8 +1,8 @@
 /**
  * useVisitorIntelligence
  * ---------------------
- * Central hook for all 8 visitor intelligence features.
- * Uses localStorage only — no backend, no cookies needed.
+ * Central hook for all visitor intelligence features.
+ * Uses localStorage / sessionStorage only — no backend, no cookies needed.
  *
  * Features tracked:
  *  1. Visit count (repeat visitor detection)
@@ -12,14 +12,17 @@
  *  5. Scroll depth
  *  6. Form interaction / abandonment
  *  7. Exit intent (mouseout on desktop)
+ *  8. Visit count badge (number shown on launcher)
+ *  9. Current page context (for chatbot intelligence)
  */
 
 import { useEffect, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
-const LS_VISIT_COUNT = "pp_visit_count";
-const LS_LAST_PAGE   = "pp_last_page";
-const LS_LAST_LABEL  = "pp_last_label";
+const LS_VISIT_COUNT  = "pp_visit_count";
+const LS_LAST_PAGE    = "pp_last_page";
+const LS_LAST_LABEL   = "pp_last_label";
+const LS_VISIT_DATES  = "pp_visit_dates";   // JSON array of ISO date strings
 
 export type TimeOfDay = "morning" | "afternoon" | "evening" | "night";
 
@@ -28,12 +31,14 @@ export interface VisitorIntelligence {
   isRepeatVisitor: boolean;    // true if visitCount >= 2
   lastPagePath: string | null; // e.g. "/solutions"
   lastPageLabel: string | null;// e.g. "Solutions"
+  currentPageLabel: string;    // human label for the CURRENT page
   timeOfDay: TimeOfDay;        // morning/afternoon/evening/night
   greeting: string;            // "Good Morning" etc.
   isIdle: boolean;             // true after 30s no interaction
   hasScrolled: boolean;        // true after 300px scroll
   formTouched: boolean;        // true if any input was interacted with
   setFormTouched: (v: boolean) => void;
+  visitDates: string[];        // ISO date strings of all visit timestamps
 }
 
 function getTimeOfDay(): TimeOfDay {
@@ -54,7 +59,7 @@ function getGreeting(tod: TimeOfDay): string {
 }
 
 /** Human-readable label for common routes */
-function labelForPath(path: string): string {
+export function labelForPath(path: string): string {
   const map: Record<string, string> = {
     "/":                "Home",
     "/about":           "About Us",
@@ -68,6 +73,10 @@ function labelForPath(path: string): string {
     "/case-studies":    "Case Studies",
     "/how-it-works":    "How It Works",
     "/faq":             "FAQ",
+    "/services":        "Services",
+    "/icp":             "Ideal Client Profile",
+    "/privacy":         "Privacy Policy",
+    "/terms":           "Terms of Service",
   };
   if (map[path]) return map[path];
   // slug pages: "/solutions/ai-strategy" → "Solutions › AI Strategy"
@@ -90,6 +99,22 @@ export function useVisitorIntelligence(): VisitorIntelligence {
     return count;
   });
 
+  // ── Visit dates (for analytics/history) ─────────────────────
+  const [visitDates] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = localStorage.getItem(LS_VISIT_DATES);
+      const dates: string[] = raw ? JSON.parse(raw) : [];
+      const now = new Date().toISOString();
+      dates.push(now);
+      const trimmed = dates.slice(-50); // Keep last 50
+      localStorage.setItem(LS_VISIT_DATES, JSON.stringify(trimmed));
+      return trimmed;
+    } catch {
+      return [];
+    }
+  });
+
   // ── Last page (set PREVIOUS page, update on route change) ─────
   const [lastPagePath] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
@@ -105,6 +130,9 @@ export function useVisitorIntelligence(): VisitorIntelligence {
     localStorage.setItem(LS_LAST_PAGE, pathname);
     localStorage.setItem(LS_LAST_LABEL, labelForPath(pathname));
   }, [pathname]);
+
+  // ── Current page label (consumed by chatbot for context) ───────
+  const currentPageLabel = labelForPath(pathname);
 
   // ── Time of day ───────────────────────────────────────────────
   const [timeOfDay] = useState<TimeOfDay>(getTimeOfDay);
@@ -149,11 +177,13 @@ export function useVisitorIntelligence(): VisitorIntelligence {
     isRepeatVisitor: visitCount >= 2,
     lastPagePath,
     lastPageLabel,
+    currentPageLabel,
     timeOfDay,
     greeting,
     isIdle,
     hasScrolled,
     formTouched,
     setFormTouched,
+    visitDates,
   };
 }

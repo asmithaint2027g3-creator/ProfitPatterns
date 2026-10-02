@@ -53,7 +53,7 @@ export function AuditDocumentForm({ source = "audit_submission_page" }: { source
   const [values, setValues] = useState(EMPTY_VALUES);
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [hp, setHp] = useState("");
-  const { setFormTouched } = useVisitorContext();
+  const { setFormTouched, setFormProgress } = useVisitorContext();
   const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
   const [isDragging, setIsDragging] = useState(false);
@@ -63,6 +63,18 @@ export function AuditDocumentForm({ source = "audit_submission_page" }: { source
   useEffect(() => {
     track("audit_form_open", { source });
   }, [source]);
+
+  // Dynamically update form progress bar
+  useEffect(() => {
+    let filled = 0;
+    const total = 5;
+    if (values.fullName.trim()) filled++;
+    if (values.workEmail.trim()) filled++;
+    if (values.company.trim()) filled++;
+    if (values.processSummary.trim()) filled++;
+    if (files.length > 0) filled++;
+    setFormProgress(Math.round((filled / total) * 100));
+  }, [values, files, setFormProgress]);
 
   function set(field: FieldKey, value: string | boolean) {
     setFormTouched(true); // mark form as touched for abandonment detection
