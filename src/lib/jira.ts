@@ -241,12 +241,15 @@ function buildDocumentsDescription(p: JiraLeadPayload): object {
 
 // ─── Active Sprint helper ─────────────────────────────────────────────────────
 
+const ACTIVE_SPRINT_ID = "35";
+const JANE_GRACY_ACCOUNT_ID = "712020:4a35214c-ba12-4524-a70a-699fdcfafb65";
+
 async function addToActiveSprint(issueKey: string): Promise<void> {
   try {
     const cfg = getJiraConfig();
     const auth = getAuthHeader();
-    // Sprint 2 is ProfitPatterns Sprint 1
-    const res = await fetch(`${cfg.baseUrl}/rest/agile/1.0/sprint/2/issue`, {
+    const sprintId = process.env["JIRA_SPRINT_ID"] || ACTIVE_SPRINT_ID;
+    const res = await fetch(`${cfg.baseUrl}/rest/agile/1.0/sprint/${sprintId}/issue`, {
       method: "POST",
       headers: {
         Authorization: auth,
@@ -256,7 +259,10 @@ async function addToActiveSprint(issueKey: string): Promise<void> {
       body: JSON.stringify({ issues: [issueKey] }),
     });
     if (res.ok) {
-      console.log(`📌 Added ${issueKey} to Active Sprint (Board view)`);
+      console.log(`📌 Moved ${issueKey} from Backlog to Active Sprint ${sprintId} (DI Board)`);
+    } else {
+      const errText = await res.text();
+      console.warn(`Sprint assignment notice for ${issueKey}:`, errText.slice(0, 200));
     }
   } catch (err) {
     console.warn("⚠️ Could not add to active sprint:", err);
@@ -277,16 +283,22 @@ async function createIssue(
     summary,
     description,
     issuetype: { name: issueType === "Subtask" ? "Subtask" : "Task" },
+    assignee: { accountId: JANE_GRACY_ACCOUNT_ID },
   };
 
   if (issueType === "Subtask" && parentKey) {
     fields["parent"] = { key: parentKey };
-  } else {
-    // Auto-assign parent lead task to Asmitha
-    fields["assignee"] = { id: "712020:cbf4c9bb-d905-45d9-ac86-02601a54dea4" };
   }
 
-  const result = await jiraPost("issue", { fields });
+  // Attempt creation with Jane Gracy assigned
+  let result = await jiraPost("issue", { fields });
+
+  // If assignee field fails, retry without assignee
+  if (!result.ok && result.error && result.error.includes("assignee")) {
+    console.warn("Assignee field rejected, retrying without assignee...");
+    delete fields["assignee"];
+    result = await jiraPost("issue", { fields });
+  }
 
   if (!result.ok || !result.data) {
     return result.error ? { ok: false, error: result.error } : { ok: false };
@@ -296,7 +308,7 @@ async function createIssue(
 
   // If this is a parent task, attach it to the active sprint so it shows on the Board view immediately!
   if (issueType === "Task") {
-    void addToActiveSprint(data.key);
+    await addToActiveSprint(data.key);
   }
 
   return {

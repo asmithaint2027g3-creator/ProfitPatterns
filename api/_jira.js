@@ -6,6 +6,8 @@ const DEFAULT_EMAIL = "asmitha.int2027g3@gmail.com";
 const DEFAULT_API_TOKEN =
   "ATATT3xFfGF0JoxzMyLRSgTCMFyHLwpwAq0IUJ9m-v_tV5rGF9H0vd__j1kDJw4PxztxdGvX46dB2u0WtTTxdqysjPR06GjLNF0iUigNmWymn4I1lEtf55v4Gym1uSkpynSayg9EKujVlUPJIyL0R2lpvRKRyzISCtP1J-w4mzT7HYvT40VFIZM=874B6BD6";
 const DEFAULT_PROJECT_KEY = "DI";
+const JANE_GRACY_ACCOUNT_ID = "712020:4a35214c-ba12-4524-a70a-699fdcfafb65";
+const ACTIVE_SPRINT_ID = "35";
 
 // In-memory deduplication cache: key -> { key: string, timestamp: number }
 const recentLeads = new Map();
@@ -97,8 +99,8 @@ async function addToActiveSprint(issueKey) {
   try {
     const cfg = getJiraConfig();
     const auth = getAuthHeader();
-    // Sprint 2 is ProfitPatterns Sprint 1 (active)
-    await fetch(`${cfg.baseUrl}/rest/agile/1.0/sprint/2/issue`, {
+    const sprintId = process.env.JIRA_SPRINT_ID || ACTIVE_SPRINT_ID;
+    const res = await fetch(`${cfg.baseUrl}/rest/agile/1.0/sprint/${sprintId}/issue`, {
       method: "POST",
       headers: {
         Authorization: auth,
@@ -107,6 +109,12 @@ async function addToActiveSprint(issueKey) {
       },
       body: JSON.stringify({ issues: [issueKey] }),
     });
+    if (res.ok) {
+      console.log(`📌 Moved ${issueKey} from Backlog to Active Sprint ${sprintId} (DI Board)`);
+    } else {
+      const errText = await res.text();
+      console.warn(`Sprint assignment notice for ${issueKey}:`, errText.slice(0, 200));
+    }
   } catch (err) {
     console.warn("Could not add to active sprint:", err);
   }
@@ -119,13 +127,22 @@ async function createIssue(summary, description, issueType, parentKey) {
     summary: summary.slice(0, 250),
     description,
     issuetype: { name: issueType === "Subtask" ? "Subtask" : "Task" },
+    assignee: { accountId: JANE_GRACY_ACCOUNT_ID },
   };
 
   if (issueType === "Subtask" && parentKey) {
     fields["parent"] = { key: parentKey };
   }
 
-  const result = await jiraPost("issue", { fields });
+  // Attempt creation with Jane Gracy assigned
+  let result = await jiraPost("issue", { fields });
+
+  // If assignee fails due to permissions, fallback to unassigned
+  if (!result.ok && result.error && result.error.includes("assignee")) {
+    console.warn("Assignee field rejected, retrying without assignee...");
+    delete fields.assignee;
+    result = await jiraPost("issue", { fields });
+  }
 
   if (!result.ok || !result.data) {
     return { ok: false, error: result.error || "Failed to create issue" };
@@ -133,8 +150,9 @@ async function createIssue(summary, description, issueType, parentKey) {
 
   const data = result.data;
 
+  // Move parent lead task from backlog into active sprint board
   if (issueType === "Task") {
-    void addToActiveSprint(data.key);
+    await addToActiveSprint(data.key);
   }
 
   return {
