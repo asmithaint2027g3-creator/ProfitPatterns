@@ -472,12 +472,12 @@ function estimateGeoFromTimezone(tz: string): GeoIntelligence {
     return {
       country: "India",
       countryCode: "IN",
-      city: "Bengaluru",
-      region: "Karnataka",
+      city: "Tamil Nadu",
+      region: "Tamil Nadu",
       continent: "Asia",
       flag: "🇮🇳",
-      latitude: 12.9716,
-      longitude: 77.5946,
+      latitude: 9.9252,
+      longitude: 78.1198,
       currency: "INR (₹)",
       regionalMarket: "APAC Growth Hub",
       complianceMode: "Global Standard",
@@ -517,14 +517,19 @@ function estimateGeoFromTimezone(tz: string): GeoIntelligence {
 }
 
 export function resolveGeoIntelligence(): GeoIntelligence {
-  if (cachedGeo) return cachedGeo;
+  if (cachedGeo && cachedGeo.city && cachedGeo.city !== "India" && cachedGeo.city !== "Bengaluru") {
+    return cachedGeo;
+  }
 
   // Check cached in sessionStorage
   try {
     const saved = safeStorageGet("session", "pp_geo_cache");
     if (saved) {
-      cachedGeo = JSON.parse(saved);
-      return cachedGeo!;
+      const parsed = JSON.parse(saved);
+      if (parsed && parsed.city && parsed.city !== "India" && parsed.city !== "Bengaluru") {
+        cachedGeo = parsed;
+        return cachedGeo!;
+      }
     }
   } catch {
     // Fallback
@@ -539,33 +544,71 @@ export function resolveGeoIntelligence(): GeoIntelligence {
 
   const estimated = estimateGeoFromTimezone(tz);
   cachedGeo = estimated;
-  safeStorageSet("session", "pp_geo_cache", JSON.stringify(estimated));
 
-  // Asynchronously query fast public geo IP if available without blocking
+  // Asynchronously query high-accuracy Geo IP providers without blocking UI
   if (typeof window !== "undefined") {
-    fetch("https://ipapi.co/json/", { cache: "force-cache" })
+    // Provider 1: freeipapi.com (High accuracy for Indian metro & district tier cities like Madurai)
+    fetch("https://freeipapi.com/api/json")
       .then((res) => res.json())
       .then((data) => {
-        if (data && data.country_name) {
+        if (data && (data.cityName || data.countryName)) {
+          const city = data.cityName || estimated.city;
+          const country = data.countryName || estimated.country;
+          const region = data.regionName || estimated.region;
+          const countryCode = data.countryCode || estimated.countryCode;
+
           const refined: GeoIntelligence = {
-            country: data.country_name || estimated.country,
-            countryCode: data.country_code || estimated.countryCode,
-            city: data.city || estimated.city,
-            region: data.region || estimated.region,
-            continent: data.continent_code === "EU" ? "Europe" : data.continent_code === "AS" ? "Asia" : "North America",
-            flag: data.country_code === "US" ? "🇺🇸" : data.country_code === "GB" ? "🇬🇧" : data.country_code === "SG" ? "🇸🇬" : data.country_code === "IN" ? "🇮🇳" : "🌐",
-            latitude: data.latitude || estimated.latitude,
-            longitude: data.longitude || estimated.longitude,
-            currency: data.currency ? `${data.currency} (${data.currency_name || ""})` : estimated.currency,
-            regionalMarket: data.continent_code === "EU" ? "EMEA Enterprise" : data.continent_code === "AS" ? "APAC Growth Hub" : "North America Tier 1",
-            complianceMode: data.in_eu ? "GDPR Compliant" : data.region_code === "CA" ? "CCPA Protected" : "Global Standard",
+            country,
+            countryCode,
+            city,
+            region,
+            continent: data.continent === "Asia" || data.continentCode === "AS" ? "Asia" : data.continent === "Europe" ? "Europe" : "North America",
+            flag: countryCode === "IN" ? "🇮🇳" : countryCode === "US" ? "🇺🇸" : countryCode === "GB" ? "🇬🇧" : countryCode === "SG" ? "🇸🇬" : "🌐",
+            latitude: Number(data.latitude) || estimated.latitude,
+            longitude: Number(data.longitude) || estimated.longitude,
+            currency: countryCode === "IN" ? "INR (₹)" : estimated.currency,
+            regionalMarket: countryCode === "IN" ? "APAC Growth Hub" : "North America Tier 1",
+            complianceMode: "Global Standard",
           };
           cachedGeo = refined;
           safeStorageSet("session", "pp_geo_cache", JSON.stringify(refined));
+
+          // Enrich IP intelligence if carrier info is available
+          if (data.asnOrganization && cachedIp) {
+            cachedIp.isp = data.asnOrganization;
+            if (data.ipAddress) {
+              const parts = String(data.ipAddress).split(".");
+              cachedIp.maskedIp = parts.length === 4 ? `${parts[0]}.${parts[1]}.***.***` : "IPv6 Protected";
+            }
+          }
         }
       })
       .catch(() => {
-        // Silently use timezone estimation
+        // Provider 2 fallback: ipwho.is
+        fetch("https://ipwho.is/")
+          .then((res) => res.json())
+          .then((data) => {
+            if (data && data.success) {
+              const refined: GeoIntelligence = {
+                country: data.country || estimated.country,
+                countryCode: data.country_code || estimated.countryCode,
+                city: data.city || estimated.city,
+                region: data.region || estimated.region,
+                continent: data.continent || "Asia",
+                flag: data.flag?.emoji || "🇮🇳",
+                latitude: Number(data.latitude) || estimated.latitude,
+                longitude: Number(data.longitude) || estimated.longitude,
+                currency: data.country_code === "IN" ? "INR (₹)" : estimated.currency,
+                regionalMarket: "APAC Growth Hub",
+                complianceMode: "Global Standard",
+              };
+              cachedGeo = refined;
+              safeStorageSet("session", "pp_geo_cache", JSON.stringify(refined));
+            }
+          })
+          .catch(() => {
+            // Silently retain estimated geo
+          });
       });
   }
 

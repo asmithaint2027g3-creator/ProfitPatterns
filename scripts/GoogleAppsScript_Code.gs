@@ -21,7 +21,18 @@ function doPost(e) {
     }
 
     var payload = JSON.parse(rawData);
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var TARGET_SHEET_ID = "1qGQ8z_n2YTAx2tZvbAzv1WNLxhSQmMVEnv-U9KUkFEw";
+    var ss = null;
+    try {
+      if (TARGET_SHEET_ID) {
+        ss = SpreadsheetApp.openById(TARGET_SHEET_ID);
+      }
+    } catch (e) {
+      // Fallback to active spreadsheet
+    }
+    if (!ss) {
+      ss = SpreadsheetApp.getActiveSpreadsheet();
+    }
     var now = new Date();
 
     var eventName = payload.event_name || payload.name || "event";
