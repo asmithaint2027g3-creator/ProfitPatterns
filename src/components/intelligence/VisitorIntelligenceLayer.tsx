@@ -410,7 +410,6 @@ export function VisitorIntelligenceLayer({
   const [showExitPopup, setShowExitPopup]           = useState(false);
   const [showIdleNudge, setShowIdleNudge]           = useState(false);
   const [showAbandon, setShowAbandon]               = useState(false);
-  const [exitFired, setExitFired]                   = useState(false);
   const [idleNudgeDismissed, setIdleNudgeDismissed] = useState(false);
   const [abandonDismissed, setAbandonDismissed]     = useState(false);
 
@@ -420,18 +419,48 @@ export function VisitorIntelligenceLayer({
     chatbotOpenerRef.current?.();
   }, []);
 
-  // ── 4. Exit intent (desktop only) ──────────────────────────────
+  // ── 4. Exit intent (triggers on mouse leaving top towards tab bar / close button) ─
   useEffect(() => {
-    if (exitFired) return;
-    const onMouseOut = (e: MouseEvent) => {
-      if (e.clientY <= 5 && !exitFired) {
-        setExitFired(true);
-        setShowExitPopup(true);
+    if (typeof window === "undefined") return;
+
+    const triggerExit = () => {
+      // In production, only show once per session; in dev, allow repeated testing unless currently open
+      if (!import.meta.env.DEV && sessionStorage.getItem("pp_exit_shown")) return;
+      sessionStorage.setItem("pp_exit_shown", "1");
+      setShowExitPopup(true);
+    };
+
+    // 1. Mouse leaves through the top of the viewport (classic exit intent)
+    const onMouseLeave = (e: MouseEvent) => {
+      if (e.clientY <= 25 || !e.relatedTarget) {
+        triggerExit();
       }
     };
-    document.addEventListener("mouseleave", onMouseOut);
-    return () => document.removeEventListener("mouseleave", onMouseOut);
-  }, [exitFired]);
+
+    // 2. Mouse moves very close to top bar (< 15px)
+    const onMouseMove = (e: MouseEvent) => {
+      if (e.clientY <= 15) {
+        triggerExit();
+      }
+    };
+
+    // Dev / testing helpers exposed on window
+    (window as any).__showExitPopup = () => setShowExitPopup(true);
+    (window as any).__resetExitPopup = () => {
+      sessionStorage.removeItem("pp_exit_shown");
+      setShowExitPopup(false);
+    };
+
+    document.documentElement.addEventListener("mouseleave", onMouseLeave);
+    document.addEventListener("mouseout", onMouseLeave);
+    document.addEventListener("mousemove", onMouseMove);
+
+    return () => {
+      document.documentElement.removeEventListener("mouseleave", onMouseLeave);
+      document.removeEventListener("mouseout", onMouseLeave);
+      document.removeEventListener("mousemove", onMouseMove);
+    };
+  }, []);
 
   // ── 6. Idle nudge ───────────────────────────────────────────────
   useEffect(() => {
