@@ -284,6 +284,7 @@ async function createIssue(
     description,
     issuetype: { name: issueType === "Subtask" ? "Subtask" : "Task" },
     assignee: { accountId: JANE_GRACY_ACCOUNT_ID },
+    reporter: { accountId: JANE_GRACY_ACCOUNT_ID },
   };
 
   if (issueType === "Subtask" && parentKey) {
