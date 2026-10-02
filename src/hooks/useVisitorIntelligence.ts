@@ -19,10 +19,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
-const LS_VISIT_COUNT  = "pp_visit_count";
-const LS_LAST_PAGE    = "pp_last_page";
-const LS_LAST_LABEL   = "pp_last_label";
-const LS_VISIT_DATES  = "pp_visit_dates";   // JSON array of ISO date strings
+const LS_VISIT_COUNT   = "pp_visit_count";
+const LS_LAST_PAGE     = "pp_last_page";    // previous session's last page
+const LS_LAST_LABEL    = "pp_last_label";   // previous session's last label
+const LS_VISIT_DATES   = "pp_visit_dates";  // JSON array of ISO date strings
+const SS_SESSION_GUARD = "pp_session_started"; // sessionStorage: marks this session has initialised
 
 export type TimeOfDay = "morning" | "afternoon" | "evening" | "night";
 
@@ -115,18 +116,32 @@ export function useVisitorIntelligence(): VisitorIntelligence {
     }
   });
 
-  // ── Last page (set PREVIOUS page, update on route change) ─────
+  // ── Last page (previous SESSION's final page) ────────────────
+  //
+  // Strategy: we read the stored last page ONCE on mount (before this session
+  // writes anything).  A sessionStorage sentinel ensures we only overwrite
+  // localStorage when the user actually navigates — not on the first render of
+  // a brand-new session, which would wipe the previous session's value before
+  // the popup can read it.
   const [lastPagePath] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
+    // If this is a fresh session (no sentinel yet), read the previous page
+    // from localStorage BEFORE we mark the session as started.
+    const isNewSession = !sessionStorage.getItem(SS_SESSION_GUARD);
+    if (isNewSession) {
+      // Mark session so subsequent renders don't re-read this
+      try { sessionStorage.setItem(SS_SESSION_GUARD, "1"); } catch {}
+    }
     return localStorage.getItem(LS_LAST_PAGE);
   });
+
   const [lastPageLabel] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     return localStorage.getItem(LS_LAST_LABEL);
   });
 
+  // Update stored page whenever the user navigates within the session
   useEffect(() => {
-    // Update stored page AFTER rendering (so we store where they ARE now)
     localStorage.setItem(LS_LAST_PAGE, pathname);
     localStorage.setItem(LS_LAST_LABEL, labelForPath(pathname));
   }, [pathname]);

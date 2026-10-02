@@ -714,7 +714,7 @@ export function VisitorIntelligenceLayer({
       {children}
 
       {/* FEATURE 3 — Latest Visit Pop Up (Dedicated corner popup toast for repeat visitors) */}
-      {!lastVisitDismissed && isRepeatVisitor && lastPageLabel && lastPagePath && lastPagePath !== pathname && (
+      {!lastVisitDismissed && isRepeatVisitor && lastPageLabel && lastPagePath && (
         <LatestVisitPopup
           lastPageLabel={lastPageLabel}
           lastPagePath={lastPagePath}
