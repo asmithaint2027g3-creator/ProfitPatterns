@@ -20,6 +20,7 @@ import { useState } from "react";
 
 import { WhatsAppCTA } from "@/components/cta/WhatsAppCTA";
 import { FaqAccordion } from "@/components/FaqAccordion";
+import { TrafficIntelligenceShowcase } from "@/components/intelligence/TrafficIntelligenceShowcase";
 import { Section, SectionHeading } from "@/components/layout/Section";
 import { BusinessFlowVisual } from "@/components/sections/BusinessFlowVisual";
 import { FinalCTA } from "@/components/sections/FinalCTA";
@@ -97,7 +98,7 @@ function Home() {
   const [heroMode, setHeroMode] = useState<"flow" | "carousel">("flow");
   const [selectedServiceIdx, setSelectedServiceIdx] = useState(0);
 
-  const activeService = services[selectedServiceIdx] || services[0];
+  const activeService = services[selectedServiceIdx] ?? services[0]!;
 
   return (
     <div className="flex flex-col">
@@ -483,7 +484,10 @@ function Home() {
         </ScrollReveal>
       </Section>
 
-      {/* 7. FAQs */}
+      {/* 7. Traffic & Experience Intelligence Engine */}
+      <TrafficIntelligenceShowcase />
+
+      {/* 8. FAQs */}
       <Section className="border-b border-border bg-background">
         <ScrollReveal direction="up">
           <SectionHeading

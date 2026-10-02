@@ -66,7 +66,6 @@ export const resources: Resource[] = [
     intro:
       "We are building a collection of practical examples that demonstrate how business challenges can be translated into strategies, technology solutions and measurable outcomes. Only verified case studies will be published here.",
     cta: "Discuss Your Business Challenge",
-    relatedSolution: undefined,
   },
 ];
 
