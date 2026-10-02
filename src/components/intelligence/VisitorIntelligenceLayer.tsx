@@ -78,7 +78,7 @@ function TimeIcon({ tod }: { tod: string }) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// FEATURE 1 — NEW VISITOR WELCOME BANNER (first-time visitor)
+// FEATURE 1 & 5 — NEW VISITOR WELCOME BANNER (top bar above header)
 // ─────────────────────────────────────────────────────────────────
 function NewVisitorWelcome({
   greeting,
@@ -91,63 +91,54 @@ function NewVisitorWelcome({
   onDismiss: () => void;
   onOpenChat: () => void;
 }) {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 1200);
-    const auto = setTimeout(() => onDismiss(), 12000);
-    return () => { clearTimeout(t); clearTimeout(auto); };
-  }, [onDismiss]);
-
-  const accentGrad =
-    timeOfDay === "morning"   ? "from-amber-400 to-orange-400" :
-    timeOfDay === "afternoon" ? "from-orange-400 to-rose-400"  :
-    timeOfDay === "evening"   ? "from-rose-400 to-purple-500"  :
-                                "from-indigo-500 to-violet-600";
-
   return (
     <div
-      role="status"
-      aria-live="polite"
-      className={cn(
-        "fixed bottom-6 left-4 z-50 w-[300px] transition-all duration-500 ease-out sm:left-6",
-        visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0 pointer-events-none",
-      )}
+      role="banner"
+      aria-label="Welcome notification"
+      className="relative z-40 w-full bg-gradient-to-r from-[#141414] via-[#1F1C17] to-[#141414] border-b border-[#C4B296]/30 px-3.5 py-2 text-xs sm:text-sm text-slate-200 shadow-md backdrop-blur-md animate-in slide-in-from-top-2 duration-300"
     >
-      <div
-        className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#1A1A1A]/96 shadow-2xl shadow-black/50 backdrop-blur-md"
-        style={{ boxShadow: "0 8px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06)" }}
-      >
-        <div className={cn("h-[3px] w-full bg-gradient-to-r", accentGrad)} />
-        <div className="p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-white shadow-lg", accentGrad)}>
-              <TimeIcon tod={timeOfDay} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[15px] font-bold text-white leading-tight">
-                {greeting}! 👋
-              </p>
-              <p className="mt-0.5 text-xs text-[#A8A29E] leading-snug">
-                Welcome to ProfitPatterns — your AI profit engine.
-              </p>
-            </div>
-            <button
-              onClick={onDismiss}
-              aria-label="Dismiss greeting"
-              className="shrink-0 rounded-full p-1 text-[#666] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-            >
-              <X className="size-3.5" />
-            </button>
-          </div>
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+        {/* Left: Greeting + intro */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="flex items-center justify-center size-6 rounded-full bg-[#C4B296]/20 border border-[#C4B296]/40 shrink-0">
+            <TimeIcon tod={timeOfDay} />
+          </span>
+          <span className="font-semibold text-[#F5F2EB] shrink-0">
+            {greeting}!
+          </span>
+          <span className="text-slate-300 truncate hidden sm:inline">
+            Welcome to ProfitPatterns — Accelerate Revenue & AI Margins
+          </span>
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shrink-0">
+            New Visitor
+          </span>
+        </div>
 
-          {/* Nudge to chat */}
+        {/* Right: Actions + Close */}
+        <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
           <button
-            onClick={() => { onOpenChat(); onDismiss(); }}
-            className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#C4B296]/30 bg-[#C4B296]/10 px-3 py-2 text-xs font-semibold text-[#E8D9C0] hover:bg-[#C4B296]/20 transition-colors cursor-pointer"
+            onClick={() => {
+              trackEvent("welcome_banner_chat_click");
+              onOpenChat();
+            }}
+            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded bg-[#C4B296]/20 hover:bg-[#C4B296]/30 text-[#E8D9C0] border border-[#C4B296]/40 transition-colors cursor-pointer"
           >
-            <MessageSquareText className="size-3" />
-            Chat with our AI Strategist →
+            <MessageSquareText className="size-3.5" />
+            Ask AI
+          </button>
+          <Link
+            to="/audit-submission"
+            className="hidden xs:inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-xs"
+          >
+            <span>Claim Free Audit</span>
+            <ArrowRight className="size-3" />
+          </Link>
+          <button
+            onClick={onDismiss}
+            aria-label="Dismiss banner"
+            className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+          >
+            <X className="size-3.5" />
           </button>
         </div>
       </div>
@@ -156,97 +147,70 @@ function NewVisitorWelcome({
 }
 
 // ─────────────────────────────────────────────────────────────────
-// FEATURE 2 — REPEAT VISITOR "WELCOME BACK" BANNER (bottom-left)
+// FEATURE 2 & 5 — REPEAT VISITOR WELCOME BACK BANNER (top bar above header)
 // ─────────────────────────────────────────────────────────────────
 function RepeatVisitorWelcome({
   greeting,
   visitCount,
-  lastPageLabel,
-  lastPagePath,
   timeOfDay,
   onDismiss,
+  onOpenChat,
 }: {
   greeting: string;
   visitCount: number;
-  lastPageLabel: string | null;
-  lastPagePath: string | null;
   timeOfDay: string;
   onDismiss: () => void;
+  onOpenChat: () => void;
 }) {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 1200);
-    const auto = setTimeout(() => onDismiss(), 10000);
-    return () => { clearTimeout(t); clearTimeout(auto); };
-  }, [onDismiss]);
-
-  const accentGrad =
-    timeOfDay === "morning"   ? "from-amber-400 to-orange-400" :
-    timeOfDay === "afternoon" ? "from-orange-400 to-rose-400"  :
-    timeOfDay === "evening"   ? "from-rose-400 to-purple-500"  :
-                                "from-indigo-500 to-violet-600";
-
   return (
     <div
-      role="status"
-      aria-live="polite"
-      className={cn(
-        "fixed bottom-6 left-4 z-50 w-[310px] transition-all duration-500 ease-out sm:left-6",
-        visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0 pointer-events-none",
-      )}
+      role="banner"
+      aria-label="Welcome back notification"
+      className="relative z-40 w-full bg-gradient-to-r from-[#141414] via-[#241E14] to-[#141414] border-b border-amber-500/30 px-3.5 py-2 text-xs sm:text-sm text-slate-200 shadow-md backdrop-blur-md animate-in slide-in-from-top-2 duration-300"
     >
-      <div
-        className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#1A1A1A]/96 shadow-2xl shadow-black/50 backdrop-blur-md"
-        style={{ boxShadow: "0 8px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06)" }}
-      >
-        <div className={cn("h-[3px] w-full bg-gradient-to-r", accentGrad)} />
-        <div className="p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-white shadow-lg", accentGrad)}>
-              <Trophy className="size-4" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[15px] font-bold text-white leading-tight">
-                {greeting}! Welcome back 🎉
-              </p>
-              <p className="mt-0.5 text-xs text-[#A8A29E] leading-snug">
-                Visit #{visitCount} — great to have you again!
-              </p>
-            </div>
-            <button
-              onClick={onDismiss}
-              aria-label="Dismiss greeting"
-              className="shrink-0 rounded-full p-1 text-[#666] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-            >
-              <X className="size-3.5" />
-            </button>
-          </div>
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+        {/* Left: Greeting + visit badge */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="flex items-center justify-center size-6 rounded-full bg-amber-500/20 border border-amber-500/40 shrink-0">
+            <TimeIcon tod={timeOfDay} />
+          </span>
+          <span className="font-semibold text-amber-300 shrink-0">
+            {greeting}!
+          </span>
+          <span className="text-slate-300 truncate hidden sm:inline">
+            Welcome back to ProfitPatterns
+          </span>
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
+            Visit #{visitCount}
+          </span>
+        </div>
 
-          {/* Last visited page chip */}
-          {lastPageLabel && lastPagePath && (
-            <div className="mt-3 flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
-              <BookOpen className="size-3 shrink-0 text-[#C4B296]" />
-              <span className="text-[11px] text-[#A8A29E]">Last visit:</span>
-              <Link
-                to={lastPagePath as "/"}
-                onClick={onDismiss}
-                className="text-[11px] font-semibold text-[#E8D9C0] hover:text-white transition-colors truncate underline underline-offset-2"
-              >
-                {lastPageLabel}
-              </Link>
-            </div>
-          )}
-
-          {/* CTA */}
-          <Link
-            to="/contact"
-            onClick={onDismiss}
-            className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#C4B296]/30 bg-[#C4B296]/10 px-3 py-2 text-xs font-semibold text-[#E8D9C0] hover:bg-[#C4B296]/20 transition-colors"
+        {/* Right: Actions + Close */}
+        <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
+          <button
+            onClick={() => {
+              trackEvent("welcome_banner_chat_click", { visitCount });
+              onOpenChat();
+            }}
+            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 transition-colors cursor-pointer"
           >
-            <Sparkles className="size-3" />
-            Schedule a Strategy Call
+            <MessageSquareText className="size-3.5" />
+            Ask AI
+          </button>
+          <Link
+            to="/audit-submission"
+            className="hidden xs:inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 transition-colors shadow-xs"
+          >
+            <span>AI Process Audit</span>
+            <ArrowRight className="size-3" />
           </Link>
+          <button
+            onClick={onDismiss}
+            aria-label="Dismiss banner"
+            className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+          >
+            <X className="size-3.5" />
+          </button>
         </div>
       </div>
     </div>
@@ -254,10 +218,9 @@ function RepeatVisitorWelcome({
 }
 
 // ─────────────────────────────────────────────────────────────────
-// FEATURE 3 — LAST VISITED PAGE ALERT (bottom-right corner toast)
-//   Only shown to REPEAT visitors, briefly, in the corner
+// FEATURE 3 — LATEST VISIT POP UP (Dedicated floating corner toast)
 // ─────────────────────────────────────────────────────────────────
-function LastVisitedAlert({
+function LatestVisitPopup({
   lastPageLabel,
   lastPagePath,
   onDismiss,
@@ -269,39 +232,54 @@ function LastVisitedAlert({
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Show after 2.5s (after welcome banner, separate position)
-    const show = setTimeout(() => setVisible(true), 2500);
-    // Auto-hide after 7s
-    const hide = setTimeout(() => onDismiss(), 9500);
+    // Show after 1.5s in the corner as a dedicated pop up
+    const show = setTimeout(() => setVisible(true), 1500);
+    // Auto-hide after 14s
+    const hide = setTimeout(() => onDismiss(), 14000);
     return () => { clearTimeout(show); clearTimeout(hide); };
   }, [onDismiss]);
 
   return (
     <div
+      role="status"
+      aria-live="polite"
       className={cn(
-        "fixed bottom-6 right-4 z-50 transition-all duration-500 ease-out sm:right-24",
-        visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none",
+        "fixed bottom-24 left-4 z-50 transition-all duration-500 ease-out sm:bottom-6 sm:left-6 max-w-xs",
+        visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0 pointer-events-none",
       )}
     >
-      <div className="flex items-center gap-3 rounded-xl border border-[#C4B296]/30 bg-[#1A1A1A]/95 px-4 py-3 shadow-xl backdrop-blur-md max-w-[220px]">
-        <CheckCheck className="size-4 shrink-0 text-emerald-400" />
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[#C4B296]">Last visited</p>
-          <Link
-            to={lastPagePath as "/"}
+      <div className="relative overflow-hidden rounded-2xl border border-amber-500/40 bg-[#1A1A1A]/96 p-4 shadow-2xl shadow-black/70 backdrop-blur-md">
+        <div className="h-[2px] w-full bg-gradient-to-r from-amber-400 to-orange-500 -mt-4 -mx-4 mb-3" />
+        <div className="flex items-start justify-between gap-2.5">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400">
+            <Clock className="size-4.5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                Latest Visit
+              </span>
+            </div>
+            <p className="mt-0.5 text-xs text-slate-300 font-medium leading-snug">
+              Resume where you left off on <span className="text-white font-semibold">{lastPageLabel}</span>
+            </p>
+            <Link
+              to={lastPagePath as "/"}
+              onClick={onDismiss}
+              className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-semibold shadow-sm transition-colors"
+            >
+              <span>Continue to {lastPageLabel}</span>
+              <ArrowRight className="size-3" />
+            </Link>
+          </div>
+          <button
             onClick={onDismiss}
-            className="text-[11px] font-semibold text-white hover:text-[#C4B296] truncate block underline underline-offset-2 transition-colors"
+            aria-label="Dismiss latest visit reminder"
+            className="rounded p-1 text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
           >
-            {lastPageLabel}
-          </Link>
+            <X className="size-3.5" />
+          </button>
         </div>
-        <button
-          onClick={onDismiss}
-          aria-label="Dismiss"
-          className="text-[#666] hover:text-white transition-colors cursor-pointer"
-        >
-          <X className="size-3" />
-        </button>
       </div>
     </div>
   );
@@ -549,9 +527,11 @@ function FormProgressBar({ progress }: { progress: number }) {
 // MASTER LAYER COMPONENT
 // ─────────────────────────────────────────────────────────────────
 export function VisitorIntelligenceLayer({
+  children,
   onOpenChatbot,
   onRegisterChatbotOpener,
 }: {
+  children?: React.ReactNode;
   onOpenChatbot?: () => void;
   onRegisterChatbotOpener?: (fn: () => void) => void;
 }) {
@@ -572,7 +552,10 @@ export function VisitorIntelligenceLayer({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   // ── Banner states ────────────────────────────────────────────────
-  const [bannerDismissed,     setBannerDismissed]     = useState(false);
+  const [bannerDismissed,     setBannerDismissed]     = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem("pp_banner_dismissed") === "true";
+  });
   const [lastVisitDismissed,  setLastVisitDismissed]  = useState(false);
   const [showExitPopup,       setShowExitPopup]       = useState(false);
   const [showIdleNudge,       setShowIdleNudge]       = useState(false);
@@ -700,31 +683,39 @@ export function VisitorIntelligenceLayer({
       {/* FEATURE 9 — Form Progress Bar (top of viewport) */}
       <FormProgressBar progress={formProgress} />
 
-      {/* FEATURE 1 — New Visitor Welcome Banner */}
+      {/* FEATURE 1 & 5 — New Visitor Welcome Banner (above Header) */}
       {!bannerDismissed && !isRepeatVisitor && (
         <NewVisitorWelcome
           greeting={greeting}
           timeOfDay={timeOfDay}
-          onDismiss={() => setBannerDismissed(true)}
+          onDismiss={() => {
+            setBannerDismissed(true);
+            try { sessionStorage.setItem("pp_banner_dismissed", "true"); } catch {}
+          }}
           onOpenChat={openChatbot}
         />
       )}
 
-      {/* FEATURE 2 — Repeat Visitor Welcome Back Banner */}
+      {/* FEATURE 2 & 5 — Repeat Visitor Welcome Back Banner (above Header) */}
       {!bannerDismissed && isRepeatVisitor && (
         <RepeatVisitorWelcome
           greeting={greeting}
           visitCount={visitCount}
-          lastPageLabel={lastPageLabel}
-          lastPagePath={lastPagePath}
           timeOfDay={timeOfDay}
-          onDismiss={() => setBannerDismissed(true)}
+          onDismiss={() => {
+            setBannerDismissed(true);
+            try { sessionStorage.setItem("pp_banner_dismissed", "true"); } catch {}
+          }}
+          onOpenChat={openChatbot}
         />
       )}
 
-      {/* FEATURE 3 — Last Visited Page Alert (bottom-right, repeat visitors) */}
-      {!lastVisitDismissed && isRepeatVisitor && lastPageLabel && lastPagePath && (
-        <LastVisitedAlert
+      {/* Main App Content wrapped by VisitorIntelligenceLayer */}
+      {children}
+
+      {/* FEATURE 3 — Latest Visit Pop Up (Dedicated corner popup toast for repeat visitors) */}
+      {!lastVisitDismissed && isRepeatVisitor && lastPageLabel && lastPagePath && lastPagePath !== pathname && (
+        <LatestVisitPopup
           lastPageLabel={lastPageLabel}
           lastPagePath={lastPagePath}
           onDismiss={() => setLastVisitDismissed(true)}

@@ -52,6 +52,169 @@ function generateId() {
 
 const LS_CHAT_HISTORY = "pp_chat_history";
 
+function getContextWelcome(
+  pageLabel: string,
+  isRepeat: boolean,
+  visitCount: number,
+  greeting: string,
+): { text: string; options: ChatMessage["options"] } {
+  const lower = (pageLabel || "").toLowerCase();
+
+  if (lower.includes("icp") || lower.includes("ideal client")) {
+    return {
+      text: isRepeat
+        ? `${greeting}! Welcome back 👋 (Visit #${visitCount})\n\nI see you are exploring our **Ideal Client Profile (ICP)**.\n\nProfitPatterns is engineered specifically for growth-stage B2B service firms, digital agencies, and consultancies ($1M–$50M ARR) looking to eliminate margin leakage and scale through custom AI workflows.\n\nWould you like to check if your company qualifies for our 14-day AI Diagnostic?`
+        : `${greeting}! Welcome to ProfitPatterns. I'm ProfitAI, your AI & profit strategist.\n\nYou are currently viewing our **Ideal Client Profile (ICP)** section.\n\nWe partner with established B2B service firms, digital agencies, and consultancies doing $1M–$50M ARR seeking to reclaim lost EBITDA and automate operations.\n\nHow can I help you evaluate your qualification or workflow readiness?`,
+      options: [
+        { label: "Check Qualifications →", value: "icp_qualify", isPrimary: true },
+        { label: "Submit Free Audit Form", value: "audit", link: "/audit-submission" },
+        { label: "Book Strategy Call", value: "calendar", link: "/contact" },
+        { label: "Request a Callback", value: "request_callback" },
+      ],
+    };
+  }
+
+  if (lower.includes("audit")) {
+    return {
+      text: isRepeat
+        ? `${greeting}! Welcome back 👋 (Visit #${visitCount})\n\nYou are on the **AI Process Audit** submission desk.\n\nReady to upload your workflows, SOPs, or operational sheets? We deliver a confidential ROI & margin scorecard in 24–48 hours at zero cost.`
+        : `${greeting}! Welcome to ProfitPatterns.\n\nYou are on our **AI Process Audit** portal. Upload your workflow maps or SOPs to receive a confidential 14-day diagnostic scorecard identifying your largest margin recovery opportunities.`,
+      options: [
+        { label: "How Audit Works →", value: "audit_how", isPrimary: true },
+        { label: "Submit Audit Form", value: "audit", link: "/audit-submission" },
+        { label: "Book Strategy Call", value: "calendar", link: "/contact" },
+      ],
+    };
+  }
+
+  if (lower.includes("contact")) {
+    return {
+      text: `${greeting}! Welcome to our **Contact & Advisory Desk**.\n\nYou can book a direct 15-minute introductory session or request a callback with our senior leadership team right here.`,
+      options: [
+        { label: "Chat on WhatsApp", value: "whatsapp", isPrimary: true },
+        { label: "Request a Callback →", value: "request_callback" },
+        { label: "Free AI Audit", value: "audit", link: "/audit-submission" },
+      ],
+    };
+  }
+
+  if (lower.includes("who-we-serve") || lower.includes("who we serve")) {
+    return {
+      text: `${greeting}! Welcome to **Who We Serve**.\n\nWe partner with growth-stage B2B service businesses, agencies, and tech consultancies ($1M–$50M ARR) that are bottlenecked by manual process overhead.\n\nWould you like to review how our diagnostic helps your business tier?`,
+      options: [
+        { label: "Check Qualifications", value: "icp_qualify", isPrimary: true },
+        { label: "Free AI Audit", value: "audit", link: "/audit-submission" },
+        { label: "Book Discovery Call", value: "calendar", link: "/contact" },
+      ],
+    };
+  }
+
+  if (lower.includes("industr")) {
+    return {
+      text: `${greeting}! Welcome to our **Industries & Domain Expertise**.\n\nWe develop tailored automation workflows for Professional Services, Healthcare, Logistics, FinTech, and B2B SaaS.\n\nWhich vertical does your company operate in?`,
+      options: [
+        { label: "Request Industry Scope →", value: "request_callback", isPrimary: true },
+        { label: "Free AI Audit", value: "audit", link: "/audit-submission" },
+        { label: "Explore Case Studies", value: "case_studies", link: "/case-studies" },
+      ],
+    };
+  }
+
+  if (lower.includes("how-it-works") || lower.includes("how it works")) {
+    return {
+      text: `${greeting}! Welcome to **How It Works**.\n\nOur engagements follow a 4-phase trajectory:\n1. 14-Day Diagnostic & Scorecard\n2. Architecture Blueprint\n3. Rapid AI Agent Deployment\n4. Continuous EBITDA Optimization.\n\nReady to get started?`,
+      options: [
+        { label: "Start Free Audit →", value: "audit", link: "/audit-submission", isPrimary: true },
+        { label: "Schedule 15-min Call", value: "calendar", link: "/contact" },
+      ],
+    };
+  }
+
+  if (lower.includes("insight")) {
+    return {
+      text: `${greeting}! Welcome to **Insights & Strategic Research**.\n\nBrowse our research on operational LLMs, margin recovery metrics, and AI workflow architecture.\n\nHave questions about any insight?`,
+      options: [
+        { label: "Free AI Audit", value: "audit", link: "/audit-submission", isPrimary: true },
+        { label: "Ask a Strategy Question", value: "ask_strategy" },
+      ],
+    };
+  }
+
+  if (lower.includes("resource")) {
+    return {
+      text: `${greeting}! Welcome to **Resources & Toolkits**.\n\nAccess our ROI calculators, SOP frameworks, and automation templates designed for executive decision-makers.\n\nNeed help calculating potential savings?`,
+      options: [
+        { label: "Claim Free Audit →", value: "audit", link: "/audit-submission", isPrimary: true },
+        { label: "Talk to a Strategist", value: "calendar", link: "/contact" },
+      ],
+    };
+  }
+
+  if (lower.includes("about")) {
+    return {
+      text: `${greeting}! Welcome to **About ProfitPatterns**.\n\nWe are an executive AI & profit engineering advisory helping businesses eliminate operational friction and scale EBITDA through tailored agentic systems.\n\nHow can we support your leadership team today?`,
+      options: [
+        { label: "Free AI Audit →", value: "audit", link: "/audit-submission", isPrimary: true },
+        { label: "Schedule Discovery Call", value: "calendar", link: "/contact" },
+        { label: "Our Services", value: "services", link: "/services" },
+      ],
+    };
+  }
+
+  if (lower.includes("faq")) {
+    return {
+      text: `${greeting}! Welcome to our **Frequently Asked Questions**.\n\nCommon topics: 14-day diagnostic process, confidentiality & NDA protection, payback timeframe, and custom AI agent engineering.\n\nWhat question can I answer for you right now?`,
+      options: [
+        { label: "Is Data Confidential?", value: "security", isPrimary: true },
+        { label: "How Much Does It Cost?", value: "pricing" },
+        { label: "Request a Callback", value: "request_callback" },
+      ],
+    };
+  }
+
+  if (lower.includes("solution") || lower.includes("service")) {
+    return {
+      text: `${greeting}! Welcome to our **${pageLabel}** practice.\n\nWe deliver 4 proven pillars: AI Process Diagnostic, Margin Optimization, Workflow Automation, and Executive Analytics. Which capability are you evaluating today?`,
+      options: [
+        { label: "Explore Services", value: "services", isPrimary: true },
+        { label: "Free AI Audit", value: "audit", link: "/audit-submission" },
+        { label: "Request a Callback", value: "request_callback" },
+      ],
+    };
+  }
+
+  if (lower.includes("case")) {
+    return {
+      text: `${greeting}! Welcome to **Case Studies & Proven ROI**.\n\nHere you can see documented results: 34% margin improvement and 40+ hours saved weekly. Want to see how these benchmarks apply to your business?`,
+      options: [
+        { label: "Free AI Audit", value: "audit", isPrimary: true },
+        { label: "Request a Callback", value: "request_callback" },
+        { label: "Book Strategy Call", value: "calendar", link: "/contact" },
+      ],
+    };
+  }
+
+  // Default / Home
+  return {
+    text: isRepeat
+      ? `${greeting}! Welcome back to ProfitPatterns 👋 (Visit #${visitCount})\n\nI see you're currently exploring **${pageLabel}**.\n\nGreat to see you again! I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`
+      : `${greeting}! Welcome to ProfitPatterns. I'm ProfitAI, your AI & profit strategist.\n\nI notice you're currently exploring our **${pageLabel}** section.\n\nHow can I help you uncover hidden margin leaks, evaluate automation feasibility, or optimize your business workflows?`,
+    options: isRepeat
+      ? [
+          { label: "Request a Callback →", value: "request_callback", isPrimary: true },
+          { label: "Submit Free Audit Form", value: "audit", link: "/audit-submission" },
+          { label: "Book a Strategy Call", value: "calendar", link: "/contact" },
+          { label: "WhatsApp Direct Desk", value: "whatsapp" },
+        ]
+      : [
+          { label: "Explore Our Solutions →", value: "services", isPrimary: true },
+          { label: "Free AI Audit", value: "audit", link: "/audit-submission" },
+          { label: "About ProfitPatterns", value: "about" },
+          { label: "Book Discovery Call", value: "calendar", link: "/contact" },
+        ],
+  };
+}
+
 export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { isRepeatVisitor, visitCount, currentPageLabel } = useVisitorContext();
 
@@ -80,6 +243,7 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const prevPageRef = useRef<string>(currentPageLabel);
 
   // Persist messages to localStorage whenever updated
   useEffect(() => {
@@ -100,28 +264,14 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
 
     const liveGreeting = getLiveGreeting();
     const isRepeat = isRepeatVisitor || visitCount > 1;
-    const initialText = isRepeat
-      ? `${liveGreeting}! Welcome back to ProfitPatterns 👋 (Visit #${visitCount})\n\nI see you're currently exploring **${currentPageLabel}**.\n\nGreat to see you again! I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`
-      : `${liveGreeting}! Welcome to ProfitPatterns. I'm ProfitAI, your AI & profit strategist.\n\nI notice you're currently exploring our **${currentPageLabel}** section.\n\nHow can I help you uncover hidden margin leaks, evaluate automation feasibility, or optimize your business workflows?`;
+    const ctx = getContextWelcome(currentPageLabel, isRepeat, visitCount, liveGreeting);
 
     const welcomeMsg: ChatMessage = {
       id: generateId(),
       role: "assistant",
-      text: initialText,
+      text: ctx.text,
       time: getFormattedTime(),
-      options: isRepeat
-        ? [
-            { label: "Request a Callback →", value: "request_callback", isPrimary: true },
-            { label: "Submit Free Audit Form", value: "audit" },
-            { label: "Book a Strategy Call", value: "calendar", link: "/contact" },
-            { label: "WhatsApp Direct Desk", value: "whatsapp" },
-          ]
-        : [
-            { label: "Explore Our Solutions →", value: "services", isPrimary: true },
-            { label: "Free AI Audit", value: "audit" },
-            { label: "About ProfitPatterns", value: "about" },
-            { label: "Book Discovery Call", value: "calendar", link: "/contact" },
-          ],
+      options: ctx.options,
     };
 
     setMessages([welcomeMsg]);
@@ -134,32 +284,48 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
 
     const liveGreeting = getLiveGreeting();
     const isRepeat = isRepeatVisitor || visitCount > 1;
-    const initialText = isRepeat
-      ? `${liveGreeting}! Welcome back to ProfitPatterns 👋 (Visit #${visitCount})\n\nI see you're currently exploring **${currentPageLabel}**.\n\nGreat to see you again! I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`
-      : `${liveGreeting}! Welcome to ProfitPatterns. I'm ProfitAI, your AI & profit strategist.\n\nI notice you're currently exploring our **${currentPageLabel}** section.\n\nHow can I help you uncover hidden margin leaks, evaluate automation feasibility, or optimize your business workflows?`;
+    const ctx = getContextWelcome(currentPageLabel, isRepeat, visitCount, liveGreeting);
 
     const welcomeMsg: ChatMessage = {
       id: generateId(),
       role: "assistant",
-      text: initialText,
+      text: ctx.text,
       time: getFormattedTime(),
-      options: isRepeat
-        ? [
-            { label: "Request a Callback →", value: "request_callback", isPrimary: true },
-            { label: "Submit Free Audit Form", value: "audit" },
-            { label: "Book a Strategy Call", value: "calendar", link: "/contact" },
-            { label: "WhatsApp Direct Desk", value: "whatsapp" },
-          ]
-        : [
-            { label: "Explore Our Solutions →", value: "services", isPrimary: true },
-            { label: "Free AI Audit", value: "audit" },
-            { label: "About ProfitPatterns", value: "about" },
-            { label: "Book Discovery Call", value: "calendar", link: "/contact" },
-          ],
+      options: ctx.options,
     };
 
     setMessages([welcomeMsg]);
   }, [open, messages.length, isRepeatVisitor, visitCount, currentPageLabel]);
+
+  // Synchronize context when navigating or opening chatbot on any page
+  useEffect(() => {
+    if (!open || !currentPageLabel) return;
+
+    // Check if the current conversation already has an assistant message introducing the current page
+    const hasCurrentPageIntro = messages.some(
+      (m) => m.role === "assistant" && m.text.includes(`**${currentPageLabel}**`),
+    );
+
+    if (!hasCurrentPageIntro && messages.length > 0) {
+      const liveGreeting = getLiveGreeting();
+      const isRepeat = isRepeatVisitor || visitCount > 1;
+      const ctx = getContextWelcome(currentPageLabel, isRepeat, visitCount, liveGreeting);
+
+      const lines = ctx.text.split("\n\n");
+      const summaryText = lines.length > 1 ? lines.slice(1).join("\n\n") : ctx.text;
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: generateId(),
+          role: "assistant",
+          text: `📍 **Page Context: ${currentPageLabel}**\n\n${summaryText}`,
+          time: getFormattedTime(),
+          options: ctx.options,
+        },
+      ]);
+    }
+  }, [open, currentPageLabel, isRepeatVisitor, visitCount]);
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -327,6 +493,37 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
             { label: "Schedule Call", value: "calendar", link: "/contact" },
           ];
         } else if (
+          query.includes("icp") ||
+          query.includes("qualify") ||
+          query.includes("qualification") ||
+          query.includes("criteria") ||
+          query.includes("who do you serve") ||
+          query === "icp_qualify"
+        ) {
+          replyText =
+            "**ProfitPatterns Ideal Customer Profile (ICP)**:\n\n" +
+            "• **Target Market**: Established B2B service firms, digital agencies, consultancies, and high-touch operators.\n" +
+            "• **Scale**: Typically between $1M and $50M in annual revenue with 10–250 team members.\n" +
+            "• **Core Challenge**: High manual overhead (quoting, client onboarding, reporting) and margin plateaus.\n" +
+            "• **Strategic Outcome**: Custom AI agents and workflow automation that reclaim 40+ hours/week and expand EBITDA within 14–30 days.\n\n" +
+            "Does your organization match these criteria? We can initiate a 14-day diagnostic at zero cost.";
+          nextOptions = [
+            { label: "Submit Free Audit Form →", value: "audit_page", link: "/audit-submission", isPrimary: true },
+            { label: "Schedule Strategy Call", value: "calendar", link: "/contact" },
+            { label: "Request a Callback", value: "request_callback" },
+          ];
+        } else if (query === "audit_how") {
+          replyText =
+            "**How the 14-Day AI Process Audit Works**:\n\n" +
+            "1. **Secure Ingestion**: You upload SOPs, spreadsheets, or process maps under mutual NDA.\n" +
+            "2. **Deconstruction**: We map repetitive touchpoints and estimate manual cost drag.\n" +
+            "3. **Scorecard**: You receive an executive feasibility report with exact ROI projections.\n\n" +
+            "Ready to submit your documentation?";
+          nextOptions = [
+            { label: "Submit Audit Form →", value: "audit_page", link: "/audit-submission", isPrimary: true },
+            { label: "Request a Callback", value: "request_callback" },
+          ];
+        } else if (
           query.includes("this page") ||
           query.includes("current page") ||
           query.includes("where am i") ||
@@ -337,7 +534,17 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
           query.includes("page help")
         ) {
           const lowerLabel = currentPageLabel.toLowerCase();
-          if (lowerLabel.includes("audit")) {
+          if (lowerLabel.includes("icp") || lowerLabel.includes("ideal")) {
+            replyText =
+              `You are on our **${currentPageLabel}** page.\n\n` +
+              `This framework specifies our partnership profile: B2B service businesses ($1M–$50M ARR) looking to eliminate margin leaks and build proprietary AI agent workflows.\n\n` +
+              `Would you like to check if your company qualifies for our complimentary 14-day audit?`;
+            nextOptions = [
+              { label: "Check Qualifications →", value: "icp_qualify", isPrimary: true },
+              { label: "Submit Free Audit Form", value: "audit_page", link: "/audit-submission" },
+              { label: "Request a Callback", value: "request_callback" },
+            ];
+          } else if (lowerLabel.includes("audit")) {
             replyText = `You are on our **${currentPageLabel}** page.\n\nHere you can upload SOPs, workflows, spreadsheets, or technical specs. Our senior advisory practice performs a complete 14-day AI feasibility audit and computes your exact ROI scorecard at zero cost. Would you like help preparing your submission?`;
             nextOptions = [
               { label: "Request a Callback →", value: "request_callback", isPrimary: true },

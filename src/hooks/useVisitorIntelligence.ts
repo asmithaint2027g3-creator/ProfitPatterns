@@ -74,7 +74,7 @@ export function labelForPath(path: string): string {
     "/how-it-works":    "How It Works",
     "/faq":             "FAQ",
     "/services":        "Services",
-    "/icp":             "Ideal Client Profile",
+    "/icp":             "Ideal Client Profile (ICP)",
     "/privacy":         "Privacy Policy",
     "/terms":           "Terms of Service",
   };
