@@ -51,7 +51,7 @@ const GENERIC_ERROR = "We couldn't send your message just now. Please try again,
 const APPS_SCRIPT_URL =
   process.env["VITE_ANALYTICS_URL"] ||
   process.env["APPS_SCRIPT_URL"] ||
-  "https://script.google.com/macros/s/AKfycbyOIQwm57GAUL1Jo_d_yP3ELGHTYXulzkqWV9KHOx7DXLloBLs430EL3dbmhZP89FQ/exec";
+  "https://script.google.com/macros/s/AKfycbxjPnnzlg1lE6bUYGq9rvQ1V-mfcmPo-cEkm9LXQqIk90_rg4Uva6Cjuv-meYVVUVYvFA/exec";
 
 async function forwardLeadToGoogleSheets(leadPayload: Record<string, unknown>): Promise<void> {
   try {
