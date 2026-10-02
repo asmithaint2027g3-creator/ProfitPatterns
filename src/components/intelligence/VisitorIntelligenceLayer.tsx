@@ -96,9 +96,7 @@ function WelcomeBanner({
   if (!visible) return null;
 
   const message = isRepeatVisitor
-    ? visitCount === 2
-      ? `Welcome back! Great to see you again.`
-      : `Welcome back! This is your visit #${visitCount} — we appreciate you.`
+    ? `Welcome back! Great to have you with us again.`
     : `Welcome to ProfitPatterns!`;
 
   return (
@@ -416,8 +414,9 @@ export function VisitorIntelligenceLayer({
   const chatbotOpenerRef = useRef<(() => void) | null>(null);
 
   const openChatbot = useCallback(() => {
+    onOpenChatbot?.();
     chatbotOpenerRef.current?.();
-  }, []);
+  }, [onOpenChatbot]);
 
   // ── 4. Exit intent (triggers on mouse leaving top towards tab bar / close button) ─
   useEffect(() => {

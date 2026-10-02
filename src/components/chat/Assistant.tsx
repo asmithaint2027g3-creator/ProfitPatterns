@@ -18,6 +18,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { WhatsAppCTA } from "@/components/cta/WhatsAppCTA";
 import { track } from "@/lib/analytics";
+import { useVisitorIntelligence } from "@/hooks/useVisitorIntelligence";
 import { useVisitorContext } from "@/components/intelligence/VisitorIntelligenceLayer";
 import { submitChatLead } from "@/lib/leads.functions";
 import { trackLead } from "@/utils/analytics";
@@ -37,12 +38,20 @@ function getFormattedTime() {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
+function getLiveGreeting(): string {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return "Good Morning";
+  if (h >= 12 && h < 17) return "Good Afternoon";
+  if (h >= 17 && h < 21) return "Good Evening";
+  return "Working Late?";
+}
+
 function generateId() {
   return Math.random().toString(36).substring(2, 9);
 }
 
 export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const { isRepeatVisitor, visitCount, greeting } = useVisitorContext();
+  const { isRepeatVisitor, visitCount } = useVisitorIntelligence();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
@@ -54,15 +63,16 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize opening message from ProfitAI with repeat-visitor detection
+  // Initialize opening message from ProfitAI with live time-based greeting and repeat-visitor detection
   useEffect(() => {
     if (!open || messages.length > 0) return;
     track("chat_open", { isRepeatVisitor, visitCount });
 
+    const liveGreeting = getLiveGreeting();
     const isRepeat = isRepeatVisitor || visitCount > 1;
     const initialText = isRepeat
-      ? `${greeting}! Welcome back 👋\n\nGreat to see you again for visit #${visitCount}! I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`
-      : `${greeting}! Welcome to ProfitPatterns. I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`;
+      ? `${liveGreeting}! Welcome back 👋\n\nGreat to see you again! I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`
+      : `${liveGreeting}! Welcome to ProfitPatterns. I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`;
 
     const welcomeMsg: ChatMessage = {
       id: generateId(),
@@ -78,7 +88,7 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
     };
 
     setMessages([welcomeMsg]);
-  }, [open, messages.length, isRepeatVisitor, visitCount, greeting]);
+  }, [open, messages.length, isRepeatVisitor, visitCount]);
 
   // Auto scroll to bottom
   useEffect(() => {
