@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Honeypot, SelectField, TextAreaField, TextField } from "@/components/ui/field";
 import { track } from "@/lib/analytics";
+import { useVisitorContext } from "@/components/intelligence/VisitorIntelligenceLayer";
 import {
   AUDIT_DOC_TYPES,
   AUDIT_PRIMARY_GOALS,
@@ -52,6 +53,7 @@ export function AuditDocumentForm({ source = "audit_submission_page" }: { source
   const [values, setValues] = useState(EMPTY_VALUES);
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [hp, setHp] = useState("");
+  const { setFormTouched } = useVisitorContext();
   const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
   const [isDragging, setIsDragging] = useState(false);
@@ -63,6 +65,7 @@ export function AuditDocumentForm({ source = "audit_submission_page" }: { source
   }, [source]);
 
   function set(field: FieldKey, value: string | boolean) {
+    setFormTouched(true); // mark form as touched for abandonment detection
     setValues((v) => ({ ...v, [field]: value }));
     setErrors((e) => {
       const next = { ...e };

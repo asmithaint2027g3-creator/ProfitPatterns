@@ -1,6 +1,6 @@
 // src/components/layout/AppShell.tsx
 import { useRouterState } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { AssistantLauncher } from "@/components/chat/Assistant";
 import { FloatingWhatsApp, MobileCTABar } from "@/components/cta/WhatsAppCTA";
@@ -8,6 +8,7 @@ import { LeadDialog } from "@/components/forms/LeadDialog";
 import { IntelligenceHeaderBar } from "@/components/intelligence/IntelligenceHeaderBar";
 import { IntelligenceProvider } from "@/components/intelligence/IntelligenceContext";
 import { LiveIntelligenceConsole } from "@/components/intelligence/LiveIntelligenceConsole";
+import { VisitorIntelligenceLayer } from "@/components/intelligence/VisitorIntelligenceLayer";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { track } from "@/lib/analytics";
@@ -16,12 +17,23 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [leadOpen, setLeadOpen] = useState(false);
 
+  // Chatbot open state — lifted here so VisitorIntelligenceLayer can trigger it
+  const [chatOpen, setChatOpen] = useState(false);
+  const chatOpenerRef = useRef<(() => void) | null>(null);
+
   useEffect(() => {
     track("page_view", { page: pathname });
   }, [pathname]);
 
   return (
     <IntelligenceProvider>
+      {/* VisitorIntelligenceLayer sits OUTSIDE the main flex column
+          so the banner can use position:fixed without layout side-effects */}
+      <VisitorIntelligenceLayer
+        onOpenChatbot={() => setChatOpen(true)}
+        onRegisterChatbotOpener={(fn) => { chatOpenerRef.current = fn; }}
+      />
+
       <div className="flex min-h-screen flex-col">
         <a
           href="#main"
@@ -36,7 +48,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </main>
         <Footer />
         <FloatingWhatsApp />
-        <AssistantLauncher />
+        <AssistantLauncher externalOpen={chatOpen} onExternalOpenChange={setChatOpen} />
         <LiveIntelligenceConsole />
         <MobileCTABar onOpenForm={() => setLeadOpen(true)} />
         <LeadDialog open={leadOpen} onOpenChange={setLeadOpen} source="mobile_bar" />

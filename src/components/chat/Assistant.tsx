@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { WhatsAppCTA } from "@/components/cta/WhatsAppCTA";
 import { Button } from "@/components/ui/button";
 import { track } from "@/lib/analytics";
+import { useVisitorContext } from "@/components/intelligence/VisitorIntelligenceLayer";
 import {
   makeMessage,
   scriptedEngine,
@@ -31,6 +32,8 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const { isRepeatVisitor, visitCount, greeting } = useVisitorContext();
+
   const applyTurn = useCallback((next: AssistantTurn) => {
     setTurn(next);
     setState(next.state);
@@ -40,8 +43,20 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
   useEffect(() => {
     if (!open || messages.length > 0) return;
     track("chat_open", {});
-    applyTurn(engine.start());
-  }, [open, messages.length, applyTurn]);
+    const startTurn = engine.start();
+    // Personalise the first message for repeat visitors
+    if (isRepeatVisitor) {
+      const personalMsg = visitCount >= 3
+        ? `${greeting}! Welcome back — this is visit #${visitCount} for you 🎉. How can I help you today?`
+        : `${greeting}! Welcome back to ProfitPatterns 👋. Great to see you again! How can I help?`;
+      applyTurn({
+        ...startTurn,
+        messages: [personalMsg, ...startTurn.messages.slice(1)],
+      });
+    } else {
+      applyTurn(startTurn);
+    }
+  }, [open, messages.length, applyTurn, isRepeatVisitor, visitCount, greeting]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -272,13 +287,31 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
   );
 }
 
-export function AssistantLauncher() {
-  const [open, setOpen] = useState(false);
+export function AssistantLauncher({
+  externalOpen,
+  onExternalOpenChange,
+}: {
+  externalOpen?: boolean;
+  onExternalOpenChange?: (v: boolean) => void;
+}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = (v: boolean) => {
+    setInternalOpen(v);
+    onExternalOpenChange?.(v);
+  };
+
+  const { registerChatbotOpener } = useVisitorContext();
+  useEffect(() => {
+    registerChatbotOpener(() => setOpen(true));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <>
       <Assistant open={open} onOpenChange={setOpen} />
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen(!open)}
         aria-label={open ? "Close ProfitPatterns Assistant" : "Open ProfitPatterns Assistant"}
         aria-expanded={open}
         className="fixed bottom-20 right-4 z-40 grid size-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-105 md:bottom-5 md:right-5"
