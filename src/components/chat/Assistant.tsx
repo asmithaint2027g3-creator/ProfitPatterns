@@ -82,7 +82,7 @@ export function Assistant({
     (ctx: PageChatContext): ChatMessage => {
       const liveGreeting = getLiveGreeting();
       const isRepeat = isRepeatVisitor || visitCount > 1;
-      const text = ctx.getInitialMessage(liveGreeting, isRepeat);
+      const text = ctx.getInitialMessage(liveGreeting, isRepeat, visitCount);
 
       return {
         id: generateId(),
@@ -118,11 +118,11 @@ export function Assistant({
         // If user hadn't sent any messages yet, completely refresh with the new page's welcome message
         setMessages([createInitialMessage(pageCtx)]);
       } else {
-        // If user already had a conversation, append a smooth contextual transition prompt
+        // If user already had a conversation, append a smooth contextual transition prompt immediately
         const transitionMsg: ChatMessage = {
           id: generateId(),
           role: "assistant",
-          text: `📍 **Switched to ${pageCtx.pageName} Context**\n\n${pageCtx.getInitialMessage(getLiveGreeting(), false)}`,
+          text: `📍 **Switched to ${pageCtx.pageName} Context**\n\n${pageCtx.getInitialMessage(getLiveGreeting(), false, visitCount)}`,
           time: getFormattedTime(),
           options: pageCtx.initialOptions,
           contextBadge: pageCtx.badge,
@@ -365,7 +365,7 @@ export function Assistant({
 
         // Attempt lead capture in background
         void tryCaptureLead(userInput, optionValue || `${pageCtx.badge}: General Chat`);
-      }, 450);
+      }, 35);
     },
     [pageCtx, tryCaptureLead],
   );
@@ -421,7 +421,7 @@ export function Assistant({
           ],
         },
       ]);
-    }, 600);
+    }, 40);
 
     e.target.value = "";
   };

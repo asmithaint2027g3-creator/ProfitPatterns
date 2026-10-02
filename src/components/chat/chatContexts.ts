@@ -12,12 +12,28 @@ export interface PageChatContext {
   inputPlaceholder: string;
   nudgeTitle: string;
   nudgeText: string;
-  getInitialMessage: (greeting: string, isRepeat: boolean) => string;
+  getInitialMessage: (greeting: string, isRepeat: boolean, visitCount?: number) => string;
   initialOptions: ChatOption[];
   getAnswer: (
     query: string,
     rawInput: string,
   ) => { replyText: string; nextOptions?: ChatOption[] } | null;
+}
+
+function getVisitPrefix(greeting: string, isRepeat: boolean, visitCount: number = 1): string {
+  if (!isRepeat || visitCount <= 1) {
+    return `${greeting}!`;
+  }
+  if (visitCount === 2) {
+    return `${greeting}! Welcome back 👋 (2nd visit)`;
+  }
+  if (visitCount === 3) {
+    return `${greeting}! Welcome back for your 3rd visit 🔥`;
+  }
+  if (visitCount === 4) {
+    return `${greeting}! Welcome back (4th visit) ⚡`;
+  }
+  return `${greeting}! Welcome back (Visit #${visitCount}) 👑`;
 }
 
 export function getPageChatContext(pathname: string): PageChatContext {
@@ -32,10 +48,12 @@ export function getPageChatContext(pathname: string): PageChatContext {
       inputPlaceholder: "Ask about fit, agency criteria, or qualification...",
       nudgeTitle: "Wondering if you qualify?",
       nudgeText: "Check if your firm matches our AI profit architecture criteria.",
-      getInitialMessage: (greeting, isRepeat) =>
-        isRepeat
-          ? `${greeting}! Welcome back to the ICP Assessment desk 👋\n\nAre you looking to verify if your agency or B2B consultancy qualifies for our custom profit engineering and AI architecture systems?`
-          : `${greeting}! Welcome to our Ideal Customer Profile (ICP) framework.\n\nI'm ProfitAI. I can help evaluate if your firm is the right strategic fit for ProfitPatterns to eliminate operational drag and unlock predictable gross margins. What type of business do you run?`,
+      getInitialMessage: (greeting, isRepeat, visitCount = 1) => {
+        const prefix = getVisitPrefix(greeting, isRepeat, visitCount);
+        return isRepeat
+          ? `${prefix}\n\nReady to verify if your agency or B2B consultancy qualifies for our custom profit engineering and AI architecture systems?`
+          : `${prefix} Welcome to our Ideal Customer Profile (ICP) framework.\n\nI'm ProfitAI. I can evaluate whether your firm is the right strategic fit to eliminate operational drag and unlock predictable gross margins. What type of business do you run?`;
+      },
       initialOptions: [
         { label: "Check My Firm's Fit", value: "icp_fit_check", isPrimary: true },
         { label: "Agency & Consultancy Fit", value: "icp_agency" },
@@ -123,10 +141,12 @@ export function getPageChatContext(pathname: string): PageChatContext {
       inputPlaceholder: "Ask about AI systems, margin leak recovery, automation...",
       nudgeTitle: "Exploring AI Solutions?",
       nudgeText: "Find out how our custom AI systems eliminate operational leaks.",
-      getInitialMessage: (greeting, isRepeat) =>
-        isRepeat
-          ? `${greeting}! Welcome back to Solutions Architecture 👋\n\nReady to engineer a custom AI profit system for your operations? Which system are you exploring today?`
-          : `${greeting}! Exploring ProfitPatterns Solutions?\n\nI'm ProfitAI. We architect proprietary AI systems that eliminate margin leaks, automate heavy operations, and provide predictive intelligence. Which solution area can I assist you with?`,
+      getInitialMessage: (greeting, isRepeat, visitCount = 1) => {
+        const prefix = getVisitPrefix(greeting, isRepeat, visitCount);
+        return isRepeat
+          ? `${prefix}\n\nReady to engineer a custom AI profit system for your operations? Which system are you exploring today?`
+          : `${prefix} Exploring ProfitPatterns Solutions?\n\nI'm ProfitAI. We architect proprietary AI systems that eliminate margin leaks, automate heavy operations, and provide predictive intelligence. Which solution area can I assist you with?`;
+      },
       initialOptions: [
         { label: "Stop Margin Leaks", value: "sol_leaks", isPrimary: true },
         { label: "AI Agent Automation", value: "sol_automation" },
@@ -194,10 +214,12 @@ export function getPageChatContext(pathname: string): PageChatContext {
       inputPlaceholder: "Ask about our 14-day diagnostic, fractional AI, retainers...",
       nudgeTitle: "Looking at our Services?",
       nudgeText: "Learn about our 14-day zero-risk diagnostic and implementation sprints.",
-      getInitialMessage: (greeting, isRepeat) =>
-        isRepeat
-          ? `${greeting}! Welcome back to Strategic Advisory 👋\n\nCan I help clarify our engagement models, 14-day diagnostic sprint, or fractional leadership services?`
-          : `${greeting}! Viewing our Advisory & Service Offerings?\n\nI'm ProfitAI. I can guide you through our 14-day zero-risk diagnostic sprint, fractional Chief AI Officer engagements, and custom delivery buildouts. How can I assist?`,
+      getInitialMessage: (greeting, isRepeat, visitCount = 1) => {
+        const prefix = getVisitPrefix(greeting, isRepeat, visitCount);
+        return isRepeat
+          ? `${prefix}\n\nCan I help clarify our engagement models, 14-day diagnostic sprint, or fractional leadership services?`
+          : `${prefix} Viewing our Advisory & Service Offerings?\n\nI'm ProfitAI. I can guide you through our 14-day zero-risk diagnostic sprint, fractional Chief AI Officer engagements, and custom delivery buildouts. How can I assist?`;
+      },
       initialOptions: [
         { label: "14-Day Diagnostic Sprint", value: "srv_diagnostic", isPrimary: true },
         { label: "Fractional AI Officer", value: "srv_fractional" },
@@ -249,10 +271,12 @@ export function getPageChatContext(pathname: string): PageChatContext {
       inputPlaceholder: "Ask about client results, payback periods, metrics...",
       nudgeTitle: "Curious about client ROI?",
       nudgeText: "See how similar firms unlocked $420k+ in recovered margin.",
-      getInitialMessage: (greeting, isRepeat) =>
-        isRepeat
-          ? `${greeting}! Welcome back to Case Studies 👋\n\nWould you like me to highlight ROI metrics and timelines for a specific industry or company size?`
-          : `${greeting}! Reviewing our verified client case studies?\n\nI'm ProfitAI. I can break down the exact ROI metrics, payback periods, and architectural workflows we implemented for similar B2B firms.`,
+      getInitialMessage: (greeting, isRepeat, visitCount = 1) => {
+        const prefix = getVisitPrefix(greeting, isRepeat, visitCount);
+        return isRepeat
+          ? `${prefix}\n\nWould you like me to highlight ROI metrics and timelines for a specific industry or company size?`
+          : `${prefix} Reviewing our verified client case studies?\n\nI'm ProfitAI. I can break down the exact ROI metrics, payback periods, and architectural workflows we implemented for similar B2B firms.`;
+      },
       initialOptions: [
         { label: "Agency Margin Case (+$420k)", value: "cs_agency", isPrimary: true },
         { label: "SaaS Ops Case (60% Speedup)", value: "cs_saas" },
@@ -317,10 +341,12 @@ export function getPageChatContext(pathname: string): PageChatContext {
       inputPlaceholder: "Ask about audit scope, timeline, confidentiality, NDA...",
       nudgeTitle: "Need help with the Audit?",
       nudgeText: "I can answer questions or help fast-track your submission.",
-      getInitialMessage: (greeting, isRepeat) =>
-        isRepeat
-          ? `${greeting}! Welcome back to the 14-Day Audit Desk 👋\n\nDo you need any help completing the diagnostic form or would you like to speak directly with an auditor?`
-          : `${greeting}! Need help preparing or submitting your Free 14-Day AI Diagnostic?\n\nI'm ProfitAI. I can clarify the assessment questions, verify scope requirements, or fast-track your scorecard review with our lead partner.`,
+      getInitialMessage: (greeting, isRepeat, visitCount = 1) => {
+        const prefix = getVisitPrefix(greeting, isRepeat, visitCount);
+        return isRepeat
+          ? `${prefix}\n\nDo you need any help completing the diagnostic form or would you like to speak directly with an auditor?`
+          : `${prefix} Need help preparing or submitting your Free 14-Day AI Diagnostic?\n\nI'm ProfitAI. I can clarify assessment questions, verify scope requirements, or fast-track your scorecard review with our lead partner.`;
+      },
       initialOptions: [
         { label: "What We Analyze (Scope)", value: "audit_scope", isPrimary: true },
         { label: "Data Security & NDA", value: "security" },
@@ -357,8 +383,10 @@ export function getPageChatContext(pathname: string): PageChatContext {
       inputPlaceholder: "Ask about your industry vertical, benchmarks, cases...",
       nudgeTitle: "Industry-Specific AI",
       nudgeText: "See tailored AI architectures for your vertical.",
-      getInitialMessage: (greeting) =>
-        `${greeting}! Looking for industry-tailored profit solutions?\n\nI'm ProfitAI. Whether you operate in Agencies, Legal, Financial Services, Tech/SaaS, or Healthcare, I can share relevant benchmarks, leak patterns, and AI systems.`,
+      getInitialMessage: (greeting, isRepeat, visitCount = 1) => {
+        const prefix = getVisitPrefix(greeting, isRepeat, visitCount);
+        return `${prefix} Looking for industry-tailored profit solutions?\n\nI'm ProfitAI. Whether you operate in Agencies, Legal, Financial Services, Tech/SaaS, or Healthcare, I can share relevant benchmarks, leak patterns, and AI systems.`;
+      },
       initialOptions: [
         { label: "Agencies & Consultancies", value: "icp_agency", isPrimary: true },
         { label: "Legal & Advisory", value: "ind_legal" },
@@ -400,8 +428,10 @@ export function getPageChatContext(pathname: string): PageChatContext {
       inputPlaceholder: "Ask about the 4 phases, roadmap, timelines...",
       nudgeTitle: "How Our Process Works",
       nudgeText: "Explore our 4-phase roadmap from audit to full automation.",
-      getInitialMessage: (greeting) =>
-        `${greeting}! Exploring our 4-phase rollout methodology?\n\nI'm ProfitAI. I can explain how we go from initial 14-day audit (Phase 1) to Profit Architecture (Phase 2), Agent Automation (Phase 3), and Ongoing Acceleration (Phase 4).`,
+      getInitialMessage: (greeting, isRepeat, visitCount = 1) => {
+        const prefix = getVisitPrefix(greeting, isRepeat, visitCount);
+        return `${prefix} Exploring our 4-phase rollout methodology?\n\nI'm ProfitAI. I can explain how we go from initial 14-day audit (Phase 1) to Profit Architecture (Phase 2), Agent Automation (Phase 3), and Ongoing Acceleration (Phase 4).`;
+      },
       initialOptions: [
         { label: "Phase 1: 14-Day Diagnostic", value: "srv_diagnostic", isPrimary: true },
         { label: "Phase 2: Profit Architecture", value: "how_p2" },
@@ -434,8 +464,10 @@ export function getPageChatContext(pathname: string): PageChatContext {
       inputPlaceholder: "Ask for an instant callback, calendar booking, WhatsApp...",
       nudgeTitle: "Ready to connect?",
       nudgeText: "I can arrange an immediate callback with our senior team.",
-      getInitialMessage: (greeting) =>
-        `${greeting}! Ready to connect directly with ProfitPatterns leadership?\n\nI'm ProfitAI. I can arrange an immediate callback, book a 15-minute executive briefing, or open direct messaging on WhatsApp.`,
+      getInitialMessage: (greeting, isRepeat, visitCount = 1) => {
+        const prefix = getVisitPrefix(greeting, isRepeat, visitCount);
+        return `${prefix} Ready to connect directly with ProfitPatterns leadership?\n\nI'm ProfitAI. I can arrange an immediate callback, book a 15-minute executive briefing, or open direct messaging on WhatsApp.`;
+      },
       initialOptions: [
         { label: "Schedule 15-Min Briefing →", value: "calendar", link: "/contact", isPrimary: true },
         { label: "Request Instant Callback", value: "request_callback" },
@@ -467,8 +499,10 @@ export function getPageChatContext(pathname: string): PageChatContext {
       inputPlaceholder: "Ask about AI frameworks, margin scorecards, playbooks...",
       nudgeTitle: "Looking for Insights?",
       nudgeText: "Get executive playbooks on margin optimization and AI architecture.",
-      getInitialMessage: (greeting) =>
-        `${greeting}! Browsing our profit engineering playbooks and insights?\n\nI'm ProfitAI. Tell me what operational challenge or AI topic you're researching, and I'll pull the best framework for you.`,
+      getInitialMessage: (greeting, isRepeat, visitCount = 1) => {
+        const prefix = getVisitPrefix(greeting, isRepeat, visitCount);
+        return `${prefix} Browsing our profit engineering playbooks and insights?\n\nI'm ProfitAI. Tell me what operational challenge or AI topic you're researching, and I'll pull the best framework for you.`;
+      },
       initialOptions: [
         { label: "AI Profit Playbook 2026", value: "res_playbook", isPrimary: true },
         { label: "Margin Leak Checklist", value: "sol_leaks" },
@@ -504,8 +538,10 @@ export function getPageChatContext(pathname: string): PageChatContext {
       inputPlaceholder: "Ask who we work with, firm types, qualifications...",
       nudgeTitle: "Is this built for you?",
       nudgeText: "See how we support agency founders, CEOs, and service leaders.",
-      getInitialMessage: (greeting) =>
-        `${greeting}! Wondering if ProfitPatterns fits your organization?\n\nI'm ProfitAI. We work with growth-stage B2B agencies, consultancies, and tech-enabled service firms. Tell me about your team!`,
+      getInitialMessage: (greeting, isRepeat, visitCount = 1) => {
+        const prefix = getVisitPrefix(greeting, isRepeat, visitCount);
+        return `${prefix} Wondering if ProfitPatterns fits your organization?\n\nI'm ProfitAI. We work with growth-stage B2B agencies, consultancies, and tech-enabled service firms. Tell me about your team!`;
+      },
       initialOptions: [
         { label: "Check My Firm's Fit", value: "icp_fit_check", isPrimary: true },
         { label: "Agency & Consulting Fit", value: "icp_agency" },
@@ -524,10 +560,12 @@ export function getPageChatContext(pathname: string): PageChatContext {
     inputPlaceholder: "Ask ProfitAI or explore profit solutions...",
     nudgeTitle: "Still with us?",
     nudgeText: "Can I help you find what you're looking for?",
-    getInitialMessage: (greeting, isRepeat) =>
-      isRepeat
-        ? `${greeting}! Welcome back to ProfitPatterns 👋\n\nGreat to see you again! I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`
-        : `${greeting}! Welcome to ProfitPatterns.\n\nI'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`,
+    getInitialMessage: (greeting, isRepeat, visitCount = 1) => {
+      const prefix = getVisitPrefix(greeting, isRepeat, visitCount);
+      return isRepeat
+        ? `${prefix}\n\nGreat to see you again! What sort of profit optimization or AI strategy requirements are you exploring today?`
+        : `${prefix} Welcome to ProfitPatterns.\n\nI'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`;
+    },
     initialOptions: [
       { label: "Request a Callback →", value: "request_callback", isPrimary: true },
       { label: "Check ICP Fit", value: "icp_fit_check", link: "/icp" },

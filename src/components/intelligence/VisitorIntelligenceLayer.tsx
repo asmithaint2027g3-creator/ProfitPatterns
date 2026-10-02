@@ -67,112 +67,144 @@ function TimeIcon({ tod }: { tod: string }) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// 1 + 3 + 5 — REPEAT VISITOR WELCOME BANNER
+// 1 + 3 + 5 — REPEAT VISITOR WELCOME BANNER (Engaging Milestone-Aware)
 // ─────────────────────────────────────────────────────────────────
 function WelcomeBanner({
   visitCount,
   isRepeatVisitor,
   greeting,
+  headlineData,
   lastPageLabel,
   lastPagePath,
   timeOfDay,
+  onOpenChatbot,
   onDismiss,
 }: {
   visitCount: number;
   isRepeatVisitor: boolean;
   greeting: string;
+  headlineData: {
+    badge: string;
+    headline: string;
+    subtext: string;
+    ctaText: string;
+    ctaLink: string;
+  };
   lastPageLabel: string | null;
   lastPagePath: string | null;
   timeOfDay: string;
+  onOpenChatbot?: () => void;
   onDismiss: () => void;
 }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Slight delay so page renders first
-    const t = setTimeout(() => setVisible(true), 800);
+    // Instant smooth reveal
+    const t = setTimeout(() => setVisible(true), 200);
     return () => clearTimeout(t);
   }, []);
 
   if (!visible) return null;
 
-  const message = isRepeatVisitor
-    ? `Welcome back! Great to have you with us again.`
-    : `Welcome to ProfitPatterns!`;
-
   return (
     <div
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-transform duration-500",
-        visible ? "translate-y-0" : "-translate-y-full",
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-400 ease-out",
+        visible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0",
       )}
       role="banner"
       aria-live="polite"
     >
-      <div className="bg-gradient-to-r from-[#1A1A1A] via-[#292929] to-[#1A1A1A] px-4 py-3 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-[#141414] via-[#222222] to-[#141414] border-b border-[#C4B296]/30 px-3.5 py-2.5 text-white shadow-xl shadow-black/30">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-          {/* Left side */}
-          <div className="flex items-center gap-3 min-w-0">
+          {/* Left side: Time + Milestone Badge + Engaging Headline */}
+          <div className="flex items-center gap-2.5 min-w-0 flex-wrap sm:flex-nowrap">
+            {/* Time icon & Greeting */}
             <div className="flex items-center gap-1.5 shrink-0">
               <TimeIcon tod={timeOfDay} />
-              <span className="text-sm font-semibold text-white">{greeting}!</span>
+              <span className="text-xs font-semibold text-white/90">{greeting}!</span>
             </div>
 
-            <span className="hidden sm:inline text-[#A8A29E] text-xs">•</span>
-
-            <span className="text-xs text-[#D4C9B8] truncate">
-              {message}
+            {/* Dynamic Milestone Badge (1st, 2nd, 3rd, 4th, 5+ visit) */}
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#C4B296]/20 border border-[#C4B296]/40 px-2.5 py-0.5 text-[10px] font-bold text-[#F0E6D2] tracking-wider uppercase shrink-0 shadow-xs">
+              <Sparkles className="size-2.5 text-[#C4B296]" />
+              {headlineData.badge}
             </span>
 
-            {/* Last visited page alert */}
+            {/* Dynamic Headline Message */}
+            <span className="text-xs font-medium text-[#FAFAF8] truncate">
+              {headlineData.headline}
+            </span>
+
+            {/* Subtext on larger screens */}
+            <span className="hidden lg:inline text-xs text-[#A8A29E] truncate">
+              — {headlineData.subtext}
+            </span>
+
+            {/* Last visited page alert if repeat visitor */}
             {isRepeatVisitor && lastPageLabel && lastPagePath && (
-              <>
-                <span className="hidden md:inline text-[#A8A29E] text-xs">•</span>
-                <div className="hidden md:flex items-center gap-1.5 text-xs text-[#C4B296]">
-                  <BookOpen className="size-3 shrink-0" />
-                  <span>Last time you visited:</span>
-                  <Link
-                    to={lastPagePath as "/"}
-                    className="font-semibold text-[#E8D9C0] hover:text-white transition-colors underline underline-offset-2"
-                  >
-                    {lastPageLabel}
-                  </Link>
-                </div>
-              </>
+              <div className="hidden md:flex items-center gap-1 text-[11px] text-[#C4B296] bg-black/40 px-2 py-0.5 rounded border border-white/10 shrink-0">
+                <BookOpen className="size-3 text-[#C4B296]" />
+                <span className="text-[#A8A29E]">Last saw:</span>
+                <Link
+                  to={lastPagePath as "/"}
+                  className="font-semibold text-[#E8D9C0] hover:text-white underline underline-offset-2 transition-colors"
+                >
+                  {lastPageLabel}
+                </Link>
+              </div>
             )}
           </div>
 
-          {/* Right side — CTA + Dismiss */}
+          {/* Right side: Interactive CTAs + Dismiss */}
           <div className="flex items-center gap-2 shrink-0">
-            {isRepeatVisitor && (
-              <Link
-                to="/contact"
-                className="hidden sm:inline-flex items-center gap-1.5 rounded border border-[#C4B296]/40 bg-[#C4B296]/10 px-3 py-1 text-xs font-semibold text-[#E8D9C0] hover:bg-[#C4B296]/20 transition-colors"
-              >
-                <Sparkles className="size-3" />
-                Schedule a Call
-              </Link>
-            )}
+            {/* Chatbot Quick Trigger */}
+            <button
+              onClick={onOpenChatbot}
+              className="inline-flex items-center gap-1 rounded border border-[#C4B296]/40 bg-[#C4B296]/15 px-2.5 py-1 text-xs font-semibold text-[#E8D9C0] hover:bg-[#C4B296] hover:text-[#1A1A1A] transition-all cursor-pointer shadow-xs"
+            >
+              <MessageSquareText className="size-3" />
+              <span>Ask AI</span>
+            </button>
+
+            {/* Milestone-Specific Primary Action */}
+            <Link
+              to={headlineData.ctaLink as "/"}
+              className="hidden sm:inline-flex items-center gap-1.5 rounded bg-[#FAFAF8] px-3 py-1 text-xs font-bold text-[#1A1A1A] hover:bg-[#E5E0D8] transition-all shadow-xs"
+            >
+              <span>{headlineData.ctaText}</span>
+              <ArrowRight className="size-3 text-[#1A1A1A]" />
+            </Link>
+
+            {/* Dismiss Button */}
             <button
               onClick={onDismiss}
               aria-label="Dismiss welcome banner"
-              className="rounded p-1 text-[#A8A29E] hover:text-white transition-colors cursor-pointer"
+              className="rounded p-1 text-[#A8A29E] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <X className="size-4" />
             </button>
           </div>
         </div>
 
-        {/* Mobile: last visited page */}
+        {/* Mobile secondary row for last visited page */}
         {isRepeatVisitor && lastPageLabel && lastPagePath && (
-          <div className="md:hidden mt-1 flex items-center gap-1.5 text-xs text-[#C4B296]">
-            <BookOpen className="size-3 shrink-0" />
-            <span>Continue from:</span>
+          <div className="md:hidden mt-1.5 pt-1.5 border-t border-white/10 flex items-center justify-between text-[11px] text-[#C4B296]">
+            <div className="flex items-center gap-1.5 truncate">
+              <BookOpen className="size-3 shrink-0" />
+              <span>Continue from:</span>
+              <Link
+                to={lastPagePath as "/"}
+                className="font-semibold text-[#E8D9C0] underline underline-offset-2"
+              >
+                {lastPageLabel}
+              </Link>
+            </div>
             <Link
-              to={lastPagePath as "/"}
-              className="font-semibold text-[#E8D9C0] hover:text-white transition-colors"
+              to={headlineData.ctaLink as "/"}
+              className="font-bold text-white shrink-0 ml-2 text-[10px] bg-white/10 px-2 py-0.5 rounded"
             >
-              {lastPageLabel}
+              {headlineData.ctaText} →
             </Link>
           </div>
         )}
@@ -402,6 +434,7 @@ export function VisitorIntelligenceLayer({
     lastPageLabel,
     timeOfDay,
     greeting,
+    headlineData,
     isIdle,
     hasScrolled,
     formTouched,
@@ -520,9 +553,11 @@ export function VisitorIntelligenceLayer({
           visitCount={visitCount}
           isRepeatVisitor={isRepeatVisitor}
           greeting={greeting}
+          headlineData={headlineData}
           lastPageLabel={lastPageLabel}
           lastPagePath={lastPagePath}
           timeOfDay={timeOfDay}
+          onOpenChatbot={openChatbot}
           onDismiss={() => setBannerDismissed(true)}
         />
       )}
