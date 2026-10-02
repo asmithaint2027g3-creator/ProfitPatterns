@@ -1,13 +1,16 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
   ArrowRight,
   Bot,
   Calendar,
   CheckCircle2,
+  Compass,
   FileText,
+  HelpCircle,
   Loader2,
   Minus,
   Paperclip,
+  RefreshCw,
   Send,
   Shield,
   Sparkles,
@@ -23,14 +26,16 @@ import { useVisitorContext } from "@/components/intelligence/VisitorIntelligence
 import { submitChatLead } from "@/lib/leads.functions";
 import { trackLead } from "@/utils/analytics";
 import { cn } from "@/lib/utils";
+import { getPageChatContext, type ChatOption, type PageChatContext } from "@/components/chat/chatContexts";
 
 export interface ChatMessage {
   id: string;
-  role: "assistant" | "user";
+  role: "assistant" | "user" | "system";
   text: string;
   time: string;
-  options?: { label: string; value: string; isPrimary?: boolean; link?: string }[];
+  options?: ChatOption[];
   fileAttachment?: { name: string; size: string };
+  contextBadge?: string;
 }
 
 function getFormattedTime() {
@@ -50,7 +55,15 @@ function generateId() {
   return Math.random().toString(36).substring(2, 9);
 }
 
-export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+export function Assistant({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const pageCtx = getPageChatContext(pathname);
   const { isRepeatVisitor, visitCount } = useVisitorIntelligence();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -59,36 +72,70 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
   const [leadCaptured, setLeadCaptured] = useState(false);
   const [savingLead, setSavingLead] = useState(false);
 
+  const activeContextKeyRef = useRef<string>(pageCtx.key);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize opening message from ProfitAI with live time-based greeting and repeat-visitor detection
+  // Helper to generate the initial context greeting message
+  const createInitialMessage = useCallback(
+    (ctx: PageChatContext): ChatMessage => {
+      const liveGreeting = getLiveGreeting();
+      const isRepeat = isRepeatVisitor || visitCount > 1;
+      const text = ctx.getInitialMessage(liveGreeting, isRepeat);
+
+      return {
+        id: generateId(),
+        role: "assistant",
+        text,
+        time: getFormattedTime(),
+        options: ctx.initialOptions,
+        contextBadge: ctx.badge,
+      };
+    },
+    [isRepeatVisitor, visitCount],
+  );
+
+  // Initialize or update context message when opened or when page changes
   useEffect(() => {
-    if (!open || messages.length > 0) return;
-    track("chat_open", { isRepeatVisitor, visitCount });
+    if (!open) return;
 
-    const liveGreeting = getLiveGreeting();
-    const isRepeat = isRepeatVisitor || visitCount > 1;
-    const initialText = isRepeat
-      ? `${liveGreeting}! Welcome back 👋\n\nGreat to see you again! I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`
-      : `${liveGreeting}! Welcome to ProfitPatterns. I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`;
+    // First time open
+    if (messages.length === 0) {
+      activeContextKeyRef.current = pageCtx.key;
+      track("chat_open", { isRepeatVisitor, visitCount, page: pathname, context: pageCtx.key });
+      setMessages([createInitialMessage(pageCtx)]);
+      return;
+    }
 
-    const welcomeMsg: ChatMessage = {
-      id: generateId(),
-      role: "assistant",
-      text: initialText,
-      time: getFormattedTime(),
-      options: [
-        { label: "Request a Callback →", value: "request_callback", isPrimary: true },
-        { label: "Our Services", value: "services" },
-        { label: "About ProfitPatterns", value: "about" },
-        { label: "Free AI Audit", value: "audit" },
-      ],
-    };
+    // If user navigated to a DIFFERENT page while chat was previously opened
+    if (activeContextKeyRef.current !== pageCtx.key) {
+      activeContextKeyRef.current = pageCtx.key;
 
-    setMessages([welcomeMsg]);
-  }, [open, messages.length, isRepeatVisitor, visitCount]);
+      const hasUserMessages = messages.some((m) => m.role === "user");
+
+      if (!hasUserMessages) {
+        // If user hadn't sent any messages yet, completely refresh with the new page's welcome message
+        setMessages([createInitialMessage(pageCtx)]);
+      } else {
+        // If user already had a conversation, append a smooth contextual transition prompt
+        const transitionMsg: ChatMessage = {
+          id: generateId(),
+          role: "assistant",
+          text: `📍 **Switched to ${pageCtx.pageName} Context**\n\n${pageCtx.getInitialMessage(getLiveGreeting(), false)}`,
+          time: getFormattedTime(),
+          options: pageCtx.initialOptions,
+          contextBadge: pageCtx.badge,
+        };
+        setMessages((prev) => [...prev, transitionMsg]);
+      }
+    }
+  }, [open, pathname, pageCtx, messages, createInitialMessage, isRepeatVisitor, visitCount]);
+
+  // Reset chat context to current page
+  const handleResetContext = () => {
+    setMessages([createInitialMessage(pageCtx)]);
+  };
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -115,14 +162,17 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
         setSavingLead(true);
         const email = emailMatch ? emailMatch[0] : "";
         const phone = phoneMatch ? phoneMatch[0] : "";
-        const nameGuess = text.replace(email, "").replace(phone, "").trim().slice(0, 50) || "Chatbot Prospect";
+        const nameGuess =
+          text.replace(email, "").replace(phone, "").trim().slice(0, 50) || "Chatbot Prospect";
+
+        const intentTag = `[${pageCtx.badge}] ${contextNote}`;
 
         trackLead({
           name: nameGuess,
           email: email || "prospect@chat.lead",
           phone: phone,
           company: "Not specified",
-          requirement: contextNote,
+          requirement: intentTag,
           challenge: text,
           form_name: "ProfitAI Assistant",
           source: "assistant_chatbot",
@@ -136,8 +186,8 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
               phone: phone,
               company: "Not specified",
               businessProblem: text,
-              intent: contextNote,
-              page: typeof window !== "undefined" ? window.location.pathname : "/",
+              intent: intentTag,
+              page: pathname,
             },
           });
         } catch (e) {
@@ -154,7 +204,7 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
             {
               id: generateId(),
               role: "assistant",
-              text: `✅ Thank you! I have logged your details (${email || phone}). Our senior advisory team will review your requirements and reach out within 24 hours.`,
+              text: `✅ Thank you! I have logged your details (${email || phone}) in our **${pageCtx.pageName}** priority queue. Our senior advisory team will review your requirements and reach out within 24 hours.`,
               time: getFormattedTime(),
               options: [
                 { label: "Book a 15-min Call", value: "contact_page", link: "/contact" },
@@ -165,10 +215,10 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
         }, 500);
       }
     },
-    [leadCaptured],
+    [leadCaptured, pageCtx.badge, pageCtx.pageName, pathname],
   );
 
-  // Generate intelligent response based on input
+  // Generate intelligent response based on input & active page context
   const handleAssistantResponse = useCallback(
     (userInput: string, optionValue?: string) => {
       setIsTyping(true);
@@ -178,16 +228,32 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
         let replyText = "";
         let nextOptions: ChatMessage["options"] = undefined;
 
-        if (query === "request_callback" || query.includes("callback") || query.includes("call me")) {
+        // 1. Check if the active page context has a custom handler for this query
+        const contextualAnswer = pageCtx.getAnswer(query, userInput);
+        if (contextualAnswer) {
+          replyText = contextualAnswer.replyText;
+          nextOptions = contextualAnswer.nextOptions;
+        }
+        // 2. Global handlers for standard intents
+        else if (
+          query === "request_callback" ||
+          query.includes("callback") ||
+          query.includes("call me")
+        ) {
           replyText =
-            "I'd be glad to arrange a callback with one of our principal partners. Please share your **phone number or email address** below, or connect with our desk directly on WhatsApp!";
+            `I'd be glad to arrange a priority callback regarding **${pageCtx.pageName}**. Please share your **phone number or email address** below, or connect with our consulting desk directly on WhatsApp!`;
           nextOptions = [
             { label: "Chat on WhatsApp", value: "whatsapp", isPrimary: true },
             { label: "Schedule on Calendar →", value: "calendar", link: "/contact" },
           ];
-        } else if (query === "services" || query.includes("service") || query.includes("what do you do") || query.includes("offering")) {
+        } else if (
+          query === "services" ||
+          query.includes("service") ||
+          query.includes("what do you do") ||
+          query.includes("offering")
+        ) {
           replyText =
-            "ProfitPatterns accelerates revenue & margin through 4 proven pillars:\n\n" +
+            "ProfitPatterns accelerates revenue & gross margin through 4 proven pillars:\n\n" +
             "1. **AI Strategy & Diagnostic**: 14-day operational audit & leak scorecard\n" +
             "2. **Profit Growth Architecture**: Margin expansion & leak recovery\n" +
             "3. **Business Process Automation**: Custom agentic workflows saving 40+ hrs/wk\n" +
@@ -198,19 +264,33 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
             { label: "Free AI Audit", value: "audit" },
             { label: "Talk to an Expert", value: "calendar", link: "/contact" },
           ];
-        } else if (query === "about" || query.includes("about") || query.includes("who are you")) {
+        } else if (
+          query === "about" ||
+          query.includes("about") ||
+          query.includes("who are you")
+        ) {
           replyText =
             "ProfitPatterns is an enterprise AI & profit engineering advisory. We help businesses discover hidden margin leaks, implement automated workflows, and build proprietary AI systems that produce verified ROI within 14 to 30 days.";
           nextOptions = [
-            { label: "Our Services", value: "services" },
-            { label: "Free AI Audit", value: "audit" },
-            { label: "Request a Callback →", value: "request_callback", isPrimary: true },
+            { label: "Check ICP Fit", value: "icp_fit_check", link: "/icp" },
+            { label: "Our Services", value: "services", link: "/services" },
+            { label: "Free AI Audit", value: "audit", link: "/audit-submission" },
           ];
-        } else if (query === "audit" || query.includes("audit") || query.includes("diagnostic") || query.includes("free audit")) {
+        } else if (
+          query === "audit" ||
+          query.includes("audit") ||
+          query.includes("diagnostic") ||
+          query.includes("free audit")
+        ) {
           replyText =
             "Our **14-day AI Diagnostic** evaluates your operational bottlenecks and produces an executive ROI scorecard at zero cost. We map high-friction workflows and calculate exact potential savings.";
           nextOptions = [
-            { label: "Submit Free Audit Form →", value: "audit_page", link: "/audit-submission", isPrimary: true },
+            {
+              label: "Submit Free Audit Form →",
+              value: "audit_page",
+              link: "/audit-submission",
+              isPrimary: true,
+            },
             { label: "Request a Callback", value: "request_callback" },
           ];
         } else if (query === "whatsapp") {
@@ -218,22 +298,38 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
             "https://wa.me/919487569857?text=Hi%20ProfitPatterns%20Team%2C%20I%20would%20like%20to%20speak%20with%20a%20consultant.",
             "_blank",
           );
-          replyText = "Opening our official WhatsApp channel for direct consultation. Feel free to type additional questions here anytime!";
-        } else if (query.includes("pricing") || query.includes("cost") || query.includes("price") || query.includes("how much")) {
+          replyText =
+            "Opening our official WhatsApp channel for direct consultation. Feel free to type additional questions here anytime!";
+        } else if (
+          query.includes("pricing") ||
+          query.includes("cost") ||
+          query.includes("price") ||
+          query.includes("how much")
+        ) {
           replyText =
             "Our initial **14-day AI Diagnostic is 100% complimentary**. Full implementation engagements are tailored and milestone-based so you only pay for proven ROI and measurable cost reduction. Would you like to schedule an introductory consultation?";
           nextOptions = [
             { label: "Request a Callback →", value: "request_callback", isPrimary: true },
             { label: "Schedule Call", value: "calendar", link: "/contact" },
           ];
-        } else if (query.includes("security") || query.includes("safe") || query.includes("confidential") || query.includes("nda")) {
+        } else if (
+          query.includes("security") ||
+          query.includes("safe") ||
+          query.includes("confidential") ||
+          query.includes("nda")
+        ) {
           replyText =
-            "Security and confidentiality are core to everything we do. We operate under strict mutual NDAs, use SOC-2 compliant infrastructure, and ensure none of your business data is ever retained for public model training.";
+            "Security and confidentiality are core to everything we do. We operate under strict mutual NDAs, use SOC-2 compliant infrastructure, and ensure none of your proprietary business data is ever retained for public model training.";
           nextOptions = [
             { label: "Request a Callback →", value: "request_callback", isPrimary: true },
             { label: "Our Services", value: "services" },
           ];
-        } else if (query.includes("email") || query.includes("contact") || query.includes("reach") || query.includes("mail")) {
+        } else if (
+          query.includes("email") ||
+          query.includes("contact") ||
+          query.includes("reach") ||
+          query.includes("mail")
+        ) {
           replyText =
             "You can reach our principal consulting desk directly at **asmitha.int2027g3@gmail.com** or connect with us on WhatsApp. Would you like to request a callback or schedule a discovery call?";
           nextOptions = [
@@ -242,20 +338,16 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
             { label: "Schedule Call", value: "calendar", link: "/contact" },
           ];
         } else if (query.includes("hello") || query.includes("hi") || query.includes("hey")) {
-          replyText = "Hello! How can I assist with your business AI and profit strategy today?";
-          nextOptions = [
-            { label: "Request a Callback →", value: "request_callback", isPrimary: true },
-            { label: "Our Services", value: "services" },
-            { label: "Free AI Audit", value: "audit" },
-          ];
+          replyText = `Hello! How can I assist with your **${pageCtx.pageName}** inquiries or profit strategy today?`;
+          nextOptions = pageCtx.initialOptions;
         } else {
-          // General inquiry response
+          // General contextual inquiry response
           replyText =
-            "Thank you for sharing that! Our consulting team specializes in addressing this exact challenge through automated intelligence and margin optimization. Would you like to speak directly with our senior strategist, or receive our complimentary audit?";
+            `Thank you for sharing that! Our consulting team specializes in addressing this exact challenge within our **${pageCtx.pageName}** practice. Would you like to speak directly with our senior strategist, or receive our complimentary audit?`;
           nextOptions = [
             { label: "Request a Callback →", value: "request_callback", isPrimary: true },
             { label: "Submit Free Audit Form", value: "audit_page", link: "/audit-submission" },
-            { label: "Our Services", value: "services" },
+            { label: "Explore Our Solutions", value: "solutions_page", link: "/solutions" },
           ];
         }
 
@@ -272,10 +364,10 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
         ]);
 
         // Attempt lead capture in background
-        void tryCaptureLead(userInput, optionValue || "General Assistant Chat");
-      }, 550);
+        void tryCaptureLead(userInput, optionValue || `${pageCtx.badge}: General Chat`);
+      }, 450);
     },
-    [tryCaptureLead],
+    [pageCtx, tryCaptureLead],
   );
 
   // Send message from user
@@ -292,7 +384,7 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
 
     setMessages((prev) => [...prev, userMsg]);
     setDraft("");
-    track("chat_message_sent", { text });
+    track("chat_message_sent", { text, page: pathname, context: pageCtx.key });
 
     handleAssistantResponse(text, optionValue);
   };
@@ -321,17 +413,16 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
         {
           id: generateId(),
           role: "assistant",
-          text: `I've received your document **"${file.name}"** for evaluation. Please provide your **work email or phone number** below so our diagnostic team can deliver the findings to you!`,
+          text: `I've received your document **"${file.name}"** for evaluation under our **${pageCtx.pageName}** practice. Please provide your **work email or phone number** below so our diagnostic team can deliver the findings to you!`,
           time: getFormattedTime(),
           options: [
             { label: "Request a Callback →", value: "request_callback", isPrimary: true },
-            { label: "Book a Call", value: "calendar", link: "/contact" },
+            { label: "Book a Strategy Call", value: "calendar", link: "/contact" },
           ],
         },
       ]);
-    }, 700);
+    }, 600);
 
-    // Reset input
     e.target.value = "";
   };
 
@@ -341,53 +432,79 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
     <div
       role="dialog"
       aria-modal="false"
-      aria-label="ProfitAI - AI & Profit Strategist"
-      className="fixed bottom-24 right-4 z-50 flex h-[min(36rem,calc(100vh-7.5rem))] w-[min(25rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-[#E5E0D8] bg-[#FAFAF8] shadow-2xl transition-all duration-200 md:bottom-24 md:right-6 font-sans"
+      aria-label={`ProfitAI - ${pageCtx.pageName}`}
+      className="fixed bottom-24 right-4 z-50 flex h-[min(38rem,calc(100vh-7.5rem))] w-[min(26rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-[#E5E0D8] bg-[#FAFAF8] shadow-2xl transition-all duration-200 md:bottom-24 md:right-6 font-sans animate-in fade-in zoom-in-95"
     >
-      {/* ── TOP HEADER (ProfitPatterns Editorial Dark Charcoal & Gold) ── */}
-      <header className="relative flex items-center justify-between bg-[#1A1A1A] border-b border-[#2D2D2D] px-4 py-3.5 text-white shadow-sm select-none">
-        <div className="flex items-center gap-3">
-          {/* Avatar with Gold Sparkles & Live Status Indicator */}
-          <div className="relative flex size-10 shrink-0 items-center justify-center rounded-full bg-[#262626] border border-[#C4B296]/40 text-[#C4B296] shadow-xs">
-            <Sparkles className="size-5 text-[#C4B296]" />
-            <span
-              className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-emerald-400 ring-2 ring-[#1A1A1A]"
-              title="Online"
-            />
-          </div>
+      {/* ── TOP HEADER (Editorial Dark Charcoal & Gold) ── */}
+      <header className="relative flex flex-col bg-[#1A1A1A] border-b border-[#2D2D2D] px-4 pt-3 pb-2.5 text-white shadow-sm select-none">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Avatar with Gold Sparkles & Live Status Indicator */}
+            <div className="relative flex size-10 shrink-0 items-center justify-center rounded-full bg-[#262626] border border-[#C4B296]/40 text-[#C4B296] shadow-xs">
+              <Sparkles className="size-5 text-[#C4B296]" />
+              <span
+                className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-emerald-400 ring-2 ring-[#1A1A1A]"
+                title="Online & Ready"
+              />
+            </div>
 
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="font-bold text-base text-[#FAFAF8] tracking-tight leading-none font-display">
-                ProfitAI
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-base text-[#FAFAF8] tracking-tight leading-none font-display">
+                  ProfitAI
+                </span>
+                <span className="rounded bg-[#C4B296]/20 px-1.5 py-0.5 text-[9px] font-bold text-[#E8D9C0] border border-[#C4B296]/30">
+                  LIVE
+                </span>
+              </div>
+              <span className="text-[10px] font-semibold text-[#C4B296] tracking-wider uppercase mt-1">
+                {pageCtx.badge}
               </span>
             </div>
-            <span className="text-[10px] font-semibold text-[#C4B296] tracking-wider uppercase mt-1">
-              AI & PROFIT STRATEGIST
-            </span>
+          </div>
+
+          {/* Action icons */}
+          <div className="flex items-center gap-1 text-[#A8A29E]">
+            <button
+              onClick={handleResetContext}
+              title="Reset context to current page"
+              aria-label="Reset chat context"
+              className="rounded p-1.5 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+            >
+              <RefreshCw className="size-3.5" />
+            </button>
+            <button
+              onClick={() => onOpenChange(false)}
+              aria-label="Minimize assistant"
+              className="rounded p-1.5 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+            >
+              <Minus className="size-4" />
+            </button>
+            <button
+              onClick={() => onOpenChange(false)}
+              aria-label="Close assistant"
+              className="rounded p-1.5 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="size-4" />
+            </button>
           </div>
         </div>
 
-        {/* Action icons: Minimize & Close */}
-        <div className="flex items-center gap-1 text-[#A8A29E]">
-          <button
-            onClick={() => onOpenChange(false)}
-            aria-label="Minimize assistant"
-            className="rounded p-1.5 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
-          >
-            <Minus className="size-4" />
-          </button>
-          <button
-            onClick={() => onOpenChange(false)}
-            aria-label="Close assistant"
-            className="rounded p-1.5 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
-          >
-            <X className="size-4" />
-          </button>
+        {/* ── CONTEXT STATUS BAR ── */}
+        <div className="mt-2.5 flex items-center justify-between rounded-lg bg-black/40 px-2.5 py-1 text-[11px] text-[#C4B296] border border-white/5">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Compass className="size-3.5 shrink-0 text-[#C4B296]" />
+            <span className="truncate text-white/90">
+              Context: <strong className="text-[#E8D9C0] font-semibold">{pageCtx.pageName}</strong>
+            </span>
+          </div>
+          <span className="text-[10px] text-[#A8A29E] shrink-0 uppercase tracking-wider font-mono">
+            Active
+          </span>
         </div>
       </header>
 
-      {/* ── MESSAGE THREAD (Warm Ivory Background matching ProfitPatterns) ── */}
+      {/* ── MESSAGE THREAD (Warm Ivory Background) ── */}
       <div
         ref={scrollRef}
         className="flex-1 space-y-4 overflow-y-auto bg-[#FAFAF8] p-4 text-[#1A1A1A]"
@@ -397,13 +514,13 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
           <div key={m.id} className="space-y-2">
             {m.role === "assistant" ? (
               <div className="flex items-start gap-2.5 max-w-[92%]">
-                {/* Bot Icon Shield on Left (Deep Charcoal with Gold Accent) */}
+                {/* Bot Icon Shield on Left */}
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[#1A1A1A] border border-[#C4B296]/30 text-[#C4B296] shadow-xs mt-0.5">
                   <Shield className="size-4.5" />
                 </div>
 
                 <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-                  {/* Assistant Message Bubble (Crisp White Card with Soft Warm Border) */}
+                  {/* Assistant Message Bubble */}
                   <div className="rounded-2xl rounded-tl-sm border border-[#E5E0D8] bg-white p-4 text-sm leading-relaxed text-[#1A1A1A] shadow-xs whitespace-pre-line">
                     {m.text}
                   </div>
@@ -414,7 +531,7 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
                       {m.options.map((opt) =>
                         opt.link ? (
                           <Link
-                            key={opt.value}
+                            key={opt.value + opt.link}
                             to={opt.link as "/"}
                             onClick={() => onOpenChange(false)}
                             className="inline-flex items-center gap-1.5 rounded-full border border-[#8B7355]/40 bg-[#8B7355]/10 px-3.5 py-1.5 text-xs font-semibold text-[#8B7355] shadow-xs hover:bg-[#8B7355] hover:text-white transition-all cursor-pointer"
@@ -446,7 +563,7 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
                 </div>
               </div>
             ) : (
-              /* User Message on Right with Avatar (Deep Charcoal Bubble) */
+              /* User Message on Right */
               <div className="flex items-start justify-end gap-2.5 ml-auto max-w-[85%]">
                 <div className="flex flex-col items-end gap-1">
                   <div className="rounded-2xl rounded-tr-sm bg-[#1A1A1A] border border-[#2D2D2D] px-4 py-2.5 text-sm font-medium text-white shadow-xs leading-relaxed">
@@ -478,15 +595,24 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
               <Shield className="size-4.5" />
             </div>
             <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-sm border border-[#E5E0D8] bg-white px-4 py-3 text-[#8B7355] shadow-xs">
-              <span className="size-2 rounded-full bg-[#8B7355] animate-bounce" style={{ animationDelay: "0ms" }} />
-              <span className="size-2 rounded-full bg-[#8B7355] animate-bounce" style={{ animationDelay: "150ms" }} />
-              <span className="size-2 rounded-full bg-[#8B7355] animate-bounce" style={{ animationDelay: "300ms" }} />
+              <span
+                className="size-2 rounded-full bg-[#8B7355] animate-bounce"
+                style={{ animationDelay: "0ms" }}
+              />
+              <span
+                className="size-2 rounded-full bg-[#8B7355] animate-bounce"
+                style={{ animationDelay: "150ms" }}
+              />
+              <span
+                className="size-2 rounded-full bg-[#8B7355] animate-bounce"
+                style={{ animationDelay: "300ms" }}
+              />
             </div>
           </div>
         )}
       </div>
 
-      {/* ── BOTTOM INPUT SECTION (ProfitPatterns Editorial Ivory & Gold) ── */}
+      {/* ── BOTTOM INPUT SECTION ── */}
       <footer className="border-t border-[#E5E0D8] bg-white p-3">
         <form
           onSubmit={(e) => {
@@ -514,13 +640,13 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
             <Paperclip className="size-4.5" />
           </button>
 
-          {/* Input field */}
+          {/* Input field with context-specific placeholder */}
           <input
             ref={inputRef}
             type="text"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Ask ProfitAI or paste files..."
+            placeholder={pageCtx.inputPlaceholder}
             className="flex-1 bg-transparent py-1 text-sm text-[#1A1A1A] placeholder:text-[#A8A29E] focus:outline-none"
           />
 
@@ -540,9 +666,8 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
           </button>
         </form>
 
-        {/* Subtitle branding matching ProfitPatterns consulting tier */}
         <p className="mt-2 text-center text-[9px] font-bold tracking-widest text-[#8B7355]/90 uppercase select-none">
-          OFFICIAL PROFITPATTERNS SUPPORT
+          {pageCtx.pageName} • OFFICIAL PROFITPATTERNS SUPPORT
         </p>
       </footer>
     </div>
@@ -563,6 +688,9 @@ export function AssistantLauncher({
     onExternalOpenChange?.(v);
   };
 
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const pageCtx = getPageChatContext(pathname);
+
   const { registerChatbotOpener } = useVisitorContext();
   useEffect(() => {
     registerChatbotOpener(() => setOpen(true));
@@ -572,12 +700,12 @@ export function AssistantLauncher({
     <>
       <Assistant open={open} onOpenChange={setOpen} />
 
-      {/* Floating launcher trigger (ProfitPatterns Charcoal & Gold) */}
+      {/* Floating launcher trigger with dynamic page context */}
       <button
         onClick={() => setOpen(!open)}
-        aria-label={open ? "Close ProfitAI Chatbot" : "Chat with ProfitAI - AI & Profit Strategist"}
+        aria-label={open ? "Close ProfitAI Chatbot" : `Chat with ProfitAI - ${pageCtx.pageName}`}
         aria-expanded={open}
-        className="fixed bottom-20 right-4 z-40 flex items-center gap-2.5 rounded-full bg-[#1A1A1A] border border-[#C4B296]/30 px-4 py-3 text-[#FAFAF8] shadow-xl shadow-black/25 transition-all hover:scale-105 hover:bg-[#2A2A2A] hover:border-[#C4B296] md:bottom-6 md:right-6 group cursor-pointer"
+        className="fixed bottom-20 right-4 z-40 flex items-center gap-2.5 rounded-full bg-[#1A1A1A] border border-[#C4B296]/40 px-4 py-3 text-[#FAFAF8] shadow-xl shadow-black/25 transition-all hover:scale-105 hover:bg-[#2A2A2A] hover:border-[#C4B296] md:bottom-6 md:right-6 group cursor-pointer"
       >
         <div className="relative flex items-center justify-center">
           {open ? (
@@ -590,7 +718,7 @@ export function AssistantLauncher({
           )}
         </div>
         <span className="text-sm font-semibold pr-1 text-[#FAFAF8]">
-          {open ? "Close" : "Chat with ProfitAI"}
+          {open ? "Close" : `Chat with ProfitAI`}
         </span>
       </button>
     </>

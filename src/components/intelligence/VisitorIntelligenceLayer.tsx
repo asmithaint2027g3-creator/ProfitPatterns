@@ -31,6 +31,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 
 import { useVisitorIntelligence } from "@/hooks/useVisitorIntelligence";
 import { cn } from "@/lib/utils";
+import { getPageChatContext } from "@/components/chat/chatContexts";
 
 // ── Shared context so the chatbot can read repeat-visitor state ──
 interface VisitorCtx {
@@ -252,43 +253,49 @@ function ExitIntentPopup({ onDismiss }: { onDismiss: () => void }) {
 // 6 — PROACTIVE CHATBOT TRIGGER BUBBLE (30s idle)
 // ─────────────────────────────────────────────────────────────────
 function IdleChatbotNudge({
+  title,
+  text,
+  badge,
   onOpen,
   onDismiss,
 }: {
+  title: string;
+  text: string;
+  badge?: string;
   onOpen: () => void;
   onDismiss: () => void;
 }) {
   return (
-    <div className="fixed bottom-36 right-4 z-50 max-w-[220px] animate-rise md:bottom-24 md:right-20">
-      <div className="relative rounded-2xl rounded-br-none border border-border bg-card p-4 shadow-xl">
+    <div className="fixed bottom-36 right-4 z-50 max-w-[240px] animate-rise md:bottom-24 md:right-20">
+      <div className="relative rounded-2xl rounded-br-none border border-[#E5E0D8] bg-white p-4 shadow-xl">
         <button
           onClick={onDismiss}
           aria-label="Dismiss"
-          className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground cursor-pointer"
+          className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full border border-[#E5E0D8] bg-white text-muted-foreground hover:text-foreground cursor-pointer shadow-xs"
         >
           <X className="size-3" />
         </button>
 
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-1.5">
           <span className="relative flex size-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
           </span>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
-            Still with us?
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#8B7355] truncate">
+            {badge || title}
           </span>
         </div>
 
-        <p className="text-xs text-foreground/90 leading-relaxed">
-          Can I help you find what you're looking for?
+        <p className="text-xs text-[#1A1A1A] font-medium leading-snug">
+          {text}
         </p>
 
         <button
           onClick={onOpen}
-          className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary/90 transition-colors cursor-pointer"
+          className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#1A1A1A] px-3 py-2 text-xs font-semibold text-white hover:bg-[#2D2D2D] transition-colors cursor-pointer"
         >
-          <MessageSquareText className="size-3.5" />
-          Chat with us
+          <MessageSquareText className="size-3.5 text-[#C4B296]" />
+          Chat with ProfitAI
         </button>
       </div>
     </div>
@@ -402,6 +409,7 @@ export function VisitorIntelligenceLayer({
   } = useVisitorIntelligence();
 
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const pageCtx = getPageChatContext(pathname);
 
   // Banner state
   const [bannerDismissed, setBannerDismissed]       = useState(false);
@@ -536,6 +544,9 @@ export function VisitorIntelligenceLayer({
       {/* 6 — Idle chatbot nudge */}
       {showIdleNudge && !showExitPopup && (
         <IdleChatbotNudge
+          title={pageCtx.nudgeTitle}
+          text={pageCtx.nudgeText}
+          badge={pageCtx.badge}
           onOpen={() => {
             openChatbot();
             setShowIdleNudge(false);
