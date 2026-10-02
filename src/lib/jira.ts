@@ -30,7 +30,7 @@ export function getJiraConfig() {
   const apiToken =
     process.env["JIRA_API_TOKEN"] ||
     process.env["VITE_JIRA_API_TOKEN"] ||
-    "ATATT3xFfGF0ZI9BTfm9JkdD0PjvWYle6DBxrQ0puxXIYMLqPb_Ry6QRoWY5LdRdLZyo43BBROTkba4IkJKl9thc3kyfhzmcrSp0bbS0mBw7s3WtYru5bvKv0gSdAz_BOODzmyINlLASkjXkF0z26smsi67zb4aJidlw6e2Uif6MEsfaxmVvJeI=E7953F81";
+    "ATATT3xFfGF0kSxqsxW2VQB1HDoEK2a7Imd9ORnLk648J2sekIcpmqhL38amLPZHtYngemmMU3tCpbe3IykSL5dsvoNCDZot9vAtITRX7UBDJ_isvP2f0z_gZCu48PPy9tK_2YvwVomoY9h9REsDQVO0r97T_geEW6fH2sJji1r7djRFmlCPTjg=E5CC331B";
   const projectKey =
     process.env["JIRA_PROJECT_KEY"] ||
     process.env["VITE_JIRA_PROJECT_KEY"] ||
@@ -284,7 +284,6 @@ async function createIssue(
     description,
     issuetype: { name: issueType === "Subtask" ? "Subtask" : "Task" },
     assignee: { accountId: JANE_GRACY_ACCOUNT_ID },
-    reporter: { accountId: JANE_GRACY_ACCOUNT_ID },
   };
 
   if (issueType === "Subtask" && parentKey) {

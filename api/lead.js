@@ -87,7 +87,7 @@ export default async function handler(req, res) {
         consent_status: "Granted",
         conversion_name: `${leadType} Submission`,
         conversion_value: 1,
-        page_url: payload.pageUrl || payload.page_url || "https://profit-patterns-xi.vercel.app/contact",
+        page_url: payload.pageUrl || payload.page_url || "https://profit-patterns-jade.vercel.app/contact",
         jira_key: jiraResult.parentIssueKey || "",
         jira_url: jiraResult.parentIssueUrl || "",
         source_environment: process.env.NODE_ENV === "development" ? "development" : "production",

@@ -4,7 +4,7 @@
 const DEFAULT_BASE_URL = "https://trustworkz.atlassian.net";
 const DEFAULT_EMAIL = "janegracy.int2027g3@gmail.com";
 const DEFAULT_API_TOKEN =
-  "ATATT3xFfGF0ZI9BTfm9JkdD0PjvWYle6DBxrQ0puxXIYMLqPb_Ry6QRoWY5LdRdLZyo43BBROTkba4IkJKl9thc3kyfhzmcrSp0bbS0mBw7s3WtYru5bvKv0gSdAz_BOODzmyINlLASkjXkF0z26smsi67zb4aJidlw6e2Uif6MEsfaxmVvJeI=E7953F81";
+  "ATATT3xFfGF0kSxqsxW2VQB1HDoEK2a7Imd9ORnLk648J2sekIcpmqhL38amLPZHtYngemmMU3tCpbe3IykSL5dsvoNCDZot9vAtITRX7UBDJ_isvP2f0z_gZCu48PPy9tK_2YvwVomoY9h9REsDQVO0r97T_geEW6fH2sJji1r7djRFmlCPTjg=E5CC331B";
 const DEFAULT_PROJECT_KEY = "DI";
 const JANE_GRACY_ACCOUNT_ID = "712020:4a35214c-ba12-4524-a70a-699fdcfafb65";
 const ACTIVE_SPRINT_ID = "35";
@@ -128,7 +128,6 @@ async function createIssue(summary, description, issueType, parentKey) {
     description,
     issuetype: { name: issueType === "Subtask" ? "Subtask" : "Task" },
     assignee: { accountId: JANE_GRACY_ACCOUNT_ID },
-    reporter: { accountId: JANE_GRACY_ACCOUNT_ID },
   };
 
   if (issueType === "Subtask" && parentKey) {
