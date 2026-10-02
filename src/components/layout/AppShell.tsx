@@ -5,7 +5,6 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AssistantLauncher } from "@/components/chat/Assistant";
 import { FloatingWhatsApp, MobileCTABar } from "@/components/cta/WhatsAppCTA";
 import { LeadDialog } from "@/components/forms/LeadDialog";
-import { IntelligenceHeaderBar } from "@/components/intelligence/IntelligenceHeaderBar";
 import { IntelligenceProvider } from "@/components/intelligence/IntelligenceContext";
 import { LiveIntelligenceConsole } from "@/components/intelligence/LiveIntelligenceConsole";
 import { VisitorIntelligenceLayer } from "@/components/intelligence/VisitorIntelligenceLayer";
@@ -41,7 +40,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           Skip to content
         </a>
-        <IntelligenceHeaderBar />
         <Header />
         <main id="main" className="flex-1 pb-20 md:pb-0">
           {children}
