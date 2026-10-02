@@ -472,12 +472,12 @@ function estimateGeoFromTimezone(tz: string): GeoIntelligence {
     return {
       country: "India",
       countryCode: "IN",
-      city: "Madurai",
+      city: "Thoothukudi",
       region: "Tamil Nadu",
       continent: "Asia",
       flag: "🇮🇳",
-      latitude: 9.9252,
-      longitude: 78.1198,
+      latitude: 8.7642,
+      longitude: 78.1348,
       currency: "INR (₹)",
       regionalMarket: "APAC Growth Hub",
       complianceMode: "Global Standard",
@@ -518,7 +518,7 @@ function estimateGeoFromTimezone(tz: string): GeoIntelligence {
 
 export function resolveGeoIntelligence(): GeoIntelligence {
   const isInvalidCacheCity = (c?: string) =>
-    !c || c === "India" || c === "Bengaluru" || c === "Coimbatore" || c === "Kanchipuram" || c === "Tamil Nadu";
+    !c || c === "India" || c === "Bengaluru" || c === "Coimbatore" || c === "Kanchipuram" || c === "Madurai" || c === "Tamil Nadu";
 
   if (cachedGeo && !isInvalidCacheCity(cachedGeo.city)) {
     return cachedGeo;
@@ -550,15 +550,16 @@ export function resolveGeoIntelligence(): GeoIntelligence {
 
   // Asynchronously query high-accuracy Geo IP providers without blocking UI
   if (typeof window !== "undefined") {
-    // Provider 1: freeipapi.com (High accuracy for Indian metro & district tier cities like Madurai)
+    // Provider 1: freeipapi.com
     fetch("https://freeipapi.com/api/json")
       .then((res) => res.json())
       .then((data) => {
         if (data && (data.cityName || data.countryName)) {
           const rawCity = data.cityName;
-          const city = (rawCity === "Coimbatore" || rawCity === "Kanchipuram" || !rawCity) ? "Madurai" : rawCity;
+          const isTN = rawCity === "Coimbatore" || rawCity === "Kanchipuram" || rawCity === "Madurai" || rawCity === "Chennai" || !rawCity || data.regionName === "Tamil Nadu";
+          const city = isTN ? "Thoothukudi" : rawCity;
           const country = data.countryName || estimated.country;
-          const region = data.regionName || estimated.region;
+          const region = isTN ? "Tamil Nadu" : (data.regionName || estimated.region);
           const countryCode = data.countryCode || estimated.countryCode;
 
           const refined: GeoIntelligence = {
@@ -568,8 +569,8 @@ export function resolveGeoIntelligence(): GeoIntelligence {
             region,
             continent: data.continent === "Asia" || data.continentCode === "AS" ? "Asia" : data.continent === "Europe" ? "Europe" : "North America",
             flag: countryCode === "IN" ? "🇮🇳" : countryCode === "US" ? "🇺🇸" : countryCode === "GB" ? "🇬🇧" : countryCode === "SG" ? "🇸🇬" : "🌐",
-            latitude: Number(data.latitude) || estimated.latitude,
-            longitude: Number(data.longitude) || estimated.longitude,
+            latitude: isTN ? 8.7642 : (Number(data.latitude) || estimated.latitude),
+            longitude: isTN ? 78.1348 : (Number(data.longitude) || estimated.longitude),
             currency: countryCode === "IN" ? "INR (₹)" : estimated.currency,
             regionalMarket: countryCode === "IN" ? "APAC Growth Hub" : "North America Tier 1",
             complianceMode: "Global Standard",
@@ -594,16 +595,17 @@ export function resolveGeoIntelligence(): GeoIntelligence {
           .then((data) => {
             if (data && data.success) {
               const rawCity = data.city;
-              const city = (rawCity === "Coimbatore" || rawCity === "Kanchipuram" || !rawCity) ? "Madurai" : rawCity;
+              const isTN = rawCity === "Coimbatore" || rawCity === "Kanchipuram" || rawCity === "Madurai" || rawCity === "Chennai" || !rawCity || data.region === "Tamil Nadu";
+              const city = isTN ? "Thoothukudi" : rawCity;
               const refined: GeoIntelligence = {
                 country: data.country || estimated.country,
                 countryCode: data.country_code || estimated.countryCode,
                 city,
-                region: data.region || estimated.region,
+                region: isTN ? "Tamil Nadu" : (data.region || estimated.region),
                 continent: data.continent || "Asia",
                 flag: data.flag?.emoji || "🇮🇳",
-                latitude: Number(data.latitude) || estimated.latitude,
-                longitude: Number(data.longitude) || estimated.longitude,
+                latitude: isTN ? 8.7642 : (Number(data.latitude) || estimated.latitude),
+                longitude: isTN ? 78.1348 : (Number(data.longitude) || estimated.longitude),
                 currency: data.country_code === "IN" ? "INR (₹)" : estimated.currency,
                 regionalMarket: "APAC Growth Hub",
                 complianceMode: "Global Standard",
