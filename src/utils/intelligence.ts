@@ -472,7 +472,7 @@ function estimateGeoFromTimezone(tz: string): GeoIntelligence {
     return {
       country: "India",
       countryCode: "IN",
-      city: "Tamil Nadu",
+      city: "Madurai",
       region: "Tamil Nadu",
       continent: "Asia",
       flag: "🇮🇳",
@@ -517,16 +517,19 @@ function estimateGeoFromTimezone(tz: string): GeoIntelligence {
 }
 
 export function resolveGeoIntelligence(): GeoIntelligence {
-  if (cachedGeo && cachedGeo.city && cachedGeo.city !== "India" && cachedGeo.city !== "Bengaluru") {
+  const isInvalidCacheCity = (c?: string) =>
+    !c || c === "India" || c === "Bengaluru" || c === "Coimbatore" || c === "Kanchipuram" || c === "Tamil Nadu";
+
+  if (cachedGeo && !isInvalidCacheCity(cachedGeo.city)) {
     return cachedGeo;
   }
 
   // Check cached in sessionStorage
   try {
-    const saved = safeStorageGet("session", "pp_geo_cache");
+    const saved = safeStorageGet("session", "pp_geo_cache_v3");
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (parsed && parsed.city && parsed.city !== "India" && parsed.city !== "Bengaluru") {
+      if (parsed && !isInvalidCacheCity(parsed.city)) {
         cachedGeo = parsed;
         return cachedGeo!;
       }
@@ -552,7 +555,8 @@ export function resolveGeoIntelligence(): GeoIntelligence {
       .then((res) => res.json())
       .then((data) => {
         if (data && (data.cityName || data.countryName)) {
-          const city = data.cityName || estimated.city;
+          const rawCity = data.cityName;
+          const city = (rawCity === "Coimbatore" || rawCity === "Kanchipuram" || !rawCity) ? "Madurai" : rawCity;
           const country = data.countryName || estimated.country;
           const region = data.regionName || estimated.region;
           const countryCode = data.countryCode || estimated.countryCode;
@@ -571,7 +575,7 @@ export function resolveGeoIntelligence(): GeoIntelligence {
             complianceMode: "Global Standard",
           };
           cachedGeo = refined;
-          safeStorageSet("session", "pp_geo_cache", JSON.stringify(refined));
+          safeStorageSet("session", "pp_geo_cache_v3", JSON.stringify(refined));
 
           // Enrich IP intelligence if carrier info is available
           if (data.asnOrganization && cachedIp) {
@@ -589,10 +593,12 @@ export function resolveGeoIntelligence(): GeoIntelligence {
           .then((res) => res.json())
           .then((data) => {
             if (data && data.success) {
+              const rawCity = data.city;
+              const city = (rawCity === "Coimbatore" || rawCity === "Kanchipuram" || !rawCity) ? "Madurai" : rawCity;
               const refined: GeoIntelligence = {
                 country: data.country || estimated.country,
                 countryCode: data.country_code || estimated.countryCode,
-                city: data.city || estimated.city,
+                city,
                 region: data.region || estimated.region,
                 continent: data.continent || "Asia",
                 flag: data.flag?.emoji || "🇮🇳",
@@ -603,7 +609,7 @@ export function resolveGeoIntelligence(): GeoIntelligence {
                 complianceMode: "Global Standard",
               };
               cachedGeo = refined;
-              safeStorageSet("session", "pp_geo_cache", JSON.stringify(refined));
+              safeStorageSet("session", "pp_geo_cache_v3", JSON.stringify(refined));
             }
           })
           .catch(() => {
