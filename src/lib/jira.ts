@@ -26,11 +26,11 @@ export function getJiraConfig() {
   const email =
     process.env["JIRA_EMAIL"] ||
     process.env["VITE_JIRA_EMAIL"] ||
-    "asmitha.int2027g3@gmail.com";
+    "janegracy.int2027g3@gmail.com";
   const apiToken =
     process.env["JIRA_API_TOKEN"] ||
     process.env["VITE_JIRA_API_TOKEN"] ||
-    "ATATT3xFfGF0JoxzMyLRSgTCMFyHLwpwAq0IUJ9m-v_tV5rGF9H0vd__j1kDJw4PxztxdGvX46dB2u0WtTTxdqysjPR06GjLNF0iUigNmWymn4I1lEtf55v4Gym1uSkpynSayg9EKujVlUPJIyL0R2lpvRKRyzISCtP1J-w4mzT7HYvT40VFIZM=874B6BD6";
+    "ATATT3xFfGF0ZI9BTfm9JkdD0PjvWYle6DBxrQ0puxXIYMLqPb_Ry6QRoWY5LdRdLZyo43BBROTkba4IkJKl9thc3kyfhzmcrSp0bbS0mBw7s3WtYru5bvKv0gSdAz_BOODzmyINlLASkjXkF0z26smsi67zb4aJidlw6e2Uif6MEsfaxmVvJeI=E7953F81";
   const projectKey =
     process.env["JIRA_PROJECT_KEY"] ||
     process.env["VITE_JIRA_PROJECT_KEY"] ||

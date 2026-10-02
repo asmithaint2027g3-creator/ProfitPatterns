@@ -2,9 +2,9 @@
 // Self-contained Jira Integration Helper for Vercel Serverless Functions
 
 const DEFAULT_BASE_URL = "https://trustworkz.atlassian.net";
-const DEFAULT_EMAIL = "asmitha.int2027g3@gmail.com";
+const DEFAULT_EMAIL = "janegracy.int2027g3@gmail.com";
 const DEFAULT_API_TOKEN =
-  "ATATT3xFfGF0JoxzMyLRSgTCMFyHLwpwAq0IUJ9m-v_tV5rGF9H0vd__j1kDJw4PxztxdGvX46dB2u0WtTTxdqysjPR06GjLNF0iUigNmWymn4I1lEtf55v4Gym1uSkpynSayg9EKujVlUPJIyL0R2lpvRKRyzISCtP1J-w4mzT7HYvT40VFIZM=874B6BD6";
+  "ATATT3xFfGF0ZI9BTfm9JkdD0PjvWYle6DBxrQ0puxXIYMLqPb_Ry6QRoWY5LdRdLZyo43BBROTkba4IkJKl9thc3kyfhzmcrSp0bbS0mBw7s3WtYru5bvKv0gSdAz_BOODzmyINlLASkjXkF0z26smsi67zb4aJidlw6e2Uif6MEsfaxmVvJeI=E7953F81";
 const DEFAULT_PROJECT_KEY = "DI";
 const JANE_GRACY_ACCOUNT_ID = "712020:4a35214c-ba12-4524-a70a-699fdcfafb65";
 const ACTIVE_SPRINT_ID = "35";
