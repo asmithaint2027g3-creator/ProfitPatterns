@@ -54,14 +54,14 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize opening message from Arya
+  // Initialize opening message from ProfitAI
   useEffect(() => {
     if (!open || messages.length > 0) return;
     track("chat_open", { isRepeatVisitor, visitCount });
 
     const initialText = isRepeatVisitor
-      ? `${greeting}! Welcome back to ProfitPatterns — great to see you again for visit #${visitCount}! I'm Arya, a senior consultant here. What sort of profit optimization or AI strategy requirements are you exploring today?`
-      : "Hi, Welcome to ProfitPatterns! I'm Arya, a senior consultant here. What sort of profit optimization or AI strategy requirements are you exploring today?";
+      ? `${greeting}! Welcome back to ProfitPatterns — great to see you again for visit #${visitCount}! I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`
+      : "Hi, Welcome to ProfitPatterns! I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?";
 
     const welcomeMsg: ChatMessage = {
       id: generateId(),
@@ -113,7 +113,7 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
           company: "Not specified",
           requirement: contextNote,
           challenge: text,
-          form_name: "Arya AI Assistant",
+          form_name: "ProfitAI Assistant",
           source: "assistant_chatbot",
         });
 
@@ -322,7 +322,7 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
     <div
       role="dialog"
       aria-modal="false"
-      aria-label="Arya - Senior Consultant"
+      aria-label="ProfitAI - AI & Profit Strategist"
       className="fixed bottom-24 right-4 z-50 flex h-[min(36rem,calc(100vh-7.5rem))] w-[min(25rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl transition-all duration-200 md:bottom-24 md:right-6"
     >
       {/* ── TOP HEADER (Royal Blue matching reference screenshot) ── */}
@@ -339,10 +339,10 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
 
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
-              <span className="font-bold text-base text-white tracking-tight leading-none">Arya</span>
+              <span className="font-bold text-base text-white tracking-tight leading-none">ProfitAI</span>
             </div>
             <span className="text-[10px] font-semibold text-blue-100 tracking-wider uppercase mt-1">
-              SENIOR CONSULTANT
+              AI & PROFIT STRATEGIST
             </span>
           </div>
         </div>
@@ -499,7 +499,7 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
             type="text"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Ask Arya or paste files..."
+            placeholder="Ask ProfitAI or paste files..."
             className="flex-1 bg-transparent py-1 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none"
           />
 
@@ -554,7 +554,7 @@ export function AssistantLauncher({
       {/* Floating launcher trigger */}
       <button
         onClick={() => setOpen(!open)}
-        aria-label={open ? "Close Arya Chatbot" : "Chat with Arya - Senior Consultant"}
+        aria-label={open ? "Close ProfitAI Chatbot" : "Chat with ProfitAI - AI & Profit Strategist"}
         aria-expanded={open}
         className="fixed bottom-20 right-4 z-40 flex items-center gap-2.5 rounded-full bg-[#185ADB] px-4 py-3 text-white shadow-lg shadow-blue-600/30 transition-all hover:scale-105 hover:bg-blue-700 md:bottom-6 md:right-6 group cursor-pointer"
       >
@@ -569,7 +569,7 @@ export function AssistantLauncher({
           )}
         </div>
         <span className="text-sm font-semibold pr-1">
-          {open ? "Close" : "Chat with Arya"}
+          {open ? "Close" : "Chat with ProfitAI"}
         </span>
       </button>
     </>
