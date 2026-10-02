@@ -16,30 +16,28 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <IntelligenceProvider>
-      {/* VisitorIntelligenceLayer sits OUTSIDE the main flex column
-          so the banner can use position:fixed without layout side-effects */}
       <VisitorIntelligenceLayer
         onOpenChatbot={() => setChatOpen(true)}
         onRegisterChatbotOpener={(fn) => { chatOpenerRef.current = fn; }}
-      />
-
-      <div className="flex min-h-screen flex-col">
-        <a
-          href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
-        >
-          Skip to content
-        </a>
-        <Header />
-        <main id="main" className="flex-1 pb-20 md:pb-0">
-          {children}
-        </main>
-        <Footer />
-        <FloatingWhatsApp />
-        <AssistantLauncher externalOpen={chatOpen} onExternalOpenChange={setChatOpen} />
-        <MobileCTABar onOpenForm={() => setLeadOpen(true)} />
-        <LeadDialog open={leadOpen} onOpenChange={setLeadOpen} source="mobile_bar" />
-      </div>
+      >
+        <div className="flex min-h-screen flex-col">
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+          >
+            Skip to content
+          </a>
+          <Header />
+          <main id="main" className="flex-1 pb-20 md:pb-0">
+            {children}
+          </main>
+          <Footer />
+          <FloatingWhatsApp />
+          <AssistantLauncher externalOpen={chatOpen} onExternalOpenChange={setChatOpen} />
+          <MobileCTABar onOpenForm={() => setLeadOpen(true)} />
+          <LeadDialog open={leadOpen} onOpenChange={setLeadOpen} source="mobile_bar" />
+        </div>
+      </VisitorIntelligenceLayer>
     </IntelligenceProvider>
   );
 }

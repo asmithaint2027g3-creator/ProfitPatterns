@@ -49,9 +49,9 @@ const GENERIC_ERROR = "We couldn't send your message just now. Please try again,
 // ─── Google Sheets (via Apps Script) ─────────────────────────────────────────
 
 const APPS_SCRIPT_URL =
-  process.env["VITE_ANALYTICS_URL"] ||
-  process.env["APPS_SCRIPT_URL"] ||
-  "https://script.google.com/macros/s/AKfycbxjPnnzlg1lE6bUYGq9rvQ1V-mfcmPo-cEkm9LXQqIk90_rg4Uva6Cjuv-meYVVUVYvFA/exec";
+  (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_ANALYTICS_URL) ||
+  (typeof process !== "undefined" && process.env && (process.env["VITE_ANALYTICS_URL"] || process.env["APPS_SCRIPT_URL"])) ||
+  "https://script.google.com/macros/s/AKfycbxUuc-vYhkvIByUF1bDTTmkZjacfDGix749tEKGYn5PALUDLWO5TTI-2GjoKc85f6Hg/exec";
 
 async function forwardLeadToGoogleSheets(leadPayload: Record<string, unknown>): Promise<void> {
   try {
@@ -290,6 +290,8 @@ export const submitQuickLead = createServerFn({ method: "POST" })
         page_url: pageUrl,
         page_path: clean(data.page) ?? "/contact",
         source_environment: "production",
+        // 3-Layer Intelligence (forwarded from browser)
+        ...(data.intelligenceMeta ?? {}),
       },
     });
 
@@ -356,6 +358,8 @@ export const submitConsultationLead = createServerFn({ method: "POST" })
         page_url: pageUrl,
         page_path: clean(data.page) ?? "/contact",
         source_environment: "production",
+        // 3-Layer Intelligence (forwarded from browser)
+        ...(data.intelligenceMeta ?? {}),
       },
     });
 
@@ -402,6 +406,8 @@ export const submitChatLead = createServerFn({ method: "POST" })
         page_url: pageUrl,
         page_path: clean(data.page) ?? "/",
         source_environment: "production",
+        // 3-Layer Intelligence (forwarded from browser)
+        ...(data.intelligenceMeta ?? {}),
       },
     });
 
@@ -468,6 +474,8 @@ export const submitAuditLead = createServerFn({ method: "POST" })
         page_url: pageUrl,
         page_path: clean(data.page) ?? "/audit-submission",
         source_environment: "production",
+        // 3-Layer Intelligence (forwarded from browser)
+        ...(data.intelligenceMeta ?? {}),
       },
     });
 

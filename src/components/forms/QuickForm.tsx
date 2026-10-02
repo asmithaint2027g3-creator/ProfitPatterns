@@ -7,6 +7,7 @@ import { track } from "@/lib/analytics";
 import { quickLeadSchema } from "@/lib/leads";
 import { submitQuickLead } from "@/lib/leads.functions";
 import { trackLead } from "@/utils/analytics";
+import { useVisitorContext } from "@/components/intelligence/VisitorIntelligenceLayer";
 
 const REQUIREMENTS = [
   "AI Opportunity Diagnostic",
@@ -34,19 +35,27 @@ export function QuickForm({ source = "quick_form" }: { source?: string }) {
   const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
   const submitting = useRef(false);
+  const { setFormTouched, setFormProgress } = useVisitorContext();
 
   useEffect(() => {
     track("quick_form_open", { source });
   }, [source]);
 
   function set(field: keyof typeof EMPTY, value: string) {
-    setValues((v) => ({ ...v, [field]: value }));
+    setFormTouched(true);
+    const updated = { ...values, [field]: value };
+    setValues(updated);
     setErrors((e) => {
       const next = { ...e };
       delete next[field];
       delete next.form;
       return next;
     });
+
+    // Compute progress across fields
+    const trackFields = ["name", "email", "phone", "company", "requirement", "message"] as const;
+    const filledCount = trackFields.filter((k) => updated[k].trim().length > 0).length;
+    setFormProgress(Math.round((filledCount / trackFields.length) * 100));
   }
 
   async function onSubmit(event: React.FormEvent) {

@@ -472,12 +472,12 @@ function estimateGeoFromTimezone(tz: string): GeoIntelligence {
     return {
       country: "India",
       countryCode: "IN",
-      city: "Madurai",
-      region: "Tamil Nadu",
+      city: "", // Populated dynamically from visitor's real IP detection
+      region: "India",
       continent: "Asia",
       flag: "🇮🇳",
-      latitude: 9.9252,
-      longitude: 78.1198,
+      latitude: 20.5937,
+      longitude: 78.9629,
       currency: "INR (₹)",
       regionalMarket: "APAC Growth Hub",
       complianceMode: "Global Standard",
@@ -518,15 +518,15 @@ function estimateGeoFromTimezone(tz: string): GeoIntelligence {
 
 export function resolveGeoIntelligence(): GeoIntelligence {
   const isInvalidCacheCity = (c?: string) =>
-    !c || c === "India" || c === "Bengaluru" || c === "Coimbatore" || c === "Kanchipuram" || c === "Tamil Nadu";
+    !c || c === "Unknown" || c === "(Detecting...)";
 
   if (cachedGeo && !isInvalidCacheCity(cachedGeo.city)) {
     return cachedGeo;
   }
 
-  // Check cached in sessionStorage
+  // Check cached in sessionStorage (v4 - real visitor geolocation)
   try {
-    const saved = safeStorageGet("session", "pp_geo_cache_v3");
+    const saved = safeStorageGet("session", "pp_geo_cache_v4");
     if (saved) {
       const parsed = JSON.parse(saved);
       if (parsed && !isInvalidCacheCity(parsed.city)) {
@@ -550,13 +550,12 @@ export function resolveGeoIntelligence(): GeoIntelligence {
 
   // Asynchronously query high-accuracy Geo IP providers without blocking UI
   if (typeof window !== "undefined") {
-    // Provider 1: freeipapi.com (High accuracy for Indian metro & district tier cities like Madurai)
+    // Provider 1: freeipapi.com (Uses real visitor location)
     fetch("https://freeipapi.com/api/json")
       .then((res) => res.json())
       .then((data) => {
         if (data && (data.cityName || data.countryName)) {
-          const rawCity = data.cityName;
-          const city = (rawCity === "Coimbatore" || rawCity === "Kanchipuram" || !rawCity) ? "Madurai" : rawCity;
+          const city = data.cityName || "";
           const country = data.countryName || estimated.country;
           const region = data.regionName || estimated.region;
           const countryCode = data.countryCode || estimated.countryCode;
@@ -575,7 +574,7 @@ export function resolveGeoIntelligence(): GeoIntelligence {
             complianceMode: "Global Standard",
           };
           cachedGeo = refined;
-          safeStorageSet("session", "pp_geo_cache_v3", JSON.stringify(refined));
+          safeStorageSet("session", "pp_geo_cache_v4", JSON.stringify(refined));
 
           // Enrich IP intelligence if carrier info is available
           if (data.asnOrganization && cachedIp) {
@@ -588,28 +587,27 @@ export function resolveGeoIntelligence(): GeoIntelligence {
         }
       })
       .catch(() => {
-        // Provider 2 fallback: ipwho.is
+        // Provider 2 fallback: ipwho.is (Uses real visitor location)
         fetch("https://ipwho.is/")
           .then((res) => res.json())
           .then((data) => {
             if (data && data.success) {
-              const rawCity = data.city;
-              const city = (rawCity === "Coimbatore" || rawCity === "Kanchipuram" || !rawCity) ? "Madurai" : rawCity;
+              const city = data.city || "";
               const refined: GeoIntelligence = {
                 country: data.country || estimated.country,
                 countryCode: data.country_code || estimated.countryCode,
                 city,
                 region: data.region || estimated.region,
                 continent: data.continent || "Asia",
-                flag: data.flag?.emoji || "🇮🇳",
+                flag: data.flag?.emoji || "🌐",
                 latitude: Number(data.latitude) || estimated.latitude,
                 longitude: Number(data.longitude) || estimated.longitude,
                 currency: data.country_code === "IN" ? "INR (₹)" : estimated.currency,
-                regionalMarket: "APAC Growth Hub",
+                regionalMarket: data.country_code === "IN" ? "APAC Growth Hub" : "North America Tier 1",
                 complianceMode: "Global Standard",
               };
               cachedGeo = refined;
-              safeStorageSet("session", "pp_geo_cache_v3", JSON.stringify(refined));
+              safeStorageSet("session", "pp_geo_cache_v4", JSON.stringify(refined));
             }
           })
           .catch(() => {

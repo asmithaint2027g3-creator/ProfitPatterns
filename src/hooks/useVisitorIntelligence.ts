@@ -1,41 +1,45 @@
 /**
  * useVisitorIntelligence
  * ---------------------
- * Central hook for visitor intelligence features.
- * Tracks visit count, milestone return visits (1st, 2nd, 3rd, 4th, 5+),
- * last visited page, time-of-day greetings, idle state, and scroll progress.
+ * Central hook for all visitor intelligence features.
+ * Uses localStorage / sessionStorage only — no backend, no cookies needed.
+ *
+ * Features tracked:
+ *  1. Visit count (repeat visitor detection)
+ *  2. Last visited page
+ *  3. Time-of-day greeting
+ *  4. Idle detection (30s)
+ *  5. Scroll depth
+ *  6. Form interaction / abandonment
+ *  7. Exit intent (mouseout on desktop)
+ *  8. Visit count badge (number shown on launcher)
+ *  9. Current page context (for chatbot intelligence)
  */
 
 import { useEffect, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
-const LS_VISIT_COUNT = "pp_visit_count";
-const SS_SESSION_KEY = "pp_session_active";
-const LS_LAST_PAGE   = "pp_last_page";
-const LS_LAST_LABEL  = "pp_last_label";
+const LS_VISIT_COUNT   = "pp_visit_count";
+const LS_LAST_PAGE     = "pp_last_page";    // previous session's last page
+const LS_LAST_LABEL    = "pp_last_label";   // previous session's last label
+const LS_VISIT_DATES   = "pp_visit_dates";  // JSON array of ISO date strings
+const SS_SESSION_GUARD = "pp_session_started"; // sessionStorage: marks this session has initialised
 
 export type TimeOfDay = "morning" | "afternoon" | "evening" | "night";
-
-export interface VisitorHeadline {
-  badge: string;
-  headline: string;
-  subtext: string;
-  ctaText: string;
-  ctaLink: string;
-}
 
 export interface VisitorIntelligence {
   visitCount: number;          // total number of visits
   isRepeatVisitor: boolean;    // true if visitCount >= 2
   lastPagePath: string | null; // e.g. "/solutions"
   lastPageLabel: string | null;// e.g. "Solutions"
+  currentPageLabel: string;    // human label for the CURRENT page
   timeOfDay: TimeOfDay;        // morning/afternoon/evening/night
   greeting: string;            // "Good Morning" etc.
-  headlineData: VisitorHeadline; // Milestone-aware copy for banner
   isIdle: boolean;             // true after 30s no interaction
   hasScrolled: boolean;        // true after 300px scroll
   formTouched: boolean;        // true if any input was interacted with
   setFormTouched: (v: boolean) => void;
+  visitDates: string[];        // ISO date strings of all visit timestamps
 }
 
 function getTimeOfDay(): TimeOfDay {
@@ -57,124 +61,97 @@ function getGreeting(tod: TimeOfDay): string {
 
 /** Human-readable label for common routes */
 export function labelForPath(path: string): string {
-  const clean = path.split("?")[0].split("#")[0];
   const map: Record<string, string> = {
     "/":                "Home",
     "/about":           "About Us",
-    "/icp":             "Ideal Customer Profile (ICP)",
-    "/solutions":       "Solutions Architecture",
-    "/services":        "Strategic Advisory",
-    "/contact":         "Advisory Contact Desk",
-    "/audit-submission":"14-Day Free AI Audit",
+    "/solutions":       "Solutions",
+    "/contact":         "Contact",
+    "/audit-submission":"AI Process Audit",
     "/who-we-serve":    "Who We Serve",
     "/industries":      "Industries",
     "/resources":       "Resources",
-    "/insights":        "Insights & Playbooks",
-    "/case-studies":    "Case Studies & ROI",
-    "/how-it-works":    "4-Phase Methodology",
+    "/insights":        "Insights",
+    "/case-studies":    "Case Studies",
+    "/how-it-works":    "How It Works",
     "/faq":             "FAQ",
+    "/services":        "Services",
+    "/icp":             "Ideal Client Profile (ICP)",
+    "/privacy":         "Privacy Policy",
+    "/terms":           "Terms of Service",
   };
-  if (map[clean]) return map[clean];
-  const parts = clean.split("/").filter(Boolean);
+  if (map[path]) return map[path];
+  // slug pages: "/solutions/ai-strategy" → "Solutions › AI Strategy"
+  const parts = path.split("/").filter(Boolean);
   if (parts.length >= 2) {
-    const parent = map["/" + parts[0]] ?? parts[0];
-    const child = parts[1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-    return `${parent} › ${child}`;
+    return `${map["/" + parts[0]] ?? parts[0]} › ${parts[1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}`;
   }
-  return clean || "Home";
-}
-
-/** Dynamic, milestone-aware copy based on 1st, 2nd, 3rd, 4th, 5+ visits */
-export function getMilestoneHeadline(visitCount: number, greeting: string): VisitorHeadline {
-  if (visitCount <= 1) {
-    return {
-      badge: "✨ FIRST VISIT",
-      headline: `${greeting}! Welcome to ProfitPatterns`,
-      subtext: "Discover how custom AI profit architectures eliminate operational leaks.",
-      ctaText: "Get Free 14-Day Audit",
-      ctaLink: "/audit-submission",
-    };
-  }
-
-  if (visitCount === 2) {
-    return {
-      badge: "👋 2ND VISIT",
-      headline: `Welcome back! (2nd visit)`,
-      subtext: "Exploring our profit systems? Identify your highest-leverage AI automation targets.",
-      ctaText: "Explore Solutions",
-      ctaLink: "/solutions",
-    };
-  }
-
-  if (visitCount === 3) {
-    return {
-      badge: "🔥 3RD VISIT",
-      headline: `Welcome back for your 3rd visit!`,
-      subtext: "You're exploring deeply! Ready to run your zero-risk 14-day operational diagnostic?",
-      ctaText: "Claim 14-Day Diagnostic",
-      ctaLink: "/audit-submission",
-    };
-  }
-
-  if (visitCount === 4) {
-    return {
-      badge: "⚡ 4TH VISIT",
-      headline: `4th Visit • Serious About Margin Expansion?`,
-      subtext: "Our senior profit architects can evaluate your operational bottlenecks on a 15-min call.",
-      ctaText: "Book 15-Min Call",
-      ctaLink: "/contact",
-    };
-  }
-
-  // 5+ visits
-  return {
-    badge: `👑 VIP RETURN VISITOR • VISIT #${visitCount}`,
-    headline: `Welcome back (Visit #${visitCount})!`,
-    subtext: "Priority advisory queue is active. Connect directly with our lead strategist on WhatsApp or calendar.",
-    ctaText: "Priority Strategy Call",
-    ctaLink: "/contact",
-  };
+  return path;
 }
 
 export function useVisitorIntelligence(): VisitorIntelligence {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  // ── Visit count (session-aware with localStorage persistence) ──
+  // ── Visit count ──────────────────────────────────────────────
   const [visitCount] = useState<number>(() => {
     if (typeof window === "undefined") return 1;
     const raw = localStorage.getItem(LS_VISIT_COUNT);
-    const existing = raw ? parseInt(raw, 10) : 0;
-
-    // Check if new session or continued session
-    const isNewSession = !sessionStorage.getItem(SS_SESSION_KEY);
-    if (isNewSession) {
-      sessionStorage.setItem(SS_SESSION_KEY, "1");
-      const nextCount = existing + 1;
-      localStorage.setItem(LS_VISIT_COUNT, String(nextCount));
-      return nextCount;
-    }
-    return Math.max(1, existing);
+    const count = raw ? parseInt(raw, 10) + 1 : 1;
+    localStorage.setItem(LS_VISIT_COUNT, String(count));
+    return count;
   });
 
-  // ── Last page (stores previous page before navigation) ─────
+  // ── Visit dates (for analytics/history) ─────────────────────
+  const [visitDates] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = localStorage.getItem(LS_VISIT_DATES);
+      const dates: string[] = raw ? JSON.parse(raw) : [];
+      const now = new Date().toISOString();
+      dates.push(now);
+      const trimmed = dates.slice(-50); // Keep last 50
+      localStorage.setItem(LS_VISIT_DATES, JSON.stringify(trimmed));
+      return trimmed;
+    } catch {
+      return [];
+    }
+  });
+
+  // ── Last page (previous SESSION's final page) ────────────────
+  //
+  // Strategy: we read the stored last page ONCE on mount (before this session
+  // writes anything).  A sessionStorage sentinel ensures we only overwrite
+  // localStorage when the user actually navigates — not on the first render of
+  // a brand-new session, which would wipe the previous session's value before
+  // the popup can read it.
   const [lastPagePath] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
+    // If this is a fresh session (no sentinel yet), read the previous page
+    // from localStorage BEFORE we mark the session as started.
+    const isNewSession = !sessionStorage.getItem(SS_SESSION_GUARD);
+    if (isNewSession) {
+      // Mark session so subsequent renders don't re-read this
+      try { sessionStorage.setItem(SS_SESSION_GUARD, "1"); } catch {}
+    }
     return localStorage.getItem(LS_LAST_PAGE);
   });
+
   const [lastPageLabel] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     return localStorage.getItem(LS_LAST_LABEL);
   });
 
+  // Update stored page whenever the user navigates within the session
   useEffect(() => {
     localStorage.setItem(LS_LAST_PAGE, pathname);
     localStorage.setItem(LS_LAST_LABEL, labelForPath(pathname));
   }, [pathname]);
 
+  // ── Current page label (consumed by chatbot for context) ───────
+  const currentPageLabel = labelForPath(pathname);
+
   // ── Time of day ───────────────────────────────────────────────
   const [timeOfDay] = useState<TimeOfDay>(getTimeOfDay);
   const greeting = getGreeting(timeOfDay);
-  const headlineData = getMilestoneHeadline(visitCount, greeting);
 
   // ── Idle detection (30 seconds) ───────────────────────────────
   const [isIdle, setIsIdle] = useState(false);
@@ -189,7 +166,7 @@ export function useVisitorIntelligence(): VisitorIntelligence {
 
     const events = ["mousemove", "keydown", "scroll", "click", "touchstart"];
     events.forEach((e) => window.addEventListener(e, resetIdle, { passive: true }));
-    resetIdle();
+    resetIdle(); // start timer immediately
 
     return () => {
       events.forEach((e) => window.removeEventListener(e, resetIdle));
@@ -215,12 +192,13 @@ export function useVisitorIntelligence(): VisitorIntelligence {
     isRepeatVisitor: visitCount >= 2,
     lastPagePath,
     lastPageLabel,
+    currentPageLabel,
     timeOfDay,
     greeting,
-    headlineData,
     isIdle,
     hasScrolled,
     formTouched,
     setFormTouched,
+    visitDates,
   };
 }
