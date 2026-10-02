@@ -233,6 +233,14 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
             { label: "Request a Callback →", value: "request_callback", isPrimary: true },
             { label: "Our Services", value: "services" },
           ];
+        } else if (query.includes("email") || query.includes("contact") || query.includes("reach") || query.includes("mail")) {
+          replyText =
+            "You can reach our principal consulting desk directly at **asmitha.int2027g3@gmail.com** or connect with us on WhatsApp. Would you like to request a callback or schedule a discovery call?";
+          nextOptions = [
+            { label: "Request a Callback →", value: "request_callback", isPrimary: true },
+            { label: "Chat on WhatsApp", value: "whatsapp" },
+            { label: "Schedule Call", value: "calendar", link: "/contact" },
+          ];
         } else if (query.includes("hello") || query.includes("hi") || query.includes("hey")) {
           replyText = "Hello! How can I assist with your business AI and profit strategy today?";
           nextOptions = [
