@@ -14,7 +14,7 @@ export const siteConfig = {
   positioning: "AI Profit Strategy Consulting",
   description:
     "ProfitPatterns helps businesses identify practical opportunities across AI, automation, data and process optimization — turning technology into a strategy for better efficiency, smarter decisions and sustainable business value.",
-  email: "[INSERT VERIFIED BUSINESS EMAIL]",
+  email: "asmitha.int2027g3@gmail.com",
   phone: "[INSERT VERIFIED PHONE]",
   whatsapp: "[INSERT VERIFIED WHATSAPP NUMBER]",
   responseTime: "We respond within one business day.",
