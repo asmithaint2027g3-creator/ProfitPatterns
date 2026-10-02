@@ -31,6 +31,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 
 import { useVisitorIntelligence } from "@/hooks/useVisitorIntelligence";
 import { cn } from "@/lib/utils";
+import { trackEvent } from "@/utils/analytics";
 
 // ── Shared context so the chatbot can read repeat-visitor state ──
 interface VisitorCtx {
@@ -66,7 +67,7 @@ function TimeIcon({ tod }: { tod: string }) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// 1 + 3 + 5 — REPEAT VISITOR WELCOME BANNER
+// 1 + 3 + 5 — GREETING TOAST CARD (bottom-left floating card)
 // ─────────────────────────────────────────────────────────────────
 function WelcomeBanner({
   visitCount,
@@ -88,93 +89,101 @@ function WelcomeBanner({
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Slight delay so page renders first
-    const t = setTimeout(() => setVisible(true), 800);
-    return () => clearTimeout(t);
-  }, []);
-
-  if (!visible) return null;
+    // Slide in after 1.2s
+    const t = setTimeout(() => setVisible(true), 1200);
+    // Auto-dismiss after 9s
+    const autoDismiss = setTimeout(() => onDismiss(), 9000);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(autoDismiss);
+    };
+  }, [onDismiss]);
 
   const message = isRepeatVisitor
-    ? `Welcome back! Great to have you with us again.`
+    ? `Great to have you back with us!`
     : `Welcome to ProfitPatterns!`;
+
+  // Icon background gradient by time of day
+  const iconBg =
+    timeOfDay === "morning"   ? "from-amber-400 to-orange-400" :
+    timeOfDay === "afternoon" ? "from-orange-400 to-rose-400"  :
+    timeOfDay === "evening"   ? "from-rose-400 to-purple-500"  :
+                                "from-indigo-500 to-violet-600";
 
   return (
     <div
-      className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-transform duration-500",
-        visible ? "translate-y-0" : "-translate-y-full",
-      )}
-      role="banner"
+      role="status"
       aria-live="polite"
+      className={cn(
+        "fixed bottom-6 left-4 z-50 w-[310px] transition-all duration-500 ease-out sm:left-6",
+        visible
+          ? "translate-y-0 opacity-100"
+          : "translate-y-8 opacity-0 pointer-events-none",
+      )}
     >
-      <div className="bg-gradient-to-r from-[#1A1A1A] via-[#292929] to-[#1A1A1A] px-4 py-3 text-white shadow-lg">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-          {/* Left side */}
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex items-center gap-1.5 shrink-0">
+      {/* Card */}
+      <div
+        className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#1A1A1A]/95 shadow-2xl shadow-black/50 backdrop-blur-md"
+        style={{ boxShadow: "0 8px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06)" }}
+      >
+        {/* Subtle shimmer accent at top */}
+        <div className={cn("h-[3px] w-full bg-gradient-to-r", iconBg)} />
+
+        <div className="p-4">
+          {/* Header row */}
+          <div className="flex items-start justify-between gap-3">
+            {/* Icon circle */}
+            <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-white shadow-lg", iconBg)}>
               <TimeIcon tod={timeOfDay} />
-              <span className="text-sm font-semibold text-white">{greeting}!</span>
             </div>
 
-            <span className="hidden sm:inline text-[#A8A29E] text-xs">•</span>
+            {/* Text */}
+            <div className="flex-1 min-w-0">
+              <p className="text-[15px] font-bold text-white leading-tight">
+                {greeting}! 👋
+              </p>
+              <p className="mt-0.5 text-xs text-[#A8A29E] leading-snug">
+                {message}
+              </p>
+            </div>
 
-            <span className="text-xs text-[#D4C9B8] truncate">
-              {message}
-            </span>
-
-            {/* Last visited page alert */}
-            {isRepeatVisitor && lastPageLabel && lastPagePath && (
-              <>
-                <span className="hidden md:inline text-[#A8A29E] text-xs">•</span>
-                <div className="hidden md:flex items-center gap-1.5 text-xs text-[#C4B296]">
-                  <BookOpen className="size-3 shrink-0" />
-                  <span>Last time you visited:</span>
-                  <Link
-                    to={lastPagePath as "/"}
-                    className="font-semibold text-[#E8D9C0] hover:text-white transition-colors underline underline-offset-2"
-                  >
-                    {lastPageLabel}
-                  </Link>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Right side — CTA + Dismiss */}
-          <div className="flex items-center gap-2 shrink-0">
-            {isRepeatVisitor && (
-              <Link
-                to="/contact"
-                className="hidden sm:inline-flex items-center gap-1.5 rounded border border-[#C4B296]/40 bg-[#C4B296]/10 px-3 py-1 text-xs font-semibold text-[#E8D9C0] hover:bg-[#C4B296]/20 transition-colors"
-              >
-                <Sparkles className="size-3" />
-                Schedule a Call
-              </Link>
-            )}
+            {/* Dismiss */}
             <button
               onClick={onDismiss}
-              aria-label="Dismiss welcome banner"
-              className="rounded p-1 text-[#A8A29E] hover:text-white transition-colors cursor-pointer"
+              aria-label="Dismiss greeting"
+              className="shrink-0 rounded-full p-1 text-[#666] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
-              <X className="size-4" />
+              <X className="size-3.5" />
             </button>
           </div>
-        </div>
 
-        {/* Mobile: last visited page */}
-        {isRepeatVisitor && lastPageLabel && lastPagePath && (
-          <div className="md:hidden mt-1 flex items-center gap-1.5 text-xs text-[#C4B296]">
-            <BookOpen className="size-3 shrink-0" />
-            <span>Continue from:</span>
+          {/* Last visited page */}
+          {isRepeatVisitor && lastPageLabel && lastPagePath && (
+            <div className="mt-3 flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
+              <BookOpen className="size-3 shrink-0 text-[#C4B296]" />
+              <span className="text-[11px] text-[#A8A29E]">Last visit:</span>
+              <Link
+                to={lastPagePath as "/"}
+                onClick={onDismiss}
+                className="text-[11px] font-semibold text-[#E8D9C0] hover:text-white transition-colors truncate underline underline-offset-2"
+              >
+                {lastPageLabel}
+              </Link>
+            </div>
+          )}
+
+          {/* CTA row */}
+          {isRepeatVisitor && (
             <Link
-              to={lastPagePath as "/"}
-              className="font-semibold text-[#E8D9C0] hover:text-white transition-colors"
+              to="/contact"
+              onClick={onDismiss}
+              className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#C4B296]/30 bg-[#C4B296]/10 px-3 py-2 text-xs font-semibold text-[#E8D9C0] hover:bg-[#C4B296]/20 transition-colors"
             >
-              {lastPageLabel}
+              <Sparkles className="size-3" />
+              Schedule a Strategy Call
             </Link>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
@@ -184,20 +193,38 @@ function WelcomeBanner({
 // 4 — EXIT INTENT POPUP
 // ─────────────────────────────────────────────────────────────────
 function ExitIntentPopup({ onDismiss }: { onDismiss: () => void }) {
+  // ESC key listener & body scroll lock
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onDismiss();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [onDismiss]);
+
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
       onClick={onDismiss}
     >
       <div
-        className="relative w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-2xl"
+        className="relative w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-2xl animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Dismiss */}
         <button
           onClick={onDismiss}
           aria-label="Close"
-          className="absolute right-4 top-4 rounded-full p-1 text-muted-foreground hover:bg-secondary hover:text-foreground cursor-pointer"
+          className="absolute right-4 top-4 rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground cursor-pointer transition-colors"
         >
           <X className="size-4" />
         </button>
@@ -222,7 +249,7 @@ function ExitIntentPopup({ onDismiss }: { onDismiss: () => void }) {
           <Link
             to="/audit-submission"
             onClick={onDismiss}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#1A1A1A] px-5 py-3 text-sm font-semibold text-white hover:bg-[#2D2D2D] transition-colors"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#1A1A1A] px-5 py-3 text-sm font-semibold text-white hover:bg-[#2D2D2D] transition-colors shadow-md"
           >
             <Sparkles className="size-4" />
             Get My Free Audit
@@ -418,46 +445,97 @@ export function VisitorIntelligenceLayer({
     chatbotOpenerRef.current?.();
   }, [onOpenChatbot]);
 
-  // ── 4. Exit intent (triggers on mouse leaving top towards tab bar / close button) ─
+  // Dismiss handler with 5-minute snooze instead of permanent session lock
+  const handleDismissExit = useCallback(() => {
+    setShowExitPopup(false);
+    try {
+      sessionStorage.setItem("pp_exit_dismissed_until", String(Date.now() + 5 * 60 * 1000));
+    } catch {}
+  }, []);
+
+  // ── 4. Exit intent (triggers on mouse leaving top towards tab bar / close button or mobile rapid upscroll) ─
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    // Minimum delay of 1.5s so initial render doesn't prematurely trigger
+    let isReady = false;
+    const readyTimer = setTimeout(() => {
+      isReady = true;
+    }, 1500);
+
     const triggerExit = () => {
-      // In production, only show once per session; in dev, allow repeated testing unless currently open
-      if (!import.meta.env.DEV && sessionStorage.getItem("pp_exit_shown")) return;
-      sessionStorage.setItem("pp_exit_shown", "1");
+      if (!isReady) return;
+      try {
+        const dismissedUntil = sessionStorage.getItem("pp_exit_dismissed_until");
+        if (dismissedUntil && Date.now() < parseInt(dismissedUntil, 10)) {
+          return;
+        }
+      } catch {}
+
       setShowExitPopup(true);
+      try {
+        trackEvent("exit_intent_shown", {
+          event_category: "Engagement",
+          event_label: "Exit Intent Diagnostic Popup",
+        });
+      } catch {}
     };
 
-    // 1. Mouse leaves through the top of the viewport (classic exit intent)
+    // 1. Mouse leaves through the top of the viewport (classic desktop exit intent)
     const onMouseLeave = (e: MouseEvent) => {
-      if (e.clientY <= 25 || !e.relatedTarget) {
+      if (e.clientY <= 20) {
         triggerExit();
       }
     };
 
-    // 2. Mouse moves very close to top bar (< 15px)
+    // 2. Mouse moves very rapidly upward near top (< 12px)
     const onMouseMove = (e: MouseEvent) => {
-      if (e.clientY <= 15) {
+      if (e.clientY <= 12) {
         triggerExit();
       }
+    };
+
+    // 3. Mobile exit intent: scrolling up quickly after viewing page
+    let lastScrollY = window.scrollY;
+    let lastScrollTime = Date.now();
+    const onScroll = () => {
+      const currentScrollY = window.scrollY;
+      const now = Date.now();
+      const scrollDiff = lastScrollY - currentScrollY;
+      const timeDiff = now - lastScrollTime;
+
+      // If user has scrolled down past 250px and rapidly scrolls up by > 120px in < 250ms
+      if (lastScrollY > 250 && scrollDiff > 120 && timeDiff < 250) {
+        triggerExit();
+      }
+
+      lastScrollY = currentScrollY;
+      lastScrollTime = now;
     };
 
     // Dev / testing helpers exposed on window
-    (window as any).__showExitPopup = () => setShowExitPopup(true);
+    (window as any).__showExitPopup = () => {
+      try { sessionStorage.removeItem("pp_exit_dismissed_until"); } catch {}
+      setShowExitPopup(true);
+    };
     (window as any).__resetExitPopup = () => {
-      sessionStorage.removeItem("pp_exit_shown");
+      try { sessionStorage.removeItem("pp_exit_dismissed_until"); } catch {}
       setShowExitPopup(false);
     };
 
+    const handleCustomTrigger = () => triggerExit();
+    window.addEventListener("pp:trigger-exit-popup", handleCustomTrigger);
+
     document.documentElement.addEventListener("mouseleave", onMouseLeave);
-    document.addEventListener("mouseout", onMouseLeave);
     document.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
+      clearTimeout(readyTimer);
+      window.removeEventListener("pp:trigger-exit-popup", handleCustomTrigger);
       document.documentElement.removeEventListener("mouseleave", onMouseLeave);
-      document.removeEventListener("mouseout", onMouseLeave);
       document.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("scroll", onScroll);
     };
   }, []);
 
@@ -519,18 +597,11 @@ export function VisitorIntelligenceLayer({
         />
       )}
 
-      {/* Spacer so content isn't hidden behind banner */}
-      {!bannerDismissed && (
-        <div
-          className="h-[46px] transition-all duration-500"
-          aria-hidden="true"
-          id="welcome-banner-spacer"
-        />
-      )}
+      {/* No spacer needed — greeting is now a floating bottom-left card */}
 
       {/* 4 — Exit intent popup */}
       {showExitPopup && (
-        <ExitIntentPopup onDismiss={() => setShowExitPopup(false)} />
+        <ExitIntentPopup onDismiss={handleDismissExit} />
       )}
 
       {/* 6 — Idle chatbot nudge */}

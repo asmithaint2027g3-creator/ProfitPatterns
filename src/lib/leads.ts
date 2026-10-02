@@ -84,6 +84,48 @@ export const honeypotSchema = z.object({
   companyWebsiteHp: z.string().max(0, { message: "Submission rejected." }).optional(),
 });
 
+/** Optional browser-resolved intelligence metadata forwarded from client */
+export const intelligenceMetaSchema = z.object({
+  session_id: z.string().optional(),
+  visitor_id: z.string().optional(),
+  geo_country: z.string().optional(),
+  geo_city: z.string().optional(),
+  geo_region: z.string().optional(),
+  geo_continent: z.string().optional(),
+  geo_currency: z.string().optional(),
+  geo_market_tier: z.string().optional(),
+  timezone_iana: z.string().optional(),
+  timezone_utc_offset: z.string().optional(),
+  timezone_day_phase: z.string().optional(),
+  timezone_local_time: z.string().optional(),
+  traffic_source: z.string().optional(),
+  utm_source: z.string().optional(),
+  utm_medium: z.string().optional(),
+  utm_campaign: z.string().optional(),
+  referrer_url: z.string().optional(),
+  channel_roi_score: z.string().optional(),
+  first_touch_attribution: z.string().optional(),
+  funnel_stage: z.string().optional(),
+  user_intent: z.string().optional(),
+  bounce_risk: z.string().optional(),
+  session_dwell_seconds: z.number().optional(),
+  page_dwell_seconds: z.number().optional(),
+  interaction_count: z.number().optional(),
+  scroll_depth: z.number().optional(),
+  is_returning_visitor: z.boolean().optional(),
+  ip_network_type: z.string().optional(),
+  ip_fraud_risk_score: z.string().optional(),
+  ip_fraud_status: z.string().optional(),
+  ip_visit_velocity: z.number().optional(),
+  ip_corporate_intent: z.string().optional(),
+  security_tier: z.string().optional(),
+  predictive_synergy_score: z.string().optional(),
+  urgency_score: z.string().optional(),
+  enterprise_priority_level: z.string().optional(),
+  tailored_strategy: z.string().optional(),
+}).optional();
+export type IntelligenceMeta = z.infer<typeof intelligenceMetaSchema>;
+
 export const quickLeadSchema = honeypotSchema.extend({
   name: trimmed(100).min(2, { message: "Please enter your name." }),
   email: trimmed(255).email({ message: "Please enter a valid email address." }),
@@ -93,6 +135,7 @@ export const quickLeadSchema = honeypotSchema.extend({
   message: trimmed(1500).min(3, { message: "Please add a brief message (at least 3 characters)." }),
   page: trimmed(200).optional(),
   source: trimmed(120).optional(),
+  intelligenceMeta: intelligenceMetaSchema,
 });
 export type QuickLeadInput = z.infer<typeof quickLeadSchema>;
 
@@ -119,6 +162,7 @@ export const consultationLeadSchema = honeypotSchema.extend({
   preferredContactTime: trimmed(40).min(1, { message: "Please select a preferred time." }),
   page: trimmed(200).optional(),
   source: trimmed(120).optional(),
+  intelligenceMeta: intelligenceMetaSchema,
 });
 export type ConsultationLeadInput = z.infer<typeof consultationLeadSchema>;
 
@@ -130,6 +174,7 @@ export const chatLeadSchema = honeypotSchema.extend({
   businessProblem: trimmed(2000).min(3, { message: "Please describe the problem briefly." }),
   intent: trimmed(120).optional(),
   page: trimmed(200).optional(),
+  intelligenceMeta: intelligenceMetaSchema,
 });
 export type ChatLeadInput = z.infer<typeof chatLeadSchema>;
 
@@ -182,6 +227,7 @@ export const auditLeadSchema = honeypotSchema.extend({
   ndaRequested: z.boolean().default(true),
   page: trimmed(200).optional(),
   source: trimmed(120).optional(),
+  intelligenceMeta: intelligenceMetaSchema,
 });
 export type AuditLeadInput = z.infer<typeof auditLeadSchema>;
 
