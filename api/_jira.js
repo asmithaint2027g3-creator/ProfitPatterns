@@ -1,21 +1,21 @@
 // api/_jira.js
 // Self-contained Jira Integration Helper for Vercel Serverless Functions
 
-const DEFAULT_BASE_URL = "https://asmithaint2027g3.atlassian.net";
+const DEFAULT_BASE_URL = "https://trustworkz.atlassian.net";
 const DEFAULT_EMAIL = "asmitha.int2027g3@gmail.com";
 const DEFAULT_API_TOKEN =
   "ATATT3xFfGF0JoxzMyLRSgTCMFyHLwpwAq0IUJ9m-v_tV5rGF9H0vd__j1kDJw4PxztxdGvX46dB2u0WtTTxdqysjPR06GjLNF0iUigNmWymn4I1lEtf55v4Gym1uSkpynSayg9EKujVlUPJIyL0R2lpvRKRyzISCtP1J-w4mzT7HYvT40VFIZM=874B6BD6";
-const DEFAULT_PROJECT_KEY = "PP";
-const DEFAULT_ASSIGNEE_ID = "712020:cbf4c9bb-d905-45d9-ac86-02601a54dea4"; // Asmitha V
+const DEFAULT_PROJECT_KEY = "DI";
 
 // In-memory deduplication cache: key -> { key: string, timestamp: number }
 const recentLeads = new Map();
 
 export function getJiraConfig() {
-  const baseUrl =
+  const baseUrl = (
     process.env.JIRA_BASE_URL ||
     process.env.VITE_JIRA_BASE_URL ||
-    DEFAULT_BASE_URL;
+    DEFAULT_BASE_URL
+  ).replace(/\/+$/, "");
   const email =
     process.env.JIRA_EMAIL ||
     process.env.VITE_JIRA_EMAIL ||
@@ -123,17 +123,9 @@ async function createIssue(summary, description, issueType, parentKey) {
 
   if (issueType === "Subtask" && parentKey) {
     fields["parent"] = { key: parentKey };
-  } else {
-    fields["assignee"] = { id: DEFAULT_ASSIGNEE_ID };
   }
 
-  let result = await jiraPost("issue", { fields });
-
-  // If failed with 400 and assignee was set, retry without assignee as fallback
-  if (!result.ok && fields["assignee"]) {
-    delete fields["assignee"];
-    result = await jiraPost("issue", { fields });
-  }
+  const result = await jiraPost("issue", { fields });
 
   if (!result.ok || !result.data) {
     return { ok: false, error: result.error || "Failed to create issue" };

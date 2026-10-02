@@ -18,10 +18,11 @@
 // ─── Dynamic Config & Auth ───────────────────────────────────────────────────
 
 export function getJiraConfig() {
-  const baseUrl =
+  const baseUrl = (
     process.env["JIRA_BASE_URL"] ||
     process.env["VITE_JIRA_BASE_URL"] ||
-    "https://asmithaint2027g3.atlassian.net";
+    "https://trustworkz.atlassian.net"
+  ).replace(/\/+$/, "");
   const email =
     process.env["JIRA_EMAIL"] ||
     process.env["VITE_JIRA_EMAIL"] ||
@@ -33,7 +34,7 @@ export function getJiraConfig() {
   const projectKey =
     process.env["JIRA_PROJECT_KEY"] ||
     process.env["VITE_JIRA_PROJECT_KEY"] ||
-    "PP";
+    "DI";
   return { baseUrl, email, apiToken, projectKey };
 }
 
