@@ -5,7 +5,7 @@ import { createJiraLeadTask } from "./_jira.js";
 import { saveLeadToAirtable } from "./_airtable.js";
 
 const DEFAULT_APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbyOIQwm57GAUL1Jo_d_yP3ELGHTYXulzkqWV9KHOx7DXLloBLs430EL3dbmhZP89FQ/exec";
+  "https://script.google.com/macros/s/AKfycbxjPnnzlg1lE6bUYGq9rvQ1V-mfcmPo-cEkm9LXQqIk90_rg4Uva6Cjuv-meYVVUVYvFA/exec";
 
 export default async function handler(req, res) {
   // CORS configuration

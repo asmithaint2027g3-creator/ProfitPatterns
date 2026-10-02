@@ -4,7 +4,7 @@ import { getDigitalPresenceSnapshot } from "./intelligence";
 const PROXY_URL = "/api/analytics/collect";
 const FALLBACK_ANALYTICS_URL =
   import.meta.env.VITE_ANALYTICS_URL ||
-  "https://script.google.com/macros/s/AKfycbyOIQwm57GAUL1Jo_d_yP3ELGHTYXulzkqWV9KHOx7DXLloBLs430EL3dbmhZP89FQ/exec";
+  "https://script.google.com/macros/s/AKfycbxjPnnzlg1lE6bUYGq9rvQ1V-mfcmPo-cEkm9LXQqIk90_rg4Uva6Cjuv-meYVVUVYvFA/exec";
 
 // --------------------------------------------------
 // 1. GENERATE UNIQUE IDS & VISITOR STATE
