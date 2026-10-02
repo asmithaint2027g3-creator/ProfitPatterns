@@ -1,6 +1,4 @@
-// src/components/layout/AppShell.tsx
-import { useRouterState } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
 import { AssistantLauncher } from "@/components/chat/Assistant";
 import { FloatingWhatsApp, MobileCTABar } from "@/components/cta/WhatsAppCTA";
@@ -9,19 +7,12 @@ import { IntelligenceProvider } from "@/components/intelligence/IntelligenceCont
 import { VisitorIntelligenceLayer } from "@/components/intelligence/VisitorIntelligenceLayer";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
-import { track } from "@/lib/analytics";
-
 export function AppShell({ children }: { children: ReactNode }) {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [leadOpen, setLeadOpen] = useState(false);
 
   // Chatbot open state — lifted here so VisitorIntelligenceLayer can trigger it
   const [chatOpen, setChatOpen] = useState(false);
   const chatOpenerRef = useRef<(() => void) | null>(null);
-
-  useEffect(() => {
-    track("page_view", { page: pathname });
-  }, [pathname]);
 
   return (
     <IntelligenceProvider>

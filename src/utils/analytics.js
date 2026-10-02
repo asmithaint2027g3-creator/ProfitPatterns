@@ -184,8 +184,27 @@ function inferEventType(eventName) {
   return "custom_event";
 }
 
+let lastEventKey = "";
+let lastEventTime = 0;
+
 export async function trackEvent(eventName, details = {}) {
   if (typeof window === "undefined") return;
+
+  const currentPath = window.location.pathname || "/";
+  const eventKey = `${eventName}:${currentPath}:${details.event_label || ""}`;
+  const now = Date.now();
+
+  // Deduplicate identical events firing within 1200ms
+  if (
+    eventName !== "lead_submit" &&
+    eventName !== "form_submit" &&
+    eventKey === lastEventKey &&
+    now - lastEventTime < 1200
+  ) {
+    return;
+  }
+  lastEventKey = eventKey;
+  lastEventTime = now;
 
   const params = new URLSearchParams(window.location.search);
   const interactionCount = getAndIncrementInteractionCount();
@@ -194,7 +213,7 @@ export async function trackEvent(eventName, details = {}) {
   const sessionId = getSessionId();
 
   const elapsedOnPage = Math.max(1, Math.round((Date.now() - pageStartTime) / 1000));
-  const snap = getDigitalPresenceSnapshot(window.location.pathname || "/");
+  const snap = getDigitalPresenceSnapshot(currentPath);
 
   const payload = {
     // Core event identifiers
@@ -424,43 +443,21 @@ export function trackPageView(title) {
 
   const currentPath = window.location.pathname || "/";
   const pageTitle = title || document.title || "ProfitPatterns | AI Profit Strategy Consulting";
+  const contentType = derivePageContentType(currentPath);
+  const contentId = derivePageContentId(currentPath);
+  const params = new URLSearchParams(window.location.search);
+  const keyword = params.get("utm_term") || params.get("q") || deriveSearchKeyword(currentPath);
 
-  // 1. Standard Page View
+  // Single comprehensive page_view event with content & SEO intelligence embedded
   trackEvent("page_view", {
     event_type: "page_view",
     event_category: "Navigation",
     event_action: "page_view",
     event_label: pageTitle,
-    page_title: pageTitle
-  });
-
-  // 2. Guaranteed Content Performance Tracking
-  const contentType = derivePageContentType(currentPath);
-  const contentId = derivePageContentId(currentPath);
-  trackEvent("content_view", {
-    event_type: "content",
-    event_category: "Content",
-    event_action: "view",
+    page_title: pageTitle,
     content_type: contentType,
     content_id: contentId,
-    content_title: pageTitle,
-    engagement_seconds: 35,
-    scroll_percentage: 50,
-    cta_name: "Schedule Strategy Assessment"
-  });
-
-  // 3. Guaranteed SEO Performance Tracking
-  const params = new URLSearchParams(window.location.search);
-  const keyword = params.get("utm_term") || params.get("q") || deriveSearchKeyword(currentPath);
-  trackEvent("seo_performance", {
-    event_type: "seo_performance",
-    event_category: "SEO",
-    event_action: "record",
     search_query: keyword,
-    clicks: 1,
-    impressions: 18,
-    ctr: "5.5%",
-    average_position: "3.2"
   });
 }
 
