@@ -54,14 +54,15 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize opening message from Arya
+  // Initialize opening message from ProfitAI with repeat-visitor detection
   useEffect(() => {
     if (!open || messages.length > 0) return;
     track("chat_open", { isRepeatVisitor, visitCount });
 
-    const initialText = isRepeatVisitor
-      ? `${greeting}! Welcome back to ProfitPatterns — great to see you again for visit #${visitCount}! I'm Arya, a senior consultant here. What sort of profit optimization or AI strategy requirements are you exploring today?`
-      : "Hi, Welcome to ProfitPatterns! I'm Arya, a senior consultant here. What sort of profit optimization or AI strategy requirements are you exploring today?";
+    const isRepeat = isRepeatVisitor || visitCount > 1;
+    const initialText = isRepeat
+      ? `${greeting}! Welcome back 👋\n\nGreat to see you again for visit #${visitCount}! I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`
+      : `${greeting}! Welcome to ProfitPatterns. I'm ProfitAI, your AI & profit strategist. What sort of profit optimization or AI strategy requirements are you exploring today?`;
 
     const welcomeMsg: ChatMessage = {
       id: generateId(),
@@ -113,7 +114,7 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
           company: "Not specified",
           requirement: contextNote,
           challenge: text,
-          form_name: "Arya AI Assistant",
+          form_name: "ProfitAI Assistant",
           source: "assistant_chatbot",
         });
 
@@ -322,68 +323,70 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
     <div
       role="dialog"
       aria-modal="false"
-      aria-label="Arya - Senior Consultant"
-      className="fixed bottom-24 right-4 z-50 flex h-[min(36rem,calc(100vh-7.5rem))] w-[min(25rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl transition-all duration-200 md:bottom-24 md:right-6"
+      aria-label="ProfitAI - AI & Profit Strategist"
+      className="fixed bottom-24 right-4 z-50 flex h-[min(36rem,calc(100vh-7.5rem))] w-[min(25rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-[#E5E0D8] bg-[#FAFAF8] shadow-2xl transition-all duration-200 md:bottom-24 md:right-6 font-sans"
     >
-      {/* ── TOP HEADER (Royal Blue matching reference screenshot) ── */}
-      <header className="relative flex items-center justify-between bg-[#185ADB] px-4 py-3.5 text-white shadow-sm select-none">
+      {/* ── TOP HEADER (ProfitPatterns Editorial Dark Charcoal & Gold) ── */}
+      <header className="relative flex items-center justify-between bg-[#1A1A1A] border-b border-[#2D2D2D] px-4 py-3.5 text-white shadow-sm select-none">
         <div className="flex items-center gap-3">
-          {/* Avatar with Sparkles & Live Status Indicator */}
-          <div className="relative flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-500/40 border border-blue-300/40 text-white shadow-xs">
-            <Sparkles className="size-5 text-white" />
+          {/* Avatar with Gold Sparkles & Live Status Indicator */}
+          <div className="relative flex size-10 shrink-0 items-center justify-center rounded-full bg-[#262626] border border-[#C4B296]/40 text-[#C4B296] shadow-xs">
+            <Sparkles className="size-5 text-[#C4B296]" />
             <span
-              className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-emerald-400 ring-2 ring-[#185ADB]"
+              className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-emerald-400 ring-2 ring-[#1A1A1A]"
               title="Online"
             />
           </div>
 
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
-              <span className="font-bold text-base text-white tracking-tight leading-none">Arya</span>
+              <span className="font-bold text-base text-[#FAFAF8] tracking-tight leading-none font-display">
+                ProfitAI
+              </span>
             </div>
-            <span className="text-[10px] font-semibold text-blue-100 tracking-wider uppercase mt-1">
-              SENIOR CONSULTANT
+            <span className="text-[10px] font-semibold text-[#C4B296] tracking-wider uppercase mt-1">
+              AI & PROFIT STRATEGIST
             </span>
           </div>
         </div>
 
         {/* Action icons: Minimize & Close */}
-        <div className="flex items-center gap-1 text-white/90">
+        <div className="flex items-center gap-1 text-[#A8A29E]">
           <button
             onClick={() => onOpenChange(false)}
             aria-label="Minimize assistant"
-            className="rounded p-1.5 hover:bg-white/15 hover:text-white transition-colors cursor-pointer"
+            className="rounded p-1.5 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
           >
             <Minus className="size-4" />
           </button>
           <button
             onClick={() => onOpenChange(false)}
             aria-label="Close assistant"
-            className="rounded p-1.5 hover:bg-white/15 hover:text-white transition-colors cursor-pointer"
+            className="rounded p-1.5 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
           >
             <X className="size-4" />
           </button>
         </div>
       </header>
 
-      {/* ── MESSAGE THREAD ── */}
+      {/* ── MESSAGE THREAD (Warm Ivory Background matching ProfitPatterns) ── */}
       <div
         ref={scrollRef}
-        className="flex-1 space-y-4 overflow-y-auto bg-[#F8FAFC] p-4 text-slate-800"
+        className="flex-1 space-y-4 overflow-y-auto bg-[#FAFAF8] p-4 text-[#1A1A1A]"
         aria-live="polite"
       >
         {messages.map((m) => (
           <div key={m.id} className="space-y-2">
             {m.role === "assistant" ? (
               <div className="flex items-start gap-2.5 max-w-[92%]">
-                {/* Bot Icon Shield on Left (as in reference screenshot) */}
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[#185ADB] text-white shadow-xs mt-0.5">
+                {/* Bot Icon Shield on Left (Deep Charcoal with Gold Accent) */}
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[#1A1A1A] border border-[#C4B296]/30 text-[#C4B296] shadow-xs mt-0.5">
                   <Shield className="size-4.5" />
                 </div>
 
                 <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-                  {/* Assistant Message Bubble */}
-                  <div className="rounded-2xl rounded-tl-sm border border-slate-100 bg-white p-4 text-sm leading-relaxed text-slate-800 shadow-xs whitespace-pre-line">
+                  {/* Assistant Message Bubble (Crisp White Card with Soft Warm Border) */}
+                  <div className="rounded-2xl rounded-tl-sm border border-[#E5E0D8] bg-white p-4 text-sm leading-relaxed text-[#1A1A1A] shadow-xs whitespace-pre-line">
                     {m.text}
                   </div>
 
@@ -396,10 +399,10 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
                             key={opt.value}
                             to={opt.link as "/"}
                             onClick={() => onOpenChange(false)}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:border-[#185ADB] hover:text-[#185ADB] hover:bg-blue-50/50 transition-all cursor-pointer"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-[#8B7355]/40 bg-[#8B7355]/10 px-3.5 py-1.5 text-xs font-semibold text-[#8B7355] shadow-xs hover:bg-[#8B7355] hover:text-white transition-all cursor-pointer"
                           >
                             <span>{opt.label}</span>
-                            <ArrowRight className="size-3 text-[#185ADB]" />
+                            <ArrowRight className="size-3" />
                           </Link>
                         ) : (
                           <button
@@ -408,12 +411,12 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
                             className={cn(
                               "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold shadow-xs transition-all cursor-pointer",
                               opt.isPrimary
-                                ? "border-slate-200 bg-white text-slate-800 hover:border-[#185ADB] hover:text-[#185ADB] hover:bg-blue-50/50"
-                                : "border-slate-200 bg-white text-slate-700 hover:border-[#185ADB] hover:text-[#185ADB] hover:bg-blue-50/50",
+                                ? "border-[#8B7355]/40 bg-[#8B7355]/10 text-[#8B7355] hover:bg-[#8B7355] hover:text-white"
+                                : "border-[#E5E0D8] bg-white text-[#1A1A1A] hover:border-[#8B7355] hover:text-[#8B7355] hover:bg-[#F5F3EE]",
                             )}
                           >
                             <span>{opt.label}</span>
-                            {opt.isPrimary && <ArrowRight className="size-3 text-[#185ADB]" />}
+                            {opt.isPrimary && <ArrowRight className="size-3" />}
                           </button>
                         ),
                       )}
@@ -421,28 +424,28 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
                   )}
 
                   {/* Timestamp */}
-                  <span className="text-[10px] font-medium text-slate-400 pl-1">{m.time}</span>
+                  <span className="text-[10px] font-medium text-[#A8A29E] pl-1">{m.time}</span>
                 </div>
               </div>
             ) : (
-              /* User Message on Right with Avatar */
+              /* User Message on Right with Avatar (Deep Charcoal Bubble) */
               <div className="flex items-start justify-end gap-2.5 ml-auto max-w-[85%]">
                 <div className="flex flex-col items-end gap-1">
-                  <div className="rounded-2xl rounded-tr-sm bg-[#185ADB] px-4 py-2.5 text-sm font-medium text-white shadow-xs leading-relaxed">
+                  <div className="rounded-2xl rounded-tr-sm bg-[#1A1A1A] border border-[#2D2D2D] px-4 py-2.5 text-sm font-medium text-white shadow-xs leading-relaxed">
                     {m.fileAttachment ? (
                       <div className="flex items-center gap-2">
-                        <FileText className="size-4 shrink-0" />
+                        <FileText className="size-4 shrink-0 text-[#C4B296]" />
                         <span>{m.fileAttachment.name}</span>
                       </div>
                     ) : (
                       m.text
                     )}
                   </div>
-                  <span className="text-[10px] font-medium text-slate-400 pr-1">{m.time}</span>
+                  <span className="text-[10px] font-medium text-[#A8A29E] pr-1">{m.time}</span>
                 </div>
 
                 {/* User Avatar Circle */}
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-600 mt-0.5 shadow-xs">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#E5E0D8] text-[#1A1A1A] mt-0.5 shadow-xs">
                   <User className="size-4" />
                 </div>
               </div>
@@ -453,26 +456,26 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
         {/* Typing indicator */}
         {isTyping && (
           <div className="flex items-start gap-2.5 max-w-[80%]">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[#185ADB] text-white shadow-xs mt-0.5">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[#1A1A1A] border border-[#C4B296]/30 text-[#C4B296] shadow-xs mt-0.5">
               <Shield className="size-4.5" />
             </div>
-            <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-sm border border-slate-100 bg-white px-4 py-3 text-slate-400 shadow-xs">
-              <span className="size-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-              <span className="size-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-              <span className="size-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+            <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-sm border border-[#E5E0D8] bg-white px-4 py-3 text-[#8B7355] shadow-xs">
+              <span className="size-2 rounded-full bg-[#8B7355] animate-bounce" style={{ animationDelay: "0ms" }} />
+              <span className="size-2 rounded-full bg-[#8B7355] animate-bounce" style={{ animationDelay: "150ms" }} />
+              <span className="size-2 rounded-full bg-[#8B7355] animate-bounce" style={{ animationDelay: "300ms" }} />
             </div>
           </div>
         )}
       </div>
 
-      {/* ── BOTTOM INPUT SECTION (Pill styled as in reference) ── */}
-      <footer className="border-t border-slate-100 bg-white p-3">
+      {/* ── BOTTOM INPUT SECTION (ProfitPatterns Editorial Ivory & Gold) ── */}
+      <footer className="border-t border-[#E5E0D8] bg-white p-3">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleSend();
           }}
-          className="flex items-center gap-2 rounded-full border border-slate-200 bg-[#F8FAFC] px-3.5 py-1.5 shadow-xs transition-colors focus-within:border-[#185ADB] focus-within:bg-white"
+          className="flex items-center gap-2 rounded-full border border-[#E5E0D8] bg-[#F5F3EE] px-3.5 py-1.5 shadow-xs transition-colors focus-within:border-[#8B7355] focus-within:bg-white"
         >
           {/* Hidden file input */}
           <input
@@ -488,7 +491,7 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
             type="button"
             onClick={() => fileInputRef.current?.click()}
             title="Attach a file or document"
-            className="text-slate-400 hover:text-[#185ADB] transition-colors p-1 cursor-pointer shrink-0"
+            className="text-[#8B7355] hover:text-[#1A1A1A] transition-colors p-1 cursor-pointer shrink-0"
           >
             <Paperclip className="size-4.5" />
           </button>
@@ -499,8 +502,8 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
             type="text"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Ask Arya or paste files..."
-            className="flex-1 bg-transparent py-1 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none"
+            placeholder="Ask ProfitAI or paste files..."
+            className="flex-1 bg-transparent py-1 text-sm text-[#1A1A1A] placeholder:text-[#A8A29E] focus:outline-none"
           />
 
           {/* Send button */}
@@ -511,16 +514,16 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
             className={cn(
               "flex size-8 shrink-0 items-center justify-center rounded-full transition-all cursor-pointer",
               draft.trim()
-                ? "bg-[#185ADB] text-white shadow-xs hover:bg-blue-700"
-                : "bg-slate-100 text-slate-400 cursor-not-allowed",
+                ? "bg-[#1A1A1A] text-white shadow-xs hover:bg-[#8B7355]"
+                : "bg-[#E5E0D8] text-[#A8A29E] cursor-not-allowed",
             )}
           >
             <Send className="size-3.5 -ml-0.5" />
           </button>
         </form>
 
-        {/* Subtitle branding as in reference screenshot */}
-        <p className="mt-2 text-center text-[9px] font-bold tracking-widest text-slate-400 uppercase select-none">
+        {/* Subtitle branding matching ProfitPatterns consulting tier */}
+        <p className="mt-2 text-center text-[9px] font-bold tracking-widest text-[#8B7355]/90 uppercase select-none">
           OFFICIAL PROFITPATTERNS SUPPORT
         </p>
       </footer>
@@ -551,25 +554,25 @@ export function AssistantLauncher({
     <>
       <Assistant open={open} onOpenChange={setOpen} />
 
-      {/* Floating launcher trigger */}
+      {/* Floating launcher trigger (ProfitPatterns Charcoal & Gold) */}
       <button
         onClick={() => setOpen(!open)}
-        aria-label={open ? "Close Arya Chatbot" : "Chat with Arya - Senior Consultant"}
+        aria-label={open ? "Close ProfitAI Chatbot" : "Chat with ProfitAI - AI & Profit Strategist"}
         aria-expanded={open}
-        className="fixed bottom-20 right-4 z-40 flex items-center gap-2.5 rounded-full bg-[#185ADB] px-4 py-3 text-white shadow-lg shadow-blue-600/30 transition-all hover:scale-105 hover:bg-blue-700 md:bottom-6 md:right-6 group cursor-pointer"
+        className="fixed bottom-20 right-4 z-40 flex items-center gap-2.5 rounded-full bg-[#1A1A1A] border border-[#C4B296]/30 px-4 py-3 text-[#FAFAF8] shadow-xl shadow-black/25 transition-all hover:scale-105 hover:bg-[#2A2A2A] hover:border-[#C4B296] md:bottom-6 md:right-6 group cursor-pointer"
       >
         <div className="relative flex items-center justify-center">
           {open ? (
-            <X className="size-5" />
+            <X className="size-5 text-[#FAFAF8]" />
           ) : (
             <>
-              <Sparkles className="size-5 text-white" />
-              <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-emerald-400 ring-2 ring-[#185ADB]" />
+              <Sparkles className="size-5 text-[#C4B296]" />
+              <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-emerald-400 ring-2 ring-[#1A1A1A]" />
             </>
           )}
         </div>
-        <span className="text-sm font-semibold pr-1">
-          {open ? "Close" : "Chat with Arya"}
+        <span className="text-sm font-semibold pr-1 text-[#FAFAF8]">
+          {open ? "Close" : "Chat with ProfitAI"}
         </span>
       </button>
     </>
