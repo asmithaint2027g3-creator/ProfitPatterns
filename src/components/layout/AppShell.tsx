@@ -5,9 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { AssistantLauncher } from "@/components/chat/Assistant";
 import { FloatingWhatsApp, MobileCTABar } from "@/components/cta/WhatsAppCTA";
 import { LeadDialog } from "@/components/forms/LeadDialog";
-import { IntelligenceHeaderBar } from "@/components/intelligence/IntelligenceHeaderBar";
 import { IntelligenceProvider } from "@/components/intelligence/IntelligenceContext";
-import { LiveIntelligenceConsole } from "@/components/intelligence/LiveIntelligenceConsole";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { track } from "@/lib/analytics";
@@ -29,7 +27,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           Skip to content
         </a>
-        <IntelligenceHeaderBar />
         <Header />
         <main id="main" className="flex-1 pb-20 md:pb-0">
           {children}
@@ -37,7 +34,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Footer />
         <FloatingWhatsApp />
         <AssistantLauncher />
-        <LiveIntelligenceConsole />
         <MobileCTABar onOpenForm={() => setLeadOpen(true)} />
         <LeadDialog open={leadOpen} onOpenChange={setLeadOpen} source="mobile_bar" />
       </div>

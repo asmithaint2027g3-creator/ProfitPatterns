@@ -1,3 +1,5 @@
+import { getDigitalPresenceSnapshot } from "./intelligence";
+
 // Vercel Serverless Proxy endpoint with fallback to direct Apps Script URL
 const PROXY_URL = "/api/analytics/collect";
 const FALLBACK_ANALYTICS_URL =
@@ -192,6 +194,7 @@ export async function trackEvent(eventName, details = {}) {
   const sessionId = getSessionId();
 
   const elapsedOnPage = Math.max(1, Math.round((Date.now() - pageStartTime) / 1000));
+  const snap = getDigitalPresenceSnapshot(window.location.pathname || "/");
 
   const payload = {
     // Core event identifiers
@@ -216,7 +219,7 @@ export async function trackEvent(eventName, details = {}) {
     referrer_url: document.referrer || "(direct_entry)",
 
     // Traffic & Campaign attribution
-    traffic_source: getTrafficSource(),
+    traffic_source: snap.traffic.trafficSource || getTrafficSource(),
     utm_source: params.get("utm_source") || details.utm_source || "(direct)",
     utm_medium: params.get("utm_medium") || details.utm_medium || "(none)",
     utm_campaign: params.get("utm_campaign") || details.utm_campaign || "(organic)",
@@ -224,20 +227,38 @@ export async function trackEvent(eventName, details = {}) {
     utm_content: params.get("utm_content") || details.utm_content || "(standard)",
 
     // Multi-Intelligence Dimensions (Session, Traffic, Geo, Time Zone, IP)
-    session_entry_point: sessionStorage.getItem("pp_entry_page") || window.location.pathname,
-    session_navigation_flow: sessionStorage.getItem("pp_nav_flow") || JSON.stringify([window.location.pathname]),
-    funnel_stage: details.funnel_stage || (window.location.pathname.includes("contact") ? "4. Executive Inbound" : window.location.pathname.includes("audit") ? "3. Diagnostic Evaluation" : "2. Strategy Exploration"),
-    user_intent: details.user_intent || "Strategy Explorer",
-    first_touch_attribution: localStorage.getItem("pp_first_touch") || "Direct",
-    last_touch_attribution: sessionStorage.getItem("pp_last_touch") || "Direct",
-    geo_country: details.geo_country || "United States",
-    geo_city: details.geo_city || "New York",
-    geo_timezone: getTimezone(),
-    compliance_mode: details.compliance_mode || "Global Standard",
-    network_carrier_type: getDeviceType() === "Mobile" ? "Mobile / Residential" : "Enterprise B2B",
-    fraud_risk_score: "0.02",
-    predictive_intent_score: details.predictive_intent_score || 88,
-    predictive_recommendation: details.predictive_recommendation || "Schedule AI Profit Strategy Diagnostic",
+    session_entry_point: snap.session.entryPage,
+    session_navigation_flow: JSON.stringify(snap.session.navigationFlow),
+    page_dwell_seconds: elapsedOnPage,
+    session_dwell_seconds: snap.session.sessionDwellSeconds,
+    bounce_risk: snap.session.bounceRisk,
+    funnel_stage: details.funnel_stage || snap.session.funnelStage,
+    user_intent: details.user_intent || snap.session.userIntent,
+    first_touch_attribution: JSON.stringify(snap.traffic.firstTouchAttribution),
+    last_touch_attribution: JSON.stringify(snap.traffic.lastTouchAttribution),
+    channel_roi_score: snap.traffic.channelScore,
+    geo_country: snap.geo.country,
+    geo_country_code: snap.geo.countryCode,
+    geo_city: snap.geo.city,
+    geo_region: snap.geo.region,
+    geo_continent: snap.geo.continent,
+    geo_currency: snap.geo.currency,
+    geo_market_tier: snap.geo.regionalMarket,
+    compliance_mode: snap.geo.complianceMode,
+    timezone_iana: snap.timezone.timezone,
+    timezone_utc_offset: snap.timezone.utcOffset,
+    timezone_local_time: snap.timezone.localTime,
+    timezone_day_phase: snap.timezone.dayPhase,
+    peak_engagement_status: snap.timezone.peakEngagementStatus,
+    active_advisory_desk: snap.timezone.activeDesk.deskName,
+    ip_network_carrier: snap.ip.isp,
+    ip_network_type: snap.ip.networkType,
+    ip_corporate_intent: snap.ip.isCorporate ? "Enterprise High Intent" : "Standard Inbound",
+    ip_fraud_risk_score: snap.ip.fraudRiskScore,
+    ip_fraud_status: snap.ip.fraudStatus,
+    ip_visit_velocity: snap.ip.repeatVisitVelocity,
+    predictive_synergy_score: snap.synergy.combinedLayering.predictivePersonalizationScore,
+    predictive_recommendation: snap.synergy.combinedLayering.tailoredStrategyRecommendation,
 
     // Device, Screen, & Hardware specifications
     device_type: getDeviceType(),

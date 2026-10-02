@@ -20,7 +20,6 @@ import { useState } from "react";
 
 import { WhatsAppCTA } from "@/components/cta/WhatsAppCTA";
 import { FaqAccordion } from "@/components/FaqAccordion";
-import { TrafficIntelligenceShowcase } from "@/components/intelligence/TrafficIntelligenceShowcase";
 import { Section, SectionHeading } from "@/components/layout/Section";
 import { BusinessFlowVisual } from "@/components/sections/BusinessFlowVisual";
 import { FinalCTA } from "@/components/sections/FinalCTA";
@@ -484,10 +483,7 @@ function Home() {
         </ScrollReveal>
       </Section>
 
-      {/* 7. Traffic & Experience Intelligence Engine */}
-      <TrafficIntelligenceShowcase />
-
-      {/* 8. FAQs */}
+      {/* 7. FAQs */}
       <Section className="border-b border-border bg-background">
         <ScrollReveal direction="up">
           <SectionHeading
