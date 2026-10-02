@@ -6,7 +6,6 @@ import { AssistantLauncher } from "@/components/chat/Assistant";
 import { FloatingWhatsApp, MobileCTABar } from "@/components/cta/WhatsAppCTA";
 import { LeadDialog } from "@/components/forms/LeadDialog";
 import { IntelligenceProvider } from "@/components/intelligence/IntelligenceContext";
-import { LiveIntelligenceConsole } from "@/components/intelligence/LiveIntelligenceConsole";
 import { VisitorIntelligenceLayer } from "@/components/intelligence/VisitorIntelligenceLayer";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
@@ -47,7 +46,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Footer />
         <FloatingWhatsApp />
         <AssistantLauncher externalOpen={chatOpen} onExternalOpenChange={setChatOpen} />
-        <LiveIntelligenceConsole />
         <MobileCTABar onOpenForm={() => setLeadOpen(true)} />
         <LeadDialog open={leadOpen} onOpenChange={setLeadOpen} source="mobile_bar" />
       </div>
