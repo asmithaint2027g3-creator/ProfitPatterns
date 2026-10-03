@@ -151,6 +151,7 @@ export function AuditDocumentForm({ source = "audit_submission_page" }: { source
 
     submitting.current = true;
     setStatus("loading");
+    track("audit_form_submit", { source, form_name: "Process Audit Document Form" });
 
     const generatedRef = `PP-AUDIT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
     setReferenceId(generatedRef);
@@ -234,6 +235,7 @@ export function AuditDocumentForm({ source = "audit_submission_page" }: { source
     }
 
     setStatus("success");
+    track("audit_form_success", { source, form_name: "Process Audit Document Form" });
     submitting.current = false;
   }
 

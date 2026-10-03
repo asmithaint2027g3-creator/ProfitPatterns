@@ -86,17 +86,64 @@ export const metaPixelAdapter: AnalyticsAdapter = {
   },
 };
 
+import { isClarityProduction } from "./clarity";
+
+// High-Signal Clarity Smart Events mapping
+const CLARITY_SMART_EVENTS: Record<string, string> = {
+  // 1. Audit Journey
+  start_audit: "START_AUDIT",
+  audit_form_open: "AUDIT_FORM_OPEN",
+  audit_form_submit: "AUDIT_SUBMITTED",
+  audit_form_success: "AUDIT_SUCCESS",
+
+  // 2. Lead Forms
+  form_start: "FORM_STARTED",
+  quick_form_open: "FORM_STARTED",
+  long_form_open: "FORM_STARTED",
+  quick_form_submit: "FORM_SUBMITTED",
+  long_form_submit: "FORM_SUBMITTED",
+  form_submit: "FORM_SUBMITTED",
+  quick_form_success: "FORM_SUCCESS",
+  long_form_success: "FORM_SUCCESS",
+  form_success: "FORM_SUCCESS",
+
+  // 3. High-Intent Actions
+  contact_us: "CONTACT_US",
+  book_consultation: "BOOK_CONSULTATION",
+  whatsapp_click: "WHATSAPP_CLICK",
+
+  // 4. Chatbot Engagement
+  chat_open: "CHATBOT_OPEN",
+  chat_message: "CHATBOT_MESSAGE",
+  chat_lead_started: "CHATBOT_LEAD_START",
+  chat_lead_completed: "CHATBOT_LEAD_SUBMIT",
+};
+
 export const microsoftClarityAdapter: AnalyticsAdapter = {
   name: "clarity",
   track: (event, payload) => {
+    if (!isClarityProduction()) return;
     const w = window as AnyWindow & {
       clarity?: (action: string, ...args: unknown[]) => void;
     };
     if (typeof w.clarity !== "function") return;
     try {
-      w.clarity("event", event);
+      // Map to normalized Clarity Smart Event or uppercase event
+      const smartName = CLARITY_SMART_EVENTS[event] || event.toUpperCase();
+      w.clarity("event", smartName);
+
+      // Set safe metadata tags ONLY (Never send PII like name, email, phone)
       if (payload?.page && typeof payload.page === "string") {
         w.clarity("set", "page", payload.page);
+      }
+      if (payload?.source && typeof payload.source === "string") {
+        w.clarity("set", "source", payload.source);
+      }
+      if (payload?.form_name && typeof payload.form_name === "string") {
+        w.clarity("set", "form_name", payload.form_name);
+      }
+      if (payload?.cta && typeof payload.cta === "string") {
+        w.clarity("set", "cta", payload.cta);
       }
     } catch {
       /* Clarity event must never break the UI */

@@ -124,7 +124,10 @@ function Home() {
                 <Button asChild size="lg" variant="primary">
                   <Link
                     to="/contact"
-                    onClick={() => track("cta_click", { location: "hero", cta: "talk_to_expert" })}
+                    onClick={() => {
+                      track("cta_click", { location: "hero", cta: "talk_to_expert" });
+                      track("book_consultation", { location: "hero" });
+                    }}
                   >
                     Schedule Diagnostic
                   </Link>
@@ -132,7 +135,10 @@ function Home() {
                 <Button asChild size="lg" variant="outline">
                   <Link
                     to="/audit-submission"
-                    onClick={() => track("cta_click", { location: "hero", cta: "audit_submission" })}
+                    onClick={() => {
+                      track("cta_click", { location: "hero", cta: "audit_submission" });
+                      track("start_audit", { location: "hero" });
+                    }}
                   >
                     Submit Process Document
                   </Link>

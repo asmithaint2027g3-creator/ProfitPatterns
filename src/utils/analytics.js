@@ -206,10 +206,16 @@ export async function trackEvent(eventName, details = {}) {
   lastEventKey = eventKey;
   lastEventTime = now;
 
-  // Forward event to Microsoft Clarity
-  if (typeof window !== "undefined" && typeof window.clarity === "function") {
+  // Forward telemetry event to Microsoft Clarity (Production Only)
+  const isClarityProd =
+    typeof window !== "undefined" &&
+    window.location.hostname === "profit-patterns-xi.vercel.app";
+
+  if (isClarityProd && typeof window.clarity === "function") {
     try {
-      window.clarity("event", eventName);
+      if (["scroll_depth", "session_start"].includes(eventName)) {
+        window.clarity("event", eventName.toUpperCase());
+      }
     } catch {
       // Fail silently
     }
@@ -768,8 +774,12 @@ export function initAnalytics() {
   if (window.__ppAnalyticsInitialized) return;
   window.__ppAnalyticsInitialized = true;
 
-  // Identify visitor and session in Microsoft Clarity
-  if (typeof window.clarity === "function") {
+  // Identify visitor and session in Microsoft Clarity (Production Only)
+  const isClarityProd =
+    typeof window !== "undefined" &&
+    window.location.hostname === "profit-patterns-xi.vercel.app";
+
+  if (isClarityProd && typeof window.clarity === "function") {
     try {
       const visitorId = getVisitorId();
       const sessionId = getSessionId();

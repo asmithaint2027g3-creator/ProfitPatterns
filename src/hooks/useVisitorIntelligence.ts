@@ -91,67 +91,60 @@ export function labelForPath(path: string): string {
 export function useVisitorIntelligence(): VisitorIntelligence {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  // ── Visit count ──────────────────────────────────────────────
-  const [visitCount] = useState<number>(() => {
-    if (typeof window === "undefined") return 1;
-    const raw = localStorage.getItem(LS_VISIT_COUNT);
-    const count = raw ? parseInt(raw, 10) + 1 : 1;
-    localStorage.setItem(LS_VISIT_COUNT, String(count));
-    return count;
-  });
+  // ── Stable initial state for SSR & Hydration (prevents React Error #418) ──
+  const [visitCount, setVisitCount] = useState<number>(1);
+  const [visitDates, setVisitDates] = useState<string[]>([]);
+  const [lastPagePath, setLastPagePath] = useState<string | null>(null);
+  const [lastPageLabel, setLastPageLabel] = useState<string | null>(null);
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("morning");
+  const [isClientReady, setIsClientReady] = useState<boolean>(false);
 
-  // ── Visit dates (for analytics/history) ─────────────────────
-  const [visitDates] = useState<string[]>(() => {
-    if (typeof window === "undefined") return [];
+  // ── Synchronize client storage after hydration completes ──────
+  useEffect(() => {
     try {
-      const raw = localStorage.getItem(LS_VISIT_DATES);
-      const dates: string[] = raw ? JSON.parse(raw) : [];
+      const rawCount = localStorage.getItem(LS_VISIT_COUNT);
+      const count = rawCount ? parseInt(rawCount, 10) + 1 : 1;
+      localStorage.setItem(LS_VISIT_COUNT, String(count));
+      setVisitCount(count);
+
+      const rawDates = localStorage.getItem(LS_VISIT_DATES);
+      const dates: string[] = rawDates ? JSON.parse(rawDates) : [];
       const now = new Date().toISOString();
       dates.push(now);
-      const trimmed = dates.slice(-50); // Keep last 50
+      const trimmed = dates.slice(-50);
       localStorage.setItem(LS_VISIT_DATES, JSON.stringify(trimmed));
-      return trimmed;
+      setVisitDates(trimmed);
+
+      const isNewSession = !sessionStorage.getItem(SS_SESSION_GUARD);
+      if (isNewSession) {
+        try {
+          sessionStorage.setItem(SS_SESSION_GUARD, "1");
+        } catch {}
+      }
+      setLastPagePath(localStorage.getItem(LS_LAST_PAGE));
+      setLastPageLabel(localStorage.getItem(LS_LAST_LABEL));
+
+      setTimeOfDay(getTimeOfDay());
+      setIsClientReady(true);
     } catch {
-      return [];
+      setIsClientReady(true);
     }
-  });
-
-  // ── Last page (previous SESSION's final page) ────────────────
-  //
-  // Strategy: we read the stored last page ONCE on mount (before this session
-  // writes anything).  A sessionStorage sentinel ensures we only overwrite
-  // localStorage when the user actually navigates — not on the first render of
-  // a brand-new session, which would wipe the previous session's value before
-  // the popup can read it.
-  const [lastPagePath] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    // If this is a fresh session (no sentinel yet), read the previous page
-    // from localStorage BEFORE we mark the session as started.
-    const isNewSession = !sessionStorage.getItem(SS_SESSION_GUARD);
-    if (isNewSession) {
-      // Mark session so subsequent renders don't re-read this
-      try { sessionStorage.setItem(SS_SESSION_GUARD, "1"); } catch {}
-    }
-    return localStorage.getItem(LS_LAST_PAGE);
-  });
-
-  const [lastPageLabel] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem(LS_LAST_LABEL);
-  });
+  }, []);
 
   // Update stored page whenever the user navigates within the session
   useEffect(() => {
-    localStorage.setItem(LS_LAST_PAGE, pathname);
-    localStorage.setItem(LS_LAST_LABEL, labelForPath(pathname));
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(LS_LAST_PAGE, pathname);
+      localStorage.setItem(LS_LAST_LABEL, labelForPath(pathname));
+    } catch {}
   }, [pathname]);
 
   // ── Current page label (consumed by chatbot for context) ───────
   const currentPageLabel = labelForPath(pathname);
 
-  // ── Time of day ───────────────────────────────────────────────
-  const [timeOfDay] = useState<TimeOfDay>(getTimeOfDay);
   const greeting = getGreeting(timeOfDay);
+  const isRepeatVisitor = isClientReady && visitCount >= 2;
 
   // ── Idle detection (30 seconds) ───────────────────────────────
   const [isIdle, setIsIdle] = useState(false);

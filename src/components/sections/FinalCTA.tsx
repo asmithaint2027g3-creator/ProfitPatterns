@@ -38,7 +38,13 @@ export function FinalCTA({
             variant="accent"
             className="bg-[#8B7355] text-white hover:bg-[#9B8365] border-0"
           >
-            <Link to="/contact" onClick={() => track("cta_click", { location, cta: "talk_to_expert" })}>
+            <Link
+              to="/contact"
+              onClick={() => {
+                track("cta_click", { location, cta: "talk_to_expert" });
+                track("contact_us", { location });
+              }}
+            >
               Talk to an Expert
             </Link>
           </Button>
@@ -55,7 +61,13 @@ export function FinalCTA({
               variant="outline"
               className="border-[#4A453E] text-[#FAFAF8] hover:bg-[#2A2A2A] hover:border-[#8B7355]"
             >
-              <Link to="/contact" onClick={() => track("cta_click", { location, cta: "consultation" })}>
+              <Link
+                to="/contact"
+                onClick={() => {
+                  track("cta_click", { location, cta: "consultation" });
+                  track("book_consultation", { location });
+                }}
+              >
                 Request Strategy Consultation
               </Link>
             </Button>

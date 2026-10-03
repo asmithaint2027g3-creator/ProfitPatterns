@@ -396,6 +396,7 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
         }
 
         setLeadCaptured(true);
+        track("chat_lead_completed", { source: "assistant_chatbot" });
         setSavingLead(false);
 
         // Assistant confirmation
@@ -630,7 +631,7 @@ export function Assistant({ open, onOpenChange }: { open: boolean; onOpenChange:
 
     setMessages((prev) => [...prev, userMsg]);
     setDraft("");
-    track("chat_message_sent", { text });
+    track("chat_message", { source: "assistant_chatbot" });
 
     handleAssistantResponse(text, optionValue);
   };

@@ -255,7 +255,10 @@ export function Header() {
           >
             <Link
               to="/contact"
-              onClick={() => track("cta_click", { location: "header", cta: "talk_to_an_expert" })}
+              onClick={() => {
+                track("cta_click", { location: "header", cta: "talk_to_an_expert" });
+                track("contact_us", { location: "header" });
+              }}
             >
               Talk to an Expert
             </Link>

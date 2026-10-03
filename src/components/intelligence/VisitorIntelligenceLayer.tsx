@@ -552,10 +552,7 @@ export function VisitorIntelligenceLayer({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   // ── Banner states ────────────────────────────────────────────────
-  const [bannerDismissed,     setBannerDismissed]     = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return sessionStorage.getItem("pp_banner_dismissed") === "true";
-  });
+  const [bannerDismissed,     setBannerDismissed]     = useState<boolean>(false);
   const [lastVisitDismissed,  setLastVisitDismissed]  = useState(false);
   const [showExitPopup,       setShowExitPopup]       = useState(false);
   const [showIdleNudge,       setShowIdleNudge]       = useState(false);
@@ -563,6 +560,14 @@ export function VisitorIntelligenceLayer({
   const [idleNudgeDismissed,  setIdleNudgeDismissed]  = useState(false);
   const [abandonDismissed,    setAbandonDismissed]    = useState(false);
   const [formProgress,        setFormProgress]        = useState(0);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem("pp_banner_dismissed") === "true") {
+        setBannerDismissed(true);
+      }
+    } catch {}
+  }, []);
 
   const chatbotOpenerRef = useRef<(() => void) | null>(null);
 

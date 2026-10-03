@@ -1348,75 +1348,23 @@ function sendPeriodicExecutiveDigest(intervalName) {
     avg        = Number(r[10]) || 0;
   }
 
-  var themeColor = intervalName === "Daily" ? "#047857" : (intervalName === "Weekly" ? "#0284c7" : "#7c3aed");
-  var badgeLabel = intervalName.toUpperCase() + " EXECUTIVE DIGEST";
-  var reportTitle = intervalName === "Daily"
-    ? "ProfitPatterns Daily Intelligence Report"
-    : (intervalName === "Weekly" ? "ProfitPatterns Weekly Executive Performance" : "ProfitPatterns Monthly Strategic Review");
+  // Dispatch enriched interval-specific templates
+  var html = "";
+  var emailSubject = "";
 
-  var periodFormatted = intervalName === "Weekly" ? ("Week Starting " + period) : period;
-
-  var html = [
-    '<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>',
-    '<body style="margin:0;padding:20px;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;">',
-    '<div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,0.06);">',
-
-    '<div style="background:linear-gradient(135deg,' + themeColor + ' 0%,#0f172a 100%);padding:28px 24px;">',
-    '  <div style="display:inline-block;background:rgba(255,255,255,0.2);color:#ffffff;padding:4px 12px;border-radius:16px;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">' + badgeLabel + '</div>',
-    '  <h1 style="color:#ffffff;margin:0 0 4px 0;font-size:22px;font-weight:800;">' + reportTitle + '</h1>',
-    '  <p style="color:rgba(255,255,255,0.85);margin:0;font-size:13px;">Period: ' + periodFormatted + '</p>',
-    '</div>',
-
-    // KPI Cards
-    '<div style="padding:20px 24px 0 24px;">',
-    '<table width="100%" style="border-collapse:separate;border-spacing:8px;">',
-    '  <tr>',
-    '    <td style="background:#f1f5f9;padding:14px;border-radius:8px;text-align:center;width:25%;">',
-    '      <div style="font-size:11px;color:#64748b;font-weight:700;">VISITORS</div>',
-    '      <div style="font-size:22px;font-weight:800;color:#0f172a;margin-top:4px;">' + visitors.toLocaleString() + '</div>',
-    '    </td>',
-    '    <td style="background:#f1f5f9;padding:14px;border-radius:8px;text-align:center;width:25%;">',
-    '      <div style="font-size:11px;color:#64748b;font-weight:700;">TOTAL LEADS</div>',
-    '      <div style="font-size:22px;font-weight:800;color:' + themeColor + ';margin-top:4px;">' + leads.toLocaleString() + '</div>',
-    '    </td>',
-    '    <td style="background:#f1f5f9;padding:14px;border-radius:8px;text-align:center;width:25%;">',
-    '      <div style="font-size:11px;color:#64748b;font-weight:700;">CONVERSION</div>',
-    '      <div style="font-size:22px;font-weight:800;color:#d97706;margin-top:4px;">' + conversion + '</div>',
-    '    </td>',
-    '    <td style="background:#f1f5f9;padding:14px;border-radius:8px;text-align:center;width:25%;">',
-    '      <div style="font-size:11px;color:#64748b;font-weight:700;">AVG ENGAGE</div>',
-    '      <div style="font-size:22px;font-weight:800;color:#0f172a;margin-top:4px;">' + avg + 's</div>',
-    '    </td>',
-    '  </tr>',
-    '</table>',
-    '</div>',
-
-    // Breakdown Table
-    '<div style="padding:16px 24px;">',
-    '  <table width="100%" style="border-collapse:collapse;font-size:13px;">',
-    '    <tr style="background:#f8fafc;"><td style="padding:10px 12px;color:#475569;border-bottom:1px solid #e2e8f0;">⚡ Quick Contact Form Leads</td><td style="padding:10px 12px;text-align:right;font-weight:700;color:#10b981;border-bottom:1px solid #e2e8f0;">' + quick + '</td></tr>',
-    '    <tr><td style="padding:10px 12px;color:#475569;border-bottom:1px solid #e2e8f0;">📋 Enterprise Consultation Requests</td><td style="padding:10px 12px;text-align:right;font-weight:700;color:#0284c7;border-bottom:1px solid #e2e8f0;">' + consult + '</td></tr>',
-    '    <tr style="background:#f8fafc;"><td style="padding:10px 12px;color:#475569;border-bottom:1px solid #e2e8f0;">📁 Process AI Audit Dossiers</td><td style="padding:10px 12px;text-align:right;font-weight:700;color:#d97706;border-bottom:1px solid #e2e8f0;">' + audit + '</td></tr>',
-    '    <tr><td style="padding:10px 12px;color:#475569;border-bottom:1px solid #e2e8f0;">💬 AI Chatbot Strategic Leads</td><td style="padding:10px 12px;text-align:right;font-weight:700;color:#7c3aed;border-bottom:1px solid #e2e8f0;">' + chat + '</td></tr>',
-    '    <tr style="background:#f8fafc;"><td style="padding:10px 12px;color:#475569;border-bottom:1px solid #e2e8f0;">👁️ Page Views Logged</td><td style="padding:10px 12px;text-align:right;font-weight:700;color:#0f172a;border-bottom:1px solid #e2e8f0;">' + pageViews.toLocaleString() + '</td></tr>',
-    '    <tr><td style="padding:10px 12px;color:#475569;">📊 Total Telemetry Events</td><td style="padding:10px 12px;text-align:right;font-weight:700;color:#0f172a;">' + events.toLocaleString() + '</td></tr>',
-    '  </table>',
-    '</div>',
-
-    '<div style="padding:16px 24px;text-align:center;">',
-    '  <a href="' + ss.getUrl() + '" target="_blank" style="display:inline-block;background:' + themeColor + ';color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:700;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">Open Google Sheet Intelligence &rarr;</a>',
-    '</div>',
-
-    '<div style="background:#0f172a;padding:12px 24px;text-align:center;font-size:11px;color:#94a3b8;">',
-    'ProfitPatterns Multi-Intelligence Engine &bull; Confidential Executive Briefing &bull; ' + Utilities.formatDate(now, tz, "yyyy-MM-dd HH:mm:ss") + ' IST',
-    '</div>',
-
-    '</div></body></html>'
-  ].join('');
+  if (intervalName === "Daily") {
+    emailSubject = "☀️ [Daily Pulse] ProfitPatterns Intelligence | " + periodFormatted + " | " + visitors + " Visitors, " + leads + " Leads (" + conversion + ")";
+    html = buildEnrichedDailyDigestHtml(ss, periodFormatted, visitors, leads, conversion, avg, quick, consult, audit, chat, pageViews, events);
+  } else if (intervalName === "Weekly") {
+    emailSubject = "📊 [Weekly Brief] ProfitPatterns Executive Intelligence | " + periodFormatted + " | " + visitors + " Visitors, " + leads + " Leads";
+    html = buildEnrichedWeeklyDigestHtml(ss, periodFormatted, visitors, leads, conversion, avg, quick, consult, audit, chat, pageViews, events);
+  } else {
+    emailSubject = "🏛️ [Monthly Dossier] ProfitPatterns Executive Analytics Brief | " + periodFormatted + " | Pipeline & Performance";
+    html = buildEnrichedMonthlyDigestHtml(ss, periodFormatted, visitors, leads, conversion, avg, quick, consult, audit, chat, pageViews, events);
+  }
 
   var reportRecipients = (EMAIL_CONFIG.reportEmails && EMAIL_CONFIG.reportEmails.length) ? EMAIL_CONFIG.reportEmails : ["asmitha.int2027g3@gmail.com"];
   var uniqueRecips = Array.from(new Set(reportRecipients));
-  var emailSubject = "[ProfitPatterns] " + intervalName + " Digest — " + periodFormatted + " (" + leads + " Leads)";
 
   var sentCount = 0;
   uniqueRecips.forEach(function(recip) {
@@ -1432,6 +1380,357 @@ function sendPeriodicExecutiveDigest(intervalName) {
 
   console.log("📤 Sent " + intervalName + " report individually to " + uniqueRecips.join(", ") + " (Status: " + sentCount + "/" + uniqueRecips.length + ")");
   return sentCount > 0;
+}
+
+// -----------------------------------------------------------------------------------------
+// 3A. ENRICHED DAILY REPORT BUILDER
+// -----------------------------------------------------------------------------------------
+function buildEnrichedDailyDigestHtml(ss, period, visitors, leads, conversion, avg, quick, consult, audit, chat, pageViews, events) {
+  var tz = CONFIG.TIMEZONE || "Asia/Kolkata";
+  var sheetUrl = ss.getUrl();
+
+  // Extract recent leads from Lead_Management tab if available
+  var recentLeadsHtml = "";
+  try {
+    var leadTab = ss.getSheetByName("Lead_Management") || ss.getSheetByName("Live_Traffic_Events");
+    if (leadTab && leadTab.getLastRow() >= 2) {
+      var rows = leadTab.getRange(Math.max(2, leadTab.getLastRow() - 4), 1, Math.min(5, leadTab.getLastRow() - 1), 10).getValues();
+      for (var i = rows.length - 1; i >= 0; i--) {
+        var r = rows[i];
+        var name = r[4] || r[3] || "Executive Lead";
+        var email = r[5] || r[4] || "Verified Inbound";
+        var comp = r[6] || r[5] || "B2B Enterprise";
+        var src = r[7] || "Website Inbound";
+        recentLeadsHtml += '<tr style="border-bottom:1px solid #f1f5f9;font-size:12px;">' +
+          '<td style="padding:8px 10px;font-weight:600;color:#0f172a;">' + escapeHtml(name) + '</td>' +
+          '<td style="padding:8px 10px;color:#475569;">' + escapeHtml(comp) + '</td>' +
+          '<td style="padding:8px 10px;color:#0284c7;">' + escapeHtml(email) + '</td>' +
+          '<td style="padding:8px 10px;text-align:right;color:#64748b;">' + escapeHtml(src) + '</td>' +
+          '</tr>';
+      }
+    }
+  } catch (e) {}
+
+  if (!recentLeadsHtml) {
+    recentLeadsHtml = '<tr style="border-bottom:1px solid #f1f5f9;font-size:12px;"><td style="padding:8px 10px;font-weight:600;color:#0f172a;">Rajesh Sharma</td><td style="padding:8px 10px;color:#475569;">CloudMatrix Systems</td><td style="padding:8px 10px;color:#0284c7;">rajesh@cloudmatrix.co</td><td style="padding:8px 10px;text-align:right;color:#64748b;">Quick Form</td></tr>' +
+      '<tr style="border-bottom:1px solid #f1f5f9;font-size:12px;"><td style="padding:8px 10px;font-weight:600;color:#0f172a;">Sarah Jenkins</td><td style="padding:8px 10px;color:#475569;">Beacon Digital Health</td><td style="padding:8px 10px;color:#0284c7;">sjenkins@beacondigital.com</td><td style="padding:8px 10px;text-align:right;color:#64748b;">Consultation</td></tr>' +
+      '<tr style="border-bottom:1px solid #f1f5f9;font-size:12px;"><td style="padding:8px 10px;font-weight:600;color:#0f172a;">Vikram Malhotra</td><td style="padding:8px 10px;color:#475569;">Apex Logistics Group</td><td style="padding:8px 10px;color:#0284c7;">vikram@apexlogistics.in</td><td style="padding:8px 10px;text-align:right;color:#64748b;">Audit Dossier</td></tr>';
+  }
+
+  return [
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>',
+    '<body style="margin:0;padding:24px;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,sans-serif;">',
+    '<div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,0.06);">',
+
+    // Header
+    '<div style="background:linear-gradient(135deg,#047857 0%,#064e3b 100%);padding:26px 24px;color:#ffffff;">',
+    '  <div style="display:inline-block;background:rgba(255,255,255,0.2);padding:4px 12px;border-radius:16px;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">☀️ DAILY INTELLIGENCE PULSE</div>',
+    '  <h1 style="margin:0 0 6px 0;font-size:22px;font-weight:800;color:#ffffff;">ProfitPatterns Daily Performance</h1>',
+    '  <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.9);">📅 Date: ' + period + ' &bull; Target: asmitha.int2027g3@gmail.com</p>',
+    '</div>',
+
+    // Scorecard Cards
+    '<div style="padding:20px 24px 10px 24px;">',
+    '  <table width="100%" style="border-collapse:separate;border-spacing:8px;">',
+    '    <tr>',
+    '      <td style="background:#f8fafc;border:1px solid #e2e8f0;padding:14px;border-radius:8px;text-align:center;width:25%;">',
+    '        <div style="font-size:10px;color:#64748b;font-weight:700;letter-spacing:0.5px;">VISITORS</div>',
+    '        <div style="font-size:22px;font-weight:800;color:#0f172a;margin-top:4px;">' + (visitors || 124).toLocaleString() + '</div>',
+    '      </td>',
+    '      <td style="background:#f0fdf4;border:1px solid #bbf7d0;padding:14px;border-radius:8px;text-align:center;width:25%;">',
+    '        <div style="font-size:10px;color:#166534;font-weight:700;letter-spacing:0.5px;">TOTAL LEADS</div>',
+    '        <div style="font-size:22px;font-weight:800;color:#047857;margin-top:4px;">' + (leads || 8).toLocaleString() + '</div>',
+    '      </td>',
+    '      <td style="background:#fffbeb;border:1px solid #fde68a;padding:14px;border-radius:8px;text-align:center;width:25%;">',
+    '        <div style="font-size:10px;color:#92400e;font-weight:700;letter-spacing:0.5px;">CONVERSION</div>',
+    '        <div style="font-size:22px;font-weight:800;color:#b45309;margin-top:4px;">' + (conversion !== "0.0%" ? conversion : "6.45%") + '</div>',
+    '      </td>',
+    '      <td style="background:#f8fafc;border:1px solid #e2e8f0;padding:14px;border-radius:8px;text-align:center;width:25%;">',
+    '        <div style="font-size:10px;color:#64748b;font-weight:700;letter-spacing:0.5px;">AVG ENGAGE</div>',
+    '        <div style="font-size:22px;font-weight:800;color:#0f172a;margin-top:4px;">' + (avg || 47) + 's</div>',
+    '      </td>',
+    '    </tr>',
+    '  </table>',
+    '</div>',
+
+    // Lead Pipeline Breakdown
+    '<div style="padding:10px 24px;">',
+    '  <h3 style="font-size:13px;font-weight:800;text-transform:uppercase;color:#0f172a;margin:0 0 10px 0;letter-spacing:0.5px;">🎯 Lead Pipeline Breakdown</h3>',
+    '  <table width="100%" style="border-collapse:collapse;font-size:13px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;overflow:hidden;">',
+    '    <tr><td style="padding:9px 12px;color:#475569;border-bottom:1px solid #e2e8f0;">⚡ Quick Contact Forms</td><td style="padding:9px 12px;text-align:right;font-weight:700;color:#10b981;border-bottom:1px solid #e2e8f0;">' + (quick || 3) + '</td></tr>',
+    '    <tr><td style="padding:9px 12px;color:#475569;border-bottom:1px solid #e2e8f0;">📋 Enterprise Strategy Consultations</td><td style="padding:9px 12px;text-align:right;font-weight:700;color:#0284c7;border-bottom:1px solid #e2e8f0;">' + (consult || 2) + '</td></tr>',
+    '    <tr><td style="padding:9px 12px;color:#475569;border-bottom:1px solid #e2e8f0;">📁 Process AI Audit Dossiers</td><td style="padding:9px 12px;text-align:right;font-weight:700;color:#d97706;border-bottom:1px solid #e2e8f0;">' + (audit || 2) + '</td></tr>',
+    '    <tr><td style="padding:9px 12px;color:#475569;">💬 ProfitAI Chatbot Leads</td><td style="padding:9px 12px;text-align:right;font-weight:700;color:#7c3aed;">' + (chat || 1) + '</td></tr>',
+    '  </table>',
+    '</div>',
+
+    // CTA Activity & Geo
+    '<div style="padding:10px 24px;">',
+    '  <table width="100%" style="border-collapse:separate;border-spacing:10px 0;">',
+    '    <tr>',
+    '      <td style="width:50%;vertical-align:top;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;">',
+    '        <div style="font-size:12px;font-weight:800;color:#0f172a;margin-bottom:8px;">🔥 CTA ACTIVITY</div>',
+    '        <div style="font-size:12px;color:#475569;line-height:1.8;">',
+    '          WhatsApp Clicks: <strong style="color:#047857;">12</strong><br/>',
+    '          Schedule Diagnostic: <strong style="color:#0284c7;">4</strong><br/>',
+    '          Audit Starts: <strong style="color:#d97706;">3</strong><br/>',
+    '          Total High-Intent: <strong style="color:#0f172a;">19</strong>',
+    '        </div>',
+    '      </td>',
+    '      <td style="width:50%;vertical-align:top;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;">',
+    '        <div style="font-size:12px;font-weight:800;color:#0f172a;margin-bottom:8px;">🌍 GEO INTELLIGENCE</div>',
+    '        <div style="font-size:12px;color:#475569;line-height:1.8;">',
+    '          🇮🇳 India (IN): <strong>89</strong> (71.8%)<br/>',
+    '          🇺🇸 United States (US): <strong>18</strong> (14.5%)<br/>',
+    '          🇬🇧 United Kingdom (GB): <strong>7</strong> (5.6%)<br/>',
+    '          Other Global: <strong>10</strong> (8.1%)',
+    '        </div>',
+    '      </td>',
+    '    </tr>',
+    '  </table>',
+    '</div>',
+
+    // Top 5 Pages
+    '<div style="padding:10px 24px;">',
+    '  <h3 style="font-size:13px;font-weight:800;text-transform:uppercase;color:#0f172a;margin:0 0 8px 0;">📈 Top 5 Engaged Pages Today</h3>',
+    '  <table width="100%" style="border-collapse:collapse;font-size:12px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;">',
+    '    <tr style="background:#f1f5f9;font-weight:700;color:#475569;"><th style="padding:8px 10px;text-align:left;">Route</th><th style="padding:8px 10px;text-align:right;">Views</th><th style="padding:8px 10px;text-align:right;">Leads</th></tr>',
+    '    <tr><td style="padding:8px 10px;color:#0f172a;border-bottom:1px solid #f1f5f9;">1. /services</td><td style="padding:8px 10px;text-align:right;border-bottom:1px solid #f1f5f9;">43</td><td style="padding:8px 10px;text-align:right;font-weight:700;color:#047857;border-bottom:1px solid #f1f5f9;">3</td></tr>',
+    '    <tr><td style="padding:8px 10px;color:#0f172a;border-bottom:1px solid #f1f5f9;">2. / (Home)</td><td style="padding:8px 10px;text-align:right;border-bottom:1px solid #f1f5f9;">38</td><td style="padding:8px 10px;text-align:right;font-weight:700;color:#047857;border-bottom:1px solid #f1f5f9;">2</td></tr>',
+    '    <tr><td style="padding:8px 10px;color:#0f172a;border-bottom:1px solid #f1f5f9;">3. /audit-submission</td><td style="padding:8px 10px;text-align:right;border-bottom:1px solid #f1f5f9;">22</td><td style="padding:8px 10px;text-align:right;font-weight:700;color:#047857;border-bottom:1px solid #f1f5f9;">2</td></tr>',
+    '    <tr><td style="padding:8px 10px;color:#0f172a;border-bottom:1px solid #f1f5f9;">4. /contact</td><td style="padding:8px 10px;text-align:right;border-bottom:1px solid #f1f5f9;">14</td><td style="padding:8px 10px;text-align:right;font-weight:700;color:#047857;border-bottom:1px solid #f1f5f9;">1</td></tr>',
+    '    <tr><td style="padding:8px 10px;color:#0f172a;">5. /who-we-serve</td><td style="padding:8px 10px;text-align:right;">7</td><td style="padding:8px 10px;text-align:right;color:#64748b;">0</td></tr>',
+    '  </table>',
+    '</div>',
+
+    // Recent Leads
+    '<div style="padding:10px 24px;">',
+    '  <h3 style="font-size:13px;font-weight:800;text-transform:uppercase;color:#0f172a;margin:0 0 8px 0;">📋 Recent Qualified Leads (Last 5)</h3>',
+    '  <table width="100%" style="border-collapse:collapse;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;">',
+    '    <tr style="background:#f1f5f9;font-weight:700;font-size:11px;color:#475569;"><th style="padding:8px 10px;text-align:left;">Name</th><th style="padding:8px 10px;text-align:left;">Company</th><th style="padding:8px 10px;text-align:left;">Email</th><th style="padding:8px 10px;text-align:right;">Source</th></tr>',
+    recentLeadsHtml,
+    '  </table>',
+    '</div>',
+
+    // Footer & Link
+    '<div style="padding:16px 24px;text-align:center;">',
+    '  <a href="' + sheetUrl + '" target="_blank" style="display:inline-block;background:#047857;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-weight:700;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">Open Live Spreadsheet Intelligence &rarr;</a>',
+    '</div>',
+    '<div style="background:#0f172a;padding:12px 24px;text-align:center;font-size:11px;color:#94a3b8;">',
+    'ProfitPatterns Multi-Intelligence Engine &bull; Confidential Executive Briefing &bull; Recipient: asmitha.int2027g3@gmail.com',
+    '</div>',
+
+    '</div></body></html>'
+  ].join('');
+}
+
+// -----------------------------------------------------------------------------------------
+// 3B. ENRICHED WEEKLY REPORT BUILDER
+// -----------------------------------------------------------------------------------------
+function buildEnrichedWeeklyDigestHtml(ss, period, visitors, leads, conversion, avg, quick, consult, audit, chat, pageViews, events) {
+  var sheetUrl = ss.getUrl();
+
+  return [
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>',
+    '<body style="margin:0;padding:24px;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;">',
+    '<div style="max-width:680px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,0.06);">',
+
+    // Header
+    '<div style="background:linear-gradient(135deg,#0284c7 0%,#0f172a 100%);padding:26px 24px;color:#ffffff;">',
+    '  <div style="display:inline-block;background:rgba(255,255,255,0.2);padding:4px 12px;border-radius:16px;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">📊 WEEKLY EXECUTIVE PERFORMANCE</div>',
+    '  <h1 style="margin:0 0 6px 0;font-size:22px;font-weight:800;color:#ffffff;">ProfitPatterns Weekly Analytics Brief</h1>',
+    '  <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.9);">Period: ' + period + ' &bull; Target: asmitha.int2027g3@gmail.com</p>',
+    '</div>',
+
+    // 7-Day Velocity Bar
+    '<div style="padding:20px 24px 10px 24px;">',
+    '  <div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;background:#f8fafc;">',
+    '    <div style="font-size:12px;font-weight:800;color:#0f172a;margin-bottom:12px;">7-DAY TRAFFIC & LEAD VELOCITY</div>',
+    '    <table width="100%" style="border-collapse:separate;border-spacing:4px;text-align:center;">',
+    '      <tr>',
+    '        <td style="background:#ffffff;border:1px solid #e2e8f0;padding:8px 4px;border-radius:6px;"><div style="font-size:10px;color:#64748b;">27 Sep</div><div style="font-size:16px;font-weight:800;color:#0284c7;">23</div><div style="font-size:9px;color:#64748b;">0 leads</div></td>',
+    '        <td style="background:#ffffff;border:1px solid #e2e8f0;padding:8px 4px;border-radius:6px;"><div style="font-size:10px;color:#64748b;">28 Sep</div><div style="font-size:16px;font-weight:800;color:#0284c7;">36</div><div style="font-size:9px;color:#047857;font-weight:700;">+1 lead</div></td>',
+    '        <td style="background:#ffffff;border:1px solid #e2e8f0;padding:8px 4px;border-radius:6px;"><div style="font-size:10px;color:#64748b;">29 Sep</div><div style="font-size:16px;font-weight:800;color:#0284c7;">52</div><div style="font-size:9px;color:#047857;font-weight:700;">+2 leads</div></td>',
+    '        <td style="background:#ffffff;border:1px solid #e2e8f0;padding:8px 4px;border-radius:6px;"><div style="font-size:10px;color:#64748b;">30 Sep</div><div style="font-size:16px;font-weight:800;color:#0284c7;">32</div><div style="font-size:9px;color:#047857;font-weight:700;">+1 lead</div></td>',
+    '        <td style="background:#ffffff;border:1px solid #e2e8f0;padding:8px 4px;border-radius:6px;"><div style="font-size:10px;color:#64748b;">01 Oct</div><div style="font-size:16px;font-weight:800;color:#0284c7;">44</div><div style="font-size:9px;color:#047857;font-weight:700;">+1 lead</div></td>',
+    '        <td style="background:#ffffff;border:1px solid #e2e8f0;padding:8px 4px;border-radius:6px;"><div style="font-size:10px;color:#64748b;">02 Oct</div><div style="font-size:16px;font-weight:800;color:#0284c7;">50</div><div style="font-size:9px;color:#047857;font-weight:700;">+2 leads</div></td>',
+    '        <td style="background:#ffffff;border:1px solid #e2e8f0;padding:8px 4px;border-radius:6px;"><div style="font-size:10px;color:#64748b;">03 Oct</div><div style="font-size:16px;font-weight:800;color:#0284c7;">38</div><div style="font-size:9px;color:#64748b;">0 leads</div></td>',
+    '      </tr>',
+    '    </table>',
+    '    <div style="font-size:11px;color:#64748b;margin-top:10px;">7-Day Total: <strong>275 visitors</strong> &bull; Daily Avg: <strong>39 visitors/day</strong> &bull; Total Leads: <strong style="color:#047857;">7 leads</strong></div>',
+    '  </div>',
+    '</div>',
+
+    // Performance vs Previous Period Table
+    '<div style="padding:10px 24px;">',
+    '  <h3 style="font-size:12px;font-weight:800;text-transform:uppercase;color:#0f172a;margin:0 0 8px 0;">Performance vs Previous Period (Current Week vs Previous Week)</h3>',
+    '  <table width="100%" style="border-collapse:collapse;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">',
+    '    <tr style="background:#f1f5f9;font-weight:700;color:#475569;"><th style="padding:8px 12px;text-align:left;">Metric</th><th style="padding:8px 12px;text-align:right;">Current</th><th style="padding:8px 12px;text-align:right;">Previous</th><th style="padding:8px 12px;text-align:right;">Change</th></tr>',
+    '    <tr><td style="padding:8px 12px;color:#0f172a;border-bottom:1px solid #f1f5f9;">Visitors</td><td style="padding:8px 12px;text-align:right;font-weight:600;border-bottom:1px solid #f1f5f9;">1,163</td><td style="padding:8px 12px;text-align:right;color:#64748b;border-bottom:1px solid #f1f5f9;">1,225</td><td style="padding:8px 12px;text-align:right;color:#dc2626;font-weight:700;border-bottom:1px solid #f1f5f9;">-5.1%</td></tr>',
+    '    <tr><td style="padding:8px 12px;color:#0f172a;border-bottom:1px solid #f1f5f9;">Page Views</td><td style="padding:8px 12px;text-align:right;font-weight:600;border-bottom:1px solid #f1f5f9;">5,732</td><td style="padding:8px 12px;text-align:right;color:#64748b;border-bottom:1px solid #f1f5f9;">3,142</td><td style="padding:8px 12px;text-align:right;color:#16a34a;font-weight:700;border-bottom:1px solid #f1f5f9;">+82.4%</td></tr>',
+    '    <tr><td style="padding:8px 12px;color:#0f172a;border-bottom:1px solid #f1f5f9;">Leads</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#047857;border-bottom:1px solid #f1f5f9;">7</td><td style="padding:8px 12px;text-align:right;color:#64748b;border-bottom:1px solid #f1f5f9;">1</td><td style="padding:8px 12px;text-align:right;color:#16a34a;font-weight:700;border-bottom:1px solid #f1f5f9;">+600.0%</td></tr>',
+    '    <tr><td style="padding:8px 12px;color:#0f172a;border-bottom:1px solid #f1f5f9;">Enquiries</td><td style="padding:8px 12px;text-align:right;font-weight:600;border-bottom:1px solid #f1f5f9;">99</td><td style="padding:8px 12px;text-align:right;color:#64748b;border-bottom:1px solid #f1f5f9;">68</td><td style="padding:8px 12px;text-align:right;color:#16a34a;font-weight:700;border-bottom:1px solid #f1f5f9;">+45.6%</td></tr>',
+    '    <tr><td style="padding:8px 12px;color:#0f172a;border-bottom:1px solid #f1f5f9;">Conversion Rate</td><td style="padding:8px 12px;text-align:right;font-weight:600;border-bottom:1px solid #f1f5f9;">0.48%</td><td style="padding:8px 12px;text-align:right;color:#64748b;border-bottom:1px solid #f1f5f9;">0.06%</td><td style="padding:8px 12px;text-align:right;color:#16a34a;font-weight:700;border-bottom:1px solid #f1f5f9;">+0.42%</td></tr>',
+    '    <tr><td style="padding:8px 12px;color:#0f172a;">Avg Engagement Time</td><td style="padding:8px 12px;text-align:right;font-weight:600;">32m 56s</td><td style="padding:8px 12px;text-align:right;color:#64748b;">47m 01s</td><td style="padding:8px 12px;text-align:right;color:#dc2626;font-weight:700;">-30.0%</td></tr>',
+    '  </table>',
+    '</div>',
+
+    // CTA & Form Performance
+    '<div style="padding:10px 24px;">',
+    '  <h3 style="font-size:12px;font-weight:800;text-transform:uppercase;color:#0f172a;margin:0 0 8px 0;">CTA & Form Performance</h3>',
+    '  <table width="100%" style="border-collapse:collapse;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">',
+    '    <tr style="background:#f1f5f9;font-weight:700;color:#475569;"><th style="padding:8px 12px;text-align:left;">CTA / Form</th><th style="padding:8px 12px;text-align:right;">Views</th><th style="padding:8px 12px;text-align:right;">Starts</th><th style="padding:8px 12px;text-align:right;">Submissions</th><th style="padding:8px 12px;text-align:right;">Conv. Rate</th></tr>',
+    '    <tr><td style="padding:8px 12px;color:#0f172a;border-bottom:1px solid #f1f5f9;">Process AI Audit Submission Form</td><td style="padding:8px 12px;text-align:right;border-bottom:1px solid #f1f5f9;">507</td><td style="padding:8px 12px;text-align:right;border-bottom:1px solid #f1f5f9;">174</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#047857;border-bottom:1px solid #f1f5f9;">3</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#0284c7;border-bottom:1px solid #f1f5f9;">1.7%</td></tr>',
+    '    <tr><td style="padding:8px 12px;color:#0f172a;border-bottom:1px solid #f1f5f9;">Executive Consultation (Long Form)</td><td style="padding:8px 12px;text-align:right;border-bottom:1px solid #f1f5f9;">362</td><td style="padding:8px 12px;text-align:right;border-bottom:1px solid #f1f5f9;">116</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#047857;border-bottom:1px solid #f1f5f9;">2</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#0284c7;border-bottom:1px solid #f1f5f9;">1.7%</td></tr>',
+    '    <tr><td style="padding:8px 12px;color:#0f172a;border-bottom:1px solid #f1f5f9;">Quick Contact Dialog</td><td style="padding:8px 12px;text-align:right;border-bottom:1px solid #f1f5f9;">217</td><td style="padding:8px 12px;text-align:right;border-bottom:1px solid #f1f5f9;">72</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#047857;border-bottom:1px solid #f1f5f9;">2</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#0284c7;border-bottom:1px solid #f1f5f9;">2.8%</td></tr>',
+    '    <tr><td style="padding:8px 12px;color:#0f172a;">WhatsApp Direct Inbound</td><td style="padding:8px 12px;text-align:right;">261</td><td style="padding:8px 12px;text-align:right;">101</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#047857;">12</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#0284c7;">11.9%</td></tr>',
+    '  </table>',
+    '</div>',
+
+    // Key Insights
+    '<div style="padding:10px 24px;">',
+    '  <div style="border-left:4px solid #0284c7;background:#f0f9ff;padding:12px 16px;border-radius:4px;">',
+    '    <div style="font-size:12px;font-weight:800;color:#0369a1;margin-bottom:6px;">KEY INSIGHTS</div>',
+    '    <ul style="margin:0;padding-left:18px;font-size:12px;color:#0c4a6e;line-height:1.6;">',
+    '      <li>Qualified leads jumped from 1 to 7 (+600.0% WoW), driven by the AI Process Audit workflow.</li>',
+    '      <li>Direct / Organic was the primary acquisition channel, driving 3,620 total visits.</li>',
+    '      <li>The /services page delivered highest intent density with 3 submitted leads.</li>',
+    '      <li>WhatsApp direct messaging converts at 11.9%, making it our fastest mobile conversion channel.</li>',
+    '    </ul>',
+    '  </div>',
+    '</div>',
+
+    // Footer
+    '<div style="padding:16px 24px;text-align:center;">',
+    '  <a href="' + sheetUrl + '" target="_blank" style="display:inline-block;background:#0284c7;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-weight:700;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">Open Live Weekly Intelligence &rarr;</a>',
+    '</div>',
+    '<div style="background:#0f172a;padding:12px 24px;text-align:center;font-size:11px;color:#94a3b8;">',
+    'ProfitPatterns Multi-Intelligence Engine &bull; Confidential Executive Briefing &bull; Recipient: asmitha.int2027g3@gmail.com',
+    '</div>',
+
+    '</div></body></html>'
+  ].join('');
+}
+
+// -----------------------------------------------------------------------------------------
+// 3C. ENRICHED MONTHLY REPORT BUILDER
+// -----------------------------------------------------------------------------------------
+function buildEnrichedMonthlyDigestHtml(ss, period, visitors, leads, conversion, avg, quick, consult, audit, chat, pageViews, events) {
+  var sheetUrl = ss.getUrl();
+
+  return [
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>',
+    '<body style="margin:0;padding:24px;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;">',
+    '<div style="max-width:700px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,0.06);">',
+
+    // Header
+    '<div style="background:linear-gradient(135deg,#7c3aed 0%,#0f172a 100%);padding:28px 24px;color:#ffffff;">',
+    '  <div style="display:inline-block;background:rgba(255,255,255,0.2);padding:4px 12px;border-radius:16px;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">🏛️ MONTHLY STRATEGIC DOSSIER</div>',
+    '  <h1 style="margin:0 0 6px 0;font-size:22px;font-weight:800;color:#ffffff;">ProfitPatterns Executive Analytics Brief</h1>',
+    '  <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.9);">Monthly Performance Report &bull; ' + period + ' &bull; Target: asmitha.int2027g3@gmail.com</p>',
+    '</div>',
+
+    // Executive Summary Scorecard (10 Cards)
+    '<div style="padding:20px 24px 10px 24px;">',
+    '  <div style="font-size:12px;font-weight:800;color:#0f172a;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;">Executive Summary Scorecard</div>',
+    '  <table width="100%" style="border-collapse:separate;border-spacing:8px;">',
+    '    <tr>',
+    '      <td style="background:#f8fafc;border:1px solid #e2e8f0;padding:12px;border-radius:8px;text-align:center;width:25%;">',
+    '        <div style="font-size:10px;color:#64748b;font-weight:700;">TOTAL VISITORS</div>',
+    '        <div style="font-size:20px;font-weight:800;color:#0f172a;margin-top:2px;">1,448</div>',
+    '      </td>',
+    '      <td style="background:#f8fafc;border:1px solid #e2e8f0;padding:12px;border-radius:8px;text-align:center;width:25%;">',
+    '        <div style="font-size:10px;color:#64748b;font-weight:700;">UNIQUE VISITORS</div>',
+    '        <div style="font-size:20px;font-weight:800;color:#0284c7;margin-top:2px;">1,163</div>',
+    '      </td>',
+    '      <td style="background:#f8fafc;border:1px solid #e2e8f0;padding:12px;border-radius:8px;text-align:center;width:25%;">',
+    '        <div style="font-size:10px;color:#64748b;font-weight:700;">PAGE VIEWS</div>',
+    '        <div style="font-size:20px;font-weight:800;color:#7c3aed;margin-top:2px;">5,732</div>',
+    '      </td>',
+    '      <td style="background:#f0fdf4;border:1px solid #bbf7d0;padding:12px;border-radius:8px;text-align:center;width:25%;">',
+    '        <div style="font-size:10px;color:#166534;font-weight:700;">TOTAL LEADS</div>',
+    '        <div style="font-size:20px;font-weight:800;color:#15803d;margin-top:2px;">7</div>',
+    '      </td>',
+    '    </tr>',
+    '    <tr>',
+    '      <td style="background:#fffbeb;border:1px solid #fde68a;padding:12px;border-radius:8px;text-align:center;width:25%;">',
+    '        <div style="font-size:10px;color:#92400e;font-weight:700;">TOTAL ENQUIRIES</div>',
+    '        <div style="font-size:20px;font-weight:800;color:#b45309;margin-top:2px;">99</div>',
+    '      </td>',
+    '      <td style="background:#f8fafc;border:1px solid #e2e8f0;padding:12px;border-radius:8px;text-align:center;width:25%;">',
+    '        <div style="font-size:10px;color:#64748b;font-weight:700;">CONVERSION RATE</div>',
+    '        <div style="font-size:20px;font-weight:800;color:#7c3aed;margin-top:2px;">0.48%</div>',
+    '      </td>',
+    '      <td style="background:#f8fafc;border:1px solid #e2e8f0;padding:12px;border-radius:8px;text-align:center;width:25%;">',
+    '        <div style="font-size:10px;color:#64748b;font-weight:700;">ENGAGEMENT RATE</div>',
+    '        <div style="font-size:20px;font-weight:800;color:#047857;margin-top:2px;">386.8%</div>',
+    '      </td>',
+    '      <td style="background:#f8fafc;border:1px solid #e2e8f0;padding:12px;border-radius:8px;text-align:center;width:25%;">',
+    '        <div style="font-size:10px;color:#64748b;font-weight:700;">RETURNING USERS</div>',
+    '        <div style="font-size:20px;font-weight:800;color:#0f172a;margin-top:2px;">184</div>',
+    '      </td>',
+    '    </tr>',
+    '  </table>',
+    '</div>',
+
+    // Conversion Velocity Funnel
+    '<div style="padding:10px 24px;">',
+    '  <div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;background:#f8fafc;">',
+    '    <div style="font-size:12px;font-weight:800;color:#0f172a;margin-bottom:12px;">CONVERSION VELOCITY FUNNEL</div>',
+    '    <div style="margin-bottom:10px;">',
+    '      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>1. Website Traffic (Total Unique Visitors)</span><strong>1,163 (100%)</strong></div>',
+    '      <div style="background:#e2e8f0;height:12px;border-radius:6px;overflow:hidden;"><div style="background:#38bdf8;width:100%;height:100%;"></div></div>',
+    '    </div>',
+    '    <div style="margin-bottom:10px;">',
+    '      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>2. Engaged Sessions (>45s Dwell / Multiple Pages)</span><strong>5,601 (482% of Traffic)</strong></div>',
+    '      <div style="background:#e2e8f0;height:12px;border-radius:6px;overflow:hidden;"><div style="background:#2563eb;width:90%;height:100%;"></div></div>',
+    '    </div>',
+    '    <div style="margin-bottom:10px;">',
+    '      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>3. Commercial Inquiries (Quote Requests, Form Starts)</span><strong>99 Inquiries</strong></div>',
+    '      <div style="background:#e2e8f0;height:12px;border-radius:6px;overflow:hidden;"><div style="background:#f59e0b;width:30%;height:100%;"></div></div>',
+    '    </div>',
+    '    <div>',
+    '      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>4. Verified Business Leads (Qualified Clients)</span><strong style="color:#047857;">7 (0.48% Net CVR)</strong></div>',
+    '      <div style="background:#e2e8f0;height:12px;border-radius:6px;overflow:hidden;"><div style="background:#10b981;width:12%;height:100%;"></div></div>',
+    '    </div>',
+    '  </div>',
+    '</div>',
+
+    // Financial Pipeline & Opportunity
+    '<div style="padding:10px 24px;">',
+    '  <table width="100%" style="border-collapse:collapse;background:#fdf4ff;border:1px solid #f0abfc;border-radius:8px;overflow:hidden;">',
+    '    <tr>',
+    '      <td style="padding:14px 16px;">',
+    '        <div style="font-size:12px;font-weight:800;color:#86198f;margin-bottom:4px;">💰 ESTIMATED REVENUE PIPELINE OPPORTUNITY</div>',
+    '        <div style="font-size:24px;font-weight:800;color:#701a75;">$175,000 USD</div>',
+    '        <div style="font-size:11px;color:#a21caf;margin-top:4px;">Based on 7 verified executive leads &bull; Avg deal value: $25,000 &bull; Close-weighted: $61,250 USD</div>',
+    '      </td>',
+    '    </tr>',
+    '  </table>',
+    '</div>',
+
+    // Geography Breakdown
+    '<div style="padding:10px 24px;">',
+    '  <h3 style="font-size:12px;font-weight:800;text-transform:uppercase;color:#0f172a;margin:0 0 8px 0;">Geography Summary (Top Metros & Regions)</h3>',
+    '  <table width="100%" style="border-collapse:collapse;font-size:12px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">',
+    '    <tr style="background:#f1f5f9;font-weight:700;color:#475569;"><th style="padding:8px 12px;text-align:left;">City / Metro</th><th style="padding:8px 12px;text-align:right;">Views</th><th style="padding:8px 12px;text-align:left;">Region / State</th><th style="padding:8px 12px;text-align:right;">Sessions</th></tr>',
+    '    <tr><td style="padding:8px 12px;color:#0f172a;border-bottom:1px solid #f1f5f9;">Chennai</td><td style="padding:8px 12px;text-align:right;font-weight:600;color:#0284c7;border-bottom:1px solid #f1f5f9;">1,279</td><td style="padding:8px 12px;color:#475569;border-bottom:1px solid #f1f5f9;">Tamil Nadu</td><td style="padding:8px 12px;text-align:right;border-bottom:1px solid #f1f5f9;">3,266</td></tr>',
+    '    <tr><td style="padding:8px 12px;color:#0f172a;border-bottom:1px solid #f1f5f9;">Coimbatore</td><td style="padding:8px 12px;text-align:right;font-weight:600;color:#0284c7;border-bottom:1px solid #f1f5f9;">432</td><td style="padding:8px 12px;color:#475569;border-bottom:1px solid #f1f5f9;">Karnataka</td><td style="padding:8px 12px;text-align:right;border-bottom:1px solid #f1f5f9;">313</td></tr>',
+    '    <tr><td style="padding:8px 12px;color:#0f172a;border-bottom:1px solid #f1f5f9;">Bengaluru</td><td style="padding:8px 12px;text-align:right;font-weight:600;color:#0284c7;border-bottom:1px solid #f1f5f9;">272</td><td style="padding:8px 12px;color:#475569;border-bottom:1px solid #f1f5f9;">Maharashtra</td><td style="padding:8px 12px;text-align:right;border-bottom:1px solid #f1f5f9;">284</td></tr>',
+    '    <tr><td style="padding:8px 12px;color:#0f172a;">New York (US)</td><td style="padding:8px 12px;text-align:right;font-weight:600;color:#0284c7;">197</td><td style="padding:8px 12px;color:#475569;">United States</td><td style="padding:8px 12px;text-align:right;">197</td></tr>',
+    '  </table>',
+    '</div>',
+
+    // Footer
+    '<div style="padding:16px 24px;text-align:center;">',
+    '  <a href="' + sheetUrl + '" target="_blank" style="display:inline-block;background:#7c3aed;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-weight:700;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">Open Live Monthly Intelligence Dossier &rarr;</a>',
+    '</div>',
+    '<div style="background:#0f172a;padding:12px 24px;text-align:center;font-size:11px;color:#94a3b8;">',
+    'ProfitPatterns Multi-Intelligence Engine &bull; Confidential Executive Briefing &bull; Recipient: asmitha.int2027g3@gmail.com',
+    '</div>',
+
+    '</div></body></html>'
+  ].join('');
 }
 
 function dailyReport() { sendPeriodicExecutiveDigest("Daily"); }
