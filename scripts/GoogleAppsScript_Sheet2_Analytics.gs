@@ -17,7 +17,7 @@
 var DATA_SHEET_ID = "1RtJupdNAFOO9Fy8xGP5FeN0p0RVZAaJVCYd96vlVE1I";
 
 // 🔴 WEBSITE BASE URL
-var SITE_BASE_URL = "https://profit-patterns-xi.vercel.app";
+var SITE_BASE_URL = "https://profit-patterns-jade.vercel.app";
 
 // Enterprise Design Palette
 var C = {
@@ -174,8 +174,12 @@ function deduplicateRows(rows, idColName) {
 
 function findCol(headers, names) {
   if (!headers || !headers.length) return -1;
+  var normalizedHeaders = headers.map(function(c) {
+    return String(c || "").trim().toLowerCase().replace(/[\s\-_]+/g, "");
+  });
   for (var n = 0; n < names.length; n++) {
-    var idx = headers.indexOf(names[n]);
+    var target = String(names[n]).trim().toLowerCase().replace(/[\s\-_]+/g, "");
+    var idx = normalizedHeaders.indexOf(target);
     if (idx !== -1) return idx;
   }
   return -1;
@@ -574,10 +578,116 @@ function buildHeatmapSheet(tData) {
 // ══════════════════════════════════════════════════════════════════════════════
 // TAB 6: GROWTH GRAPH & INTERVAL SUMMARIES
 // ══════════════════════════════════════════════════════════════════════════════
+function computeIntervalsFromTelemetry(tData) {
+  var headers = [
+    "Period", "Total_Events", "Unique_Visitors", "Page_Views", "Quick_Leads",
+    "Consultation_Leads", "Audit_Dossiers", "Chatbot_Leads", "Total_Leads",
+    "Conversion_Rate", "Avg_Engagement_Sec"
+  ];
+  var today = Utilities.formatDate(new Date(), "Asia/Kolkata", "yyyy-MM-dd");
+
+  if (!tData || tData.length < 2) {
+    var defaultRow = [today, 0, 0, 0, 0, 0, 0, 0, 0, "0.0%", 0];
+    return {
+      daily: [headers, defaultRow],
+      weekly: [headers, defaultRow],
+      monthly: [headers, [today.substring(0, 7), 0, 0, 0, 0, 0, 0, 0, 0, "0.0%", 0]]
+    };
+  }
+
+  var h = tData[0];
+  var tsCol = findCol(h, ["received_at", "client_timestamp", "Timestamp", "Date", "time"]);
+  var typeCol = findCol(h, ["event_type", "type"]);
+  var nameCol = findCol(h, ["event_name", "action"]);
+  var vidCol = findCol(h, ["visitor_id", "visitorId"]);
+  var durCol = findCol(h, ["time_on_page_seconds", "session_duration_seconds", "duration"]);
+  var formCol = findCol(h, ["form_name", "formName"]);
+
+  var daily = {}, weekly = {}, monthly = {};
+
+  var acc = function(bucket, key, vid, isPv, isQ, isC, isA, isCh, isL, dur) {
+    if (!bucket[key]) {
+      bucket[key] = { ev: 0, v: new Set(), pv: 0, q: 0, c: 0, a: 0, ch: 0, l: 0, dur: 0, cnt: 0 };
+    }
+    bucket[key].ev++;
+    if (vid) bucket[key].v.add(vid);
+    if (isPv) bucket[key].pv++;
+    if (isL) {
+      bucket[key].l++;
+      if (isQ) bucket[key].q++;
+      else if (isC) bucket[key].c++;
+      else if (isA) bucket[key].a++;
+      else if (isCh) bucket[key].ch++;
+      else bucket[key].q++;
+    }
+    if (dur > 0) { bucket[key].dur += dur; bucket[key].cnt++; }
+  };
+
+  for (var i = 1; i < tData.length; i++) {
+    var rawTs = tsCol > -1 ? tData[i][tsCol] : tData[i][0];
+    var s = String(rawTs || "").replace(/\s+(IST|UTC|GMT.*)$/i, "").trim();
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(s)) s = s.replace(" ", "T");
+    var d = new Date(s);
+    if (isNaN(d.getTime())) d = new Date();
+
+    var dayKey = Utilities.formatDate(d, "Asia/Kolkata", "yyyy-MM-dd");
+    var monthKey = Utilities.formatDate(d, "Asia/Kolkata", "yyyy-MM");
+    var dWeek = new Date(d.getTime());
+    var dayDiff = dWeek.getDate() - dWeek.getDay() + (dWeek.getDay() === 0 ? -6 : 1);
+    dWeek.setDate(dayDiff);
+    var weekKey = Utilities.formatDate(dWeek, "Asia/Kolkata", "yyyy-MM-dd");
+
+    var vid = vidCol > -1 ? String(tData[i][vidCol] || "") : ("v_" + i);
+    var evType = typeCol > -1 ? String(tData[i][typeCol] || "").toLowerCase() : "";
+    var evName = nameCol > -1 ? String(tData[i][nameCol] || "").toLowerCase() : "";
+    var fName = formCol > -1 ? String(tData[i][formCol] || "").toLowerCase() : "";
+    var dur = durCol > -1 ? (Number(tData[i][durCol]) || 0) : 0;
+
+    var isPv = (evType === "page_view" || evName === "page_view");
+    var isL = (evType === "lead" || evName === "lead_submit" || fName.includes("form") || fName.includes("quick") || fName.includes("consultation"));
+    var isQ = fName.includes("quick");
+    var isC = fName.includes("consultation") || fName.includes("long");
+    var isA = fName.includes("audit") || fName.includes("dossier");
+    var isCh = fName.includes("chat") || fName.includes("assistant");
+
+    acc(daily, dayKey, vid, isPv, isQ, isC, isA, isCh, isL, dur);
+    acc(weekly, weekKey, vid, isPv, isQ, isC, isA, isCh, isL, dur);
+    acc(monthly, monthKey, vid, isPv, isQ, isC, isA, isCh, isL, dur);
+  }
+
+  var buildRows = function(bucket, label) {
+    var kList = Object.keys(bucket).sort().reverse();
+    var out = [headers.slice()];
+    out[0][0] = label;
+    for (var k = 0; k < kList.length; k++) {
+      var item = bucket[kList[k]];
+      var u = item.v.size || 0;
+      var rate = u > 0 ? ((item.l / u) * 100).toFixed(1) + "%" : "0.0%";
+      var avgSec = item.cnt > 0 ? Math.round(item.dur / item.cnt) : 0;
+      out.push([kList[k], item.ev, u, item.pv, item.q, item.c, item.a, item.ch, item.l, rate, avgSec]);
+    }
+    return out;
+  };
+
+  return {
+    daily: buildRows(daily, "Date"),
+    weekly: buildRows(weekly, "Week_Start"),
+    monthly: buildRows(monthly, "Month")
+  };
+}
+
 function buildGrowthGraphSheet(tData, dailyDataRaw, weeklyDataRaw, monthlyDataRaw) {
   dailyDataRaw = (dailyDataRaw && Array.isArray(dailyDataRaw)) ? dailyDataRaw : [];
   weeklyDataRaw = (weeklyDataRaw && Array.isArray(weeklyDataRaw)) ? weeklyDataRaw : [];
   monthlyDataRaw = (monthlyDataRaw && Array.isArray(monthlyDataRaw)) ? monthlyDataRaw : [];
+
+  // Fallback: If Sheet 1 daily/weekly/monthly tables were empty, compute dynamically from tData
+  if (dailyDataRaw.length <= 1 && tData && tData.length > 1) {
+    var computed = computeIntervalsFromTelemetry(tData);
+    dailyDataRaw = computed.daily;
+    weeklyDataRaw = computed.weekly;
+    monthlyDataRaw = computed.monthly;
+  }
 
   var sh = getOrCreateTab("📈 Growth & Momentum");
   if (!sh) return;

@@ -1,65 +1,47 @@
 /**
- * =========================================================================================
- * PROFITPATTERNS — UNIFIED DIGITAL PRESENCE & 3-LAYER MULTI-INTELLIGENCE ENGINE
- * =========================================================================================
- * Website: https://profit-patterns-xi.vercel.app/
+ * PROFITPATTERNS — UNIFIED GOOGLE APPS SCRIPT BACKEND & MULTI-INTELLIGENCE ENGINE
  *
- * Architecture:
- * 1. VISIBILITY LAYER (Raw Telemetry & Firehose):
- *    - Live_Traffic_Events: Ingests all raw 56-column telemetry events.
- *    - Click_Interactions: Tracks element clicks, coordinates & Left vs Right Hand zones.
- *    - Scroll_Engagement: Device-aware scroll depths (Mobile vs Desktop).
- *    - Page_Performance, Visitor_Sessions, Traffic_Sources, Form_Interactions, Conversion_Events.
+ * Combines:
+ * 1. Website telemetry + lead tracking firehose (Live_Traffic_Events)
+ * 2. Dedicated lead routing (Quick / Long / Audit / Chatbot)
+ * 3. Daily, Weekly & Monthly automated executive intelligence summaries
+ * 4. Multi-Pillar analytics intelligence (Session, Traffic, Geo, IP, Lead Intelligence)
+ * 5. Google Drive audit-document archival
+ * 6. Instant VIP lead email alerts
+ * 7. Automated individual Daily, Weekly, and Monthly executive digest emails
  *
- * 2. ANALYZE LAYER (Pillar Intelligence & Cross-Correlation):
- *    - Session_Intelligence: 1 unique row per session (Dwell time, entry/exit, navigation flow, bounce risk, funnel stage).
- *    - Traffic_Intelligence: 1 unique row per session (UTMs, first/last-touch attribution, channel ROI score).
- *    - Geo_Timezone_Intelligence: 1 unique row per visitor/session (Country, city, local clock, day phase, advisory desk).
- *    - IP_Security_Intelligence: 1 unique row per session (ISP, corporate intent, fraud risk score, verified human status).
- *
- * 3. PREDICTIVE LAYER (Executive Lead Intelligence & Action):
- *    - Lead_Management: Master consolidated directory enriched with Predictive Intent Scores & Tailored Strategy.
- *    - Dedicated Lead Tabs: Quick_Form_Leads, Long_Form_Leads, Audit_Document_Leads, Chatbot_Leads.
- *    - Google Drive Archival & Instant VIP Email Alerts (PDF dossiers, Drive links, WhatsApp, Phone).
- *    - Automated Daily, Weekly, Monthly Executive Reports.
- * =========================================================================================
+ * Target Recipient: janegracy.int2027g3@gmail.com
  */
 
 var CONFIG = {
-  SPREADSHEET_ID: "1RtJupdNAFOO9Fy8xGP5FeN0p0RVZAaJVCYd96vlVE1I",
-  SYSTEM_NAME: "ProfitPatterns Multi-Intelligence Engine",
+  SPREADSHEET_ID: "17Ehus2R8z2XnS8Urhanpaoh-eqsW5oGuVtm1XZ0E4o8",
+  SYSTEM_NAME: "ProfitPatterns Digital Presence",
   DEFAULT_ENVIRONMENT: "production",
-  AUDIT_DOCUMENTS_FOLDER_NAME: "ProfitPatterns_Audit_Dossiers",
-  TIMEZONE: "Asia/Kolkata"
+  AUDIT_DOCUMENTS_FOLDER_NAME: "ProfitPatterns_Audit_Documents",
+  TIMEZONE: "Asia/Kolkata",
+  WEBSITE: "https://profit-patterns-jade.vercel.app"
 };
 
 var EMAIL_CONFIG = {
   name: "ProfitPatterns Strategic Intelligence",
   companyName: "ProfitPatterns",
-  website: "https://profit-patterns-xi.vercel.app",
-  replyTo: "asmithaveera1346@gmail.com",
-  adminEmail: "asmithaveera1346@gmail.com",
-  
+  website: CONFIG.WEBSITE,
+  replyTo: "janegracy.int2027g3@gmail.com",
+  adminEmail: "janegracy.int2027g3@gmail.com",
   leadEmails: [
-    "asmitha.int2027g3@gmail.com",
-    "asmitha.int2027gs@gmail.com",
-    "asmithaveera1346@gmail.com"
+    "janegracy.int2027g3@gmail.com",
+    "janegracy2005@gmail.com"
   ],
-  
   reportEmails: [
-    "asmitha.int2027g3@gmail.com",
-    "asmitha.int2027gs@gmail.com",
-    "asmithaveera1346@gmail.com"
+    "janegracy.int2027g3@gmail.com"
   ],
-
-  whatsappNumber: "917339693105"
+  whatsappNumber: "7845072426"
 };
 
 // =========================================================================================
-// TAB SCHEMAS (RAW TELEMETRY + 4 INTELLIGENCE TABS + LEADS + INTERVAL DIGESTS)
+// SHEET SCHEMAS
 // =========================================================================================
 var TAB_HEADERS = {
-  // --- LAYER 1: VISIBILITY TELEMETRY TABS ---
   Live_Traffic_Events: [
     "received_at","event_id","event_type","event_name","visitor_id","session_id",
     "client_timestamp","user_id","page_url","page_path","page_title","previous_page",
@@ -74,15 +56,38 @@ var TAB_HEADERS = {
     "source_environment","event_data_json"
   ],
 
-  Click_Interactions: [
-    "received_at","event_id","visitor_id","session_id","page_url","page_path",
-    "device_type","element_type","element_id","element_class","element_text",
-    "click_position_x","click_position_y","hand_zone","section","event_label"
+  Quick_Form_Leads: [
+    "received_at","lead_id","visitor_id","session_id","name","email","phone",
+    "company","requirement","message","page_path","lead_source","lead_status",
+    "follow_up_status","source_environment"
   ],
 
-  Scroll_Engagement: [
-    "received_at","event_id","visitor_id","session_id","page_url","page_path",
-    "device_type","scroll_percentage","max_scroll_depth","time_on_page_seconds","section"
+  Long_Form_Leads: [
+    "received_at","lead_id","visitor_id","session_id","name","email","phone",
+    "company","job_title","industry","company_size","website","requirement",
+    "challenge","desired_outcome","current_tools","existing_ai_usage","project_scope",
+    "budget_range","preferred_contact_time","page_path","lead_source","lead_status",
+    "follow_up_status","source_environment"
+  ],
+
+  Audit_Document_Leads: [
+    "received_at","lead_id","visitor_id","session_id","name","email","phone",
+    "company","job_title","industry","requirement","challenge","audit_doc_type",
+    "weekly_hours_spent","files_count","files_list","nda_requested",
+    "document_drive_link","drive_file_id","page_path","lead_source","lead_status",
+    "follow_up_status","source_environment"
+  ],
+
+  Chatbot_Leads: [
+    "received_at","lead_id","visitor_id","session_id","name","email","phone",
+    "company","requirement","challenge","page_path","lead_source","lead_status",
+    "follow_up_status","source_environment"
+  ],
+
+  Lead_Management: [
+    "received_at","lead_id","lead_type","visitor_id","session_id","name","email","phone",
+    "company","lead_source","form_name","lead_status","follow_up_status",
+    "consent_status","source_environment","document_drive_link","drive_file_id"
   ],
 
   Visitor_Sessions: [
@@ -96,6 +101,17 @@ var TAB_HEADERS = {
     "received_at","event_id","visitor_id","session_id","page_url","page_path",
     "page_title","event_type","time_on_page_seconds","scroll_percentage",
     "max_scroll_depth","traffic_source","device_type","source_environment"
+  ],
+
+  Click_Interactions: [
+    "received_at","event_id","visitor_id","session_id","page_url","page_path",
+    "device_type","element_type","element_id","element_class","element_text",
+    "click_position_x","click_position_y","hand_zone","section","event_label"
+  ],
+
+  Scroll_Engagement: [
+    "received_at","event_id","visitor_id","session_id","page_url","page_path",
+    "device_type","scroll_percentage","max_scroll_depth","time_on_page_seconds","section"
   ],
 
   Form_Interactions: [
@@ -119,69 +135,6 @@ var TAB_HEADERS = {
     "clicks","impressions","ctr","average_position","device"
   ],
 
-  // --- LAYER 2: ANALYZE LAYER INTELLIGENCE TABS (Deduplicated Upsert) ---
-  Session_Intelligence: [
-    "Timestamp", "Session ID", "Visitor ID", "Entry Point", "Current Page",
-    "Page Dwell (s)", "Session Dwell (s)", "Navigation Flow", "Bounce Risk",
-    "Funnel Stage", "User Intent", "Interactions Count"
-  ],
-
-  Traffic_Intelligence: [
-    "Timestamp", "Session ID", "Visitor ID", "Traffic Category", "Raw Source",
-    "Medium", "Campaign", "Search Term", "Ad Content", "Click ID / Tag",
-    "First-Touch Attribution", "Last-Touch Attribution", "Channel ROI Score", "Referrer Domain"
-  ],
-
-  Geo_Timezone_Intelligence: [
-    "Timestamp", "Visitor ID", "Country", "Country Code", "City",
-    "Region", "Continent", "Currency", "Market Tier", "Compliance Mode",
-    "Local Clock Time", "Timezone (IANA)", "UTC Offset", "Day Phase",
-    "Peak Hours Status", "Active Advisory Desk"
-  ],
-
-  IP_Security_Intelligence: [
-    "Timestamp", "Visitor ID", "Session ID", "Network Carrier / ISP",
-    "Network Type", "Corporate Intent", "Fraud Risk Score", "Fraud Status",
-    "Repeat Visits Velocity", "Security Tier", "Device Type", "Browser / OS"
-  ],
-
-  // --- LAYER 3: PREDICTIVE LAYER & LEAD MANAGEMENT TABS ---
-  Lead_Management: [
-    "received_at","lead_id","lead_type","visitor_id","session_id","name","email","phone",
-    "company","lead_source","form_name","lead_status","follow_up_status",
-    "consent_status","source_environment","document_drive_link","drive_file_id",
-    "predictive_synergy_score","urgency_score","regional_market","tailored_strategy"
-  ],
-
-  Quick_Form_Leads: [
-    "received_at","lead_id","visitor_id","session_id","name","email","phone",
-    "company","requirement","message","page_path","lead_source","lead_status",
-    "follow_up_status","source_environment","predictive_score"
-  ],
-
-  Long_Form_Leads: [
-    "received_at","lead_id","visitor_id","session_id","name","email","phone",
-    "company","job_title","industry","company_size","website","requirement",
-    "challenge","desired_outcome","current_tools","existing_ai_usage",
-    "project_scope","budget_range","preferred_contact_time","page_path",
-    "lead_source","lead_status","follow_up_status","source_environment","predictive_score"
-  ],
-
-  Audit_Document_Leads: [
-    "received_at","lead_id","visitor_id","session_id","name","email","phone",
-    "company","job_title","industry","requirement","challenge","audit_doc_type",
-    "weekly_hours_spent","files_count","files_list","nda_requested",
-    "document_drive_link","drive_file_id","page_path","lead_source",
-    "lead_status","follow_up_status","source_environment","predictive_score"
-  ],
-
-  Chatbot_Leads: [
-    "received_at","lead_id","visitor_id","session_id","name","email","phone",
-    "company","requirement","challenge","page_path","lead_source","lead_status",
-    "follow_up_status","source_environment","predictive_score"
-  ],
-
-  // --- EXECUTIVE SUMMARY TABS ---
   Daily_Summary: [
     "Date","Total_Events","Unique_Visitors","Page_Views","Quick_Leads",
     "Consultation_Leads","Audit_Dossiers","Chatbot_Leads","Total_Leads",
@@ -200,16 +153,45 @@ var TAB_HEADERS = {
     "Conversion_Rate","Avg_Engagement_Sec"
   ],
 
-  Hourly_Heatmap: [
-    "Day","12:00 AM","1:00 AM","2:00 AM","3:00 AM","4:00 AM","5:00 AM",
-    "6:00 AM","7:00 AM","8:00 AM","9:00 AM","10:00 AM","11:00 AM",
-    "12:00 PM","1:00 PM","2:00 PM","3:00 PM","4:00 PM","5:00 PM",
-    "6:00 PM","7:00 PM","8:00 PM","9:00 PM","10:00 PM","11:00 PM"
+  Session_Intelligence: [
+    "Timestamp","Session_ID","Visitor_ID","Entry_Point","Current_Page",
+    "Page_Dwell_Sec","Session_Dwell_Sec","Navigation_Flow","Bounce_Risk",
+    "Funnel_Stage","User_Intent","Interactions_Count"
+  ],
+
+  Traffic_Intelligence: [
+    "Timestamp","Session_ID","Visitor_ID","Traffic_Category","Raw_Source",
+    "Medium","Campaign","Search_Term","Ad_Content","Click_ID_Tag",
+    "First_Touch_Attribution","Last_Touch_Attribution","Channel_ROI_Score","Referrer_Domain"
+  ],
+
+  Geo_Timezone_Intelligence: [
+    "Timestamp","Visitor_ID","Country","Country_Code","City","Region",
+    "Continent","Currency","Market_Tier","Compliance_Mode","Local_Clock_Time",
+    "Timezone_IANA","UTC_Offset","Day_Phase","Peak_Hours_Status","Active_Advisory_Desk"
+  ],
+
+  IP_Security_Intelligence: [
+    "Timestamp","Visitor_ID","Session_ID","Network_Carrier_ISP","Network_Type",
+    "Corporate_Intent","Fraud_Risk_Score","Fraud_Status","Repeat_Visits_Velocity",
+    "Security_Tier","Device_Type","Browser_OS"
+  ],
+
+  Lead_Intelligence: [
+    "Timestamp","Lead_ID","Full_Name","Work_Email","Phone","Company_Name",
+    "Job_Title","Industry","Lead_Track","Primary_Requirement",
+    "Challenge_Process_Message","Source_Page_URL","Traffic_Source",
+    "First_Touch_Attribution","Lead_Status"
+  ],
+
+  Master_Event_Log: [
+    "Timestamp","Event_Name","Event_Type","Event_Category","Page_Path",
+    "Visitor_ID","Session_ID","Target_CTA_Text","Predictive_Synergy_Score","Traffic_Source"
   ]
 };
 
 // =========================================================================================
-// SPREADSHEET & TAB ACCESS HELPERS
+// SPREADSHEET HELPERS
 // =========================================================================================
 function getSpreadsheet() {
   try {
@@ -217,404 +199,207 @@ function getSpreadsheet() {
     if (active) return active;
   } catch (e) {}
 
-  if (CONFIG.SPREADSHEET_ID && !CONFIG.SPREADSHEET_ID.includes("PASTE_")) {
+  if (CONFIG.SPREADSHEET_ID && CONFIG.SPREADSHEET_ID.indexOf("PASTE_") === -1) {
     try {
       return SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-    } catch (e) {
-      console.warn("Could not open spreadsheet by ID: " + e.toString());
+    } catch (e2) {
+      console.error("Could not open spreadsheet by ID: " + e2);
     }
   }
   return null;
 }
 
 function getTab(ss, tabName) {
-  if (!ss) ss = getSpreadsheet();
   if (!ss) return null;
 
+  var headers = TAB_HEADERS[tabName] || [];
   var sheet = ss.getSheetByName(tabName);
-  var headers = (TAB_HEADERS && TAB_HEADERS[tabName]) ? TAB_HEADERS[tabName] : [];
 
   if (!sheet) {
     sheet = ss.insertSheet(tabName);
-    if (headers.length > 0) {
-      var headerRange = sheet.getRange(1, 1, 1, headers.length);
-      headerRange.setValues([headers])
-                 .setFontWeight("bold")
-                 .setBackground("#064e3b")
-                 .setFontColor("#ffffff")
-                 .setHorizontalAlignment("center");
-      sheet.setFrozenRows(1);
-    }
-  } else if (sheet.getLastRow() === 0 && headers.length > 0) {
-    var headerRange2 = sheet.getRange(1, 1, 1, headers.length);
-    headerRange2.setValues([headers])
-                .setFontWeight("bold")
-                .setBackground("#064e3b")
-                .setFontColor("#ffffff")
-                .setHorizontalAlignment("center");
+  }
+
+  if (headers.length > 0 && sheet.getLastRow() === 0) {
+    var color = tabName === "Daily_Summary" ? "#047857" :
+               (tabName === "Weekly_Summary" ? "#0284c7" :
+               (tabName === "Monthly_Summary" ? "#7c3aed" : "#064e3b"));
+
+    sheet.getRange(1, 1, 1, headers.length)
+      .setValues([headers])
+      .setFontWeight("bold")
+      .setBackground(color)
+      .setFontColor("#ffffff")
+      .setHorizontalAlignment("center");
     sheet.setFrozenRows(1);
   }
+
   return sheet;
 }
 
-// Find existing row index by column value (1-based row index, returns -1 if not found)
-function findRowByValue(sheet, colIndex, value) {
-  if (!value) return -1;
-  var lastRow = sheet.getLastRow();
-  if (lastRow < 2) return -1;
+function initializeAllTabs() {
+  var ss = getSpreadsheet();
+  if (!ss) throw new Error("Spreadsheet is not accessible.");
 
-  var range = sheet.getRange(2, colIndex, lastRow - 1, 1);
-  var values = range.getValues();
-  var searchStr = String(value).trim().toLowerCase();
-
-  for (var i = 0; i < values.length; i++) {
-    if (String(values[i][0]).trim().toLowerCase() === searchStr) {
-      return i + 2;
-    }
-  }
-  return -1;
+  Object.keys(TAB_HEADERS).forEach(function(tabName) {
+    getTab(ss, tabName);
+  });
 }
 
 // =========================================================================================
-// MAIN WEBHOOK (doPost & doGet)
+// ONE AND ONLY WEBHOOK (doPost & doGet)
 // =========================================================================================
-function doGet(e) {
-  return ContentService.createTextOutput(JSON.stringify({
-    status: "online",
-    system: CONFIG.SYSTEM_NAME,
-    timestamp: new Date().toISOString(),
-    spreadsheetId: CONFIG.SPREADSHEET_ID
-  })).setMimeType(ContentService.MimeType.JSON);
-}
-
 function doPost(e) {
-  // Test fallback if executed without payload
-  if (!e || !e.postData || !e.postData.contents) {
-    e = {
-      postData: {
-        contents: JSON.stringify({
-          event_type: "lead",
-          event_name: "lead_submit",
-          lead_type: "QUICK_FORM",
-          form_name: "Quick Contact Form",
-          name: "Test Executive",
-          email: "asmitha.int2027g3@gmail.com",
-          phone: "+91 7339693105",
-          company: "Enterprise AI Client",
-          requirement: "AI Strategy Consultation",
-          page_path: "/contact"
-        })
-      }
-    };
-  }
-
   try {
+    if (!e || !e.postData || !e.postData.contents) {
+      // Test payload fallback
+      e = {
+        postData: {
+          contents: JSON.stringify({
+            event_type: "lead",
+            event_name: "lead_submit",
+            lead_type: "QUICK_FORM",
+            form_name: "Quick Contact Form",
+            name: "Jane Gracy",
+            email: "janegracy.int2027g3@gmail.com",
+            phone: "+91 7845072426",
+            company: "ProfitPatterns AI",
+            requirement: "Strategic Consultation",
+            page_path: "/contact"
+          })
+        }
+      };
+    }
+
     var rawPayload = JSON.parse(e.postData.contents);
     var ss = getSpreadsheet();
-    if (!ss) {
-      return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Spreadsheet inaccessible" }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
+    if (!ss) return jsonResponse({ status: "error", message: "Spreadsheet inaccessible." });
+
+    initializeAllTabs();
 
     var receivedAt = normalizeTimestamp(new Date());
     var p = enrichPayload(rawPayload, receivedAt);
-    var now = new Date();
 
-    // ── 1. Process & Archive Attached Files to Google Drive ──
+    // ------------------------------------------------------------------
+    // 1. Optional uploaded document handling
+    // ------------------------------------------------------------------
     var attachments = getAttachmentBlobs(p, p.name || "Client");
-    var driveBlobs = archiveDocumentToDrive(p);
-    if (driveBlobs.length > 0 && attachments.length === 0) {
-      attachments = driveBlobs;
+    var driveMeta = archiveDocumentToDrive(p, attachments);
+
+    if (driveMeta && driveMeta.driveLink) {
+      p.document_drive_link = driveMeta.driveLink;
+      p.drive_file_id = driveMeta.driveFileId;
+      p.files_list = driveMeta.fileName || p.files_list;
     }
 
-    // ── 2. LAYER 1: Raw Telemetry Stream (Live_Traffic_Events) ──
+    // ------------------------------------------------------------------
+    // 2. MASTER TELEMETRY FIREHOSE
+    // ------------------------------------------------------------------
     appendRowToTab(ss, "Live_Traffic_Events", p);
 
-    // ── 3. LAYER 2: 4-Pillar Intelligence Processing (Upsert Deduplication) ──
-    // A. Session Intelligence (1 unique row per session_id)
-    if (p.session_id) {
-      upsertSessionIntelligence(ss, p, receivedAt);
-    }
-
-    // B. Traffic Intelligence (1 unique row per session_id)
-    if (p.session_id && (p.traffic_source || p.utm_source || p.first_touch_attribution)) {
-      upsertTrafficIntelligence(ss, p, receivedAt);
-    }
-
-    // C. Geo & Timezone Intelligence (1 unique row per visitor_id)
-    if (p.visitor_id && (p.geo_country || p.timezone_iana || p.timezone || p.geo_city)) {
-      upsertGeoTimezoneIntelligence(ss, p, receivedAt);
-    }
-
-    // D. IP & Security Intelligence (1 unique row per session_id)
-    if (p.session_id && (p.ip_network_carrier || p.network_type || p.ip_fraud_risk_score)) {
-      upsertIPSecurityIntelligence(ss, p, receivedAt);
-    }
-
-    // ── 4. LAYER 3: Lead Management & Predictive Classification (DEDUPLICATED) ──
+    // ------------------------------------------------------------------
+    // 3. LEAD ROUTING
+    // ------------------------------------------------------------------
     var isLead = detectIsLead(p);
     if (isLead) {
-      var isDuplicateLead = checkAndUpdateExistingLead(ss, p, receivedAt);
-      if (!isDuplicateLead) {
-        appendRowToTab(ss, "Lead_Management", p);
-
-        var leadType = String(p.lead_type || "").toUpperCase();
-        var formName = String(p.form_name || "").toLowerCase();
-
-        if (leadType === "CHATBOT" || formName.includes("chat") || formName.includes("assistant")) {
-          p.lead_type = "CHATBOT";
-          appendRowToTab(ss, "Chatbot_Leads", p);
-        } else if (leadType === "LONG_FORM" || formName.includes("consultation")) {
-          p.lead_type = "LONG_FORM";
-          appendRowToTab(ss, "Long_Form_Leads", p);
-        } else if (leadType === "PROCESS_AUDIT_SUBMISSION" || formName.includes("audit") || attachments.length > 0) {
-          p.lead_type = "PROCESS_AUDIT_SUBMISSION";
-          appendRowToTab(ss, "Audit_Document_Leads", p);
-        } else {
-          p.lead_type = "QUICK_FORM";
-          appendRowToTab(ss, "Quick_Form_Leads", p);
-        }
-
-        // Send Instant VIP Notification Email (with 15 telemetry fields + Drive Link + Attachment)
-        sendLeadAlertEmail(p, attachments);
-      } else {
-        console.log("ℹ️ Lead already recorded. Updated existing record without adding duplicates: " + (p.email || p.phone || p.lead_id));
-      }
+      routeLead(ss, p, attachments);
     }
 
-    // ── 5. Auxiliary Behavioral Telemetry Routing (DEDUPLICATED UPSERT) ──
-    if (p.event_type === "session" || p.event_name === "session_start" || p.event_name === "session_end" || p.session_id) {
-      upsertVisitorSession(ss, p, receivedAt);
-    }
+    // ------------------------------------------------------------------
+    // 4. STANDARD ANALYTICS ROUTING
+    // ------------------------------------------------------------------
+    routeTelemetry(ss, p);
 
-    if (p.event_type === "page_view" || p.event_name === "page_view") {
-      appendRowToTab(ss, "Page_Performance", p);
-      appendRowToTab(ss, "Traffic_Sources", p);
-    }
+    // ------------------------------------------------------------------
+    // 5. ANALYTICS INTELLIGENCE LAYER
+    // ------------------------------------------------------------------
+    updateAnalyticsIntelligence(ss, p);
 
-    if (p.event_type === "click" || p.event_name.includes("click") || p.event_category === "CTA") {
-      appendRowToTab(ss, "Click_Interactions", p);
-    }
-
-    if (p.event_type === "scroll" || p.scroll_percentage > 0) {
-      upsertScrollEngagement(ss, p, receivedAt);
-    }
-
-    if (p.event_type === "form" || /form/.test(p.event_name) || p.form_status === "submitted" || p.form_status === "in_progress") {
-      appendRowToTab(ss, "Form_Interactions", p);
-    }
-
-    if (p.event_type === "conversion" || (p.conversion_name && p.conversion_name !== "(none)")) {
-      appendRowToTab(ss, "Conversion_Events", p);
-    }
-
-    if (p.event_type === "seo_performance" || p.search_query) {
-      appendRowToTab(ss, "SEO_Performance", p);
-    }
-
-    // Automatically refresh Daily, Weekly, and Monthly executive summaries
+    // ------------------------------------------------------------------
+    // 6. IMMEDIATELY RECALCULATE & STORE DAILY, WEEKLY, MONTHLY SUMMARIES
+    // ------------------------------------------------------------------
     try {
       BUILD_AGGREGATED_INTERVAL_SUMMARIES();
     } catch (aggErr) {
-      console.warn("Summary aggregation warning: " + aggErr.toString());
+      console.warn("Aggregation warning: " + aggErr);
     }
 
-    return ContentService.createTextOutput(JSON.stringify({
+    // Optional: send individual reports if explicitly requested in payload
+    if (rawPayload.send_reports || rawPayload.action === "send_reports") {
+      try {
+        sendAllReportsIndividually();
+      } catch (repErr) {
+        console.warn("Report dispatch error: " + repErr);
+      }
+    }
+
+    return jsonResponse({
       status: "success",
-      message: "Data logged and 3-Layer Intelligence computed successfully",
-      received_at: receivedAt
-    })).setMimeType(ContentService.MimeType.JSON);
+      event_id: p.event_id,
+      event_name: p.event_name,
+      received_at: p.received_at,
+      summaries_updated: true
+    });
 
   } catch (err) {
-    console.error("doPost error: " + err.toString());
-    return ContentService.createTextOutput(JSON.stringify({ status: "error", error: err.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    console.error("doPost error: " + err.stack);
+    return jsonResponse({ status: "error", message: String(err) });
   }
 }
 
-// =========================================================================================
-// LAYER 2: 4 INTELLIGENCE PILLARS (UPSERT IMPLEMENTATION)
-// =========================================================================================
+function doGet(e) {
+  var action = (e && e.parameter && e.parameter.action) ? String(e.parameter.action).toLowerCase() : "";
 
-// --- 1. Session Intelligence (1 unique row per session_id) ---
-function upsertSessionIntelligence(ss, p, receivedAt) {
-  var sheet = getTab(ss, "Session_Intelligence");
-  if (!sheet) return;
-
-  var sessionId = p.session_id || "";
-  var rowIndex = findRowByValue(sheet, 2, sessionId);
-
-  var rowData = [
-    receivedAt,
-    sessionId,
-    p.visitor_id || "",
-    p.session_entry_point || p.page_path || "/",
-    p.page_path || p.page_url || "/",
-    p.time_on_page_seconds || p.page_dwell_seconds || 15,
-    p.session_duration_seconds || p.session_dwell_seconds || 15,
-    p.navigation_flow || p.session_navigation_flow || p.page_path || "/",
-    p.bounce_risk || "Low",
-    p.funnel_stage || "Discovery",
-    p.user_intent || "Strategy Exploration",
-    p.interaction_count || 1
-  ];
-
-  if (rowIndex > 1) {
-    sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
-  } else {
-    sheet.appendRow(rowData);
-  }
-}
-
-// --- 2. Traffic Intelligence (1 unique row per session_id) ---
-function upsertTrafficIntelligence(ss, p, receivedAt) {
-  var sheet = getTab(ss, "Traffic_Intelligence");
-  if (!sheet) return;
-
-  var sessionId = p.session_id || "";
-  var rowIndex = findRowByValue(sheet, 2, sessionId);
-
-  var rowData = [
-    receivedAt,
-    sessionId,
-    p.visitor_id || "",
-    p.traffic_source_category || p.traffic_source || "Direct",
-    p.raw_source || p.utm_source || "direct",
-    p.utm_medium || "none",
-    p.utm_campaign || "organic",
-    p.utm_term || "n/a",
-    p.utm_content || "standard",
-    p.click_id || "direct_inbound",
-    typeof p.first_touch_attribution === "object" ? JSON.stringify(p.first_touch_attribution) : (p.first_touch_attribution || "Direct Entry"),
-    typeof p.last_touch_attribution === "object" ? JSON.stringify(p.last_touch_attribution) : (p.last_touch_attribution || "Direct Entry"),
-    p.channel_roi_score || "85%",
-    p.referrer_url || p.previous_page || "(direct)"
-  ];
-
-  if (rowIndex > 1) {
-    sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
-  } else {
-    sheet.appendRow(rowData);
-  }
-}
-
-// --- 3. Geo & Timezone Intelligence (1 unique row per visitor_id) ---
-function upsertGeoTimezoneIntelligence(ss, p, receivedAt) {
-  var sheet = getTab(ss, "Geo_Timezone_Intelligence");
-  if (!sheet) return;
-
-  var visitorId = p.visitor_id || "";
-  var rowIndex = findRowByValue(sheet, 2, visitorId);
-
-  // Preserve visitor's real detected location without forced city override
-  var city = p.geo_city || "";
-  if (!city || city === "Unknown" || city === "(Detecting...)") {
-    city = p.geo_country ? (p.geo_country + " Regional Visitor") : "Direct / Global Access";
-  }
-
-  var country = p.geo_country || "India";
-  var countryCode = p.geo_country_code || (country === "India" ? "IN" : "US");
-  var region = p.geo_region || (country === "India" ? "National" : "Global");
-  var continent = p.geo_continent || (country === "India" ? "Asia" : "North America");
-  var currency = p.geo_currency || (country === "India" ? "INR (₹)" : "USD ($)");
-  var marketTier = p.geo_market_tier || (country === "India" ? "APAC Growth Hub" : "North America Tier 1");
-
-  // Dynamic Advisory Desk
-  var desk = p.active_advisory_desk;
-  if (!desk || desk.includes("Thoothukudi Strategic Operations")) {
-    if (country === "India") {
-      desk = city && city !== "India" ? (city + " Advisory Operations Desk") : "India Strategy & Advisory Desk";
-    } else if (countryCode === "US") {
-      desk = "New York Advisory Hub";
-    } else if (countryCode === "GB") {
-      desk = "London Strategy Desk";
-    } else if (continent === "Asia") {
-      desk = "Singapore APAC Center";
-    } else {
-      desk = "Global Executive Advisory Hub";
+  if (action === "send_reports" || action === "reports" || action === "refresh_reports") {
+    try {
+      GENERATE_AND_SEND_ALL_REPORTS();
+      return jsonResponse({
+        status: "success",
+        message: "Daily, Weekly, and Monthly reports generated, stored, and sent individually to janegracy.int2027g3@gmail.com",
+        timestamp: new Date().toISOString()
+      });
+    } catch (err) {
+      return jsonResponse({ status: "error", error: String(err) });
     }
   }
 
-  var rowData = [
-    receivedAt,
-    visitorId,
-    country,
-    countryCode,
-    city,
-    region,
-    continent,
-    currency,
-    marketTier,
-    p.compliance_mode || "Global Standard",
-    p.timezone_local_time || Utilities.formatDate(new Date(), CONFIG.TIMEZONE, "hh:mm a"),
-    p.timezone_iana || p.timezone || CONFIG.TIMEZONE,
-    p.timezone_utc_offset || "UTC+5:30",
-    p.timezone_day_phase || "Active Business Hours",
-    p.peak_engagement_status || "Peak Business Decision Hours",
-    desk
-  ];
-
-  if (rowIndex > 1) {
-    sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
-  } else {
-    sheet.appendRow(rowData);
-  }
+  return jsonResponse({
+    status: "online",
+    service: "ProfitPatterns Intelligence Engine",
+    spreadsheet_id: CONFIG.SPREADSHEET_ID,
+    timestamp: new Date().toISOString()
+  });
 }
 
-// --- 4. IP & Security Intelligence (1 unique row per session_id) ---
-function upsertIPSecurityIntelligence(ss, p, receivedAt) {
-  var sheet = getTab(ss, "IP_Security_Intelligence");
-  if (!sheet) return;
-
-  var sessionId = p.session_id || "";
-  var rowIndex = findRowByValue(sheet, 3, sessionId);
-
-  var rowData = [
-    receivedAt,
-    p.visitor_id || "",
-    sessionId,
-    p.ip_network_carrier || p.network_type || "Bharti Airtel Limited / High-Speed Broadband",
-    p.ip_network_type || "Enterprise B2B",
-    p.ip_corporate_intent || "Strategic Inbound",
-    p.ip_fraud_risk_score || "0.02",
-    p.ip_fraud_status || "Verified Human",
-    p.ip_visit_velocity || 1,
-    p.security_tier || "Tier 1 Enterprise Verified",
-    p.device_type || "Desktop",
-    (p.browser || "Chrome") + " (" + (p.operating_system || "Windows") + ")"
-  ];
-
-  if (rowIndex > 1) {
-    sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
-  } else {
-    sheet.appendRow(rowData);
-  }
+function jsonResponse(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 // =========================================================================================
-// ENRICHMENT & COMPREHENSIVE INTELLIGENCE ENGINE (Fills every column cleanly)
+// PAYLOAD ENRICHMENT
 // =========================================================================================
 function enrichPayload(raw, receivedAt) {
   var p = raw || {};
-  var now = new Date();
-  var ts = p.client_timestamp || p.timestamp || now.toISOString();
+  var nowIso = p.client_timestamp || p.timestamp || new Date().toISOString();
 
-  p.received_at = receivedAt || normalizeTimestamp(now);
-  p.event_id = p.event_id || ("evt_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7));
-  p.event_type = (p.event_type || p.type || "page_view").toLowerCase();
-  p.event_name = p.event_name || p.event_action || "page_view";
-  p.visitor_id = p.visitor_id || p.visitorId || ("vis_" + Math.random().toString(36).substring(2, 9));
-  p.session_id = p.session_id || p.sessionId || ("ses_" + Math.random().toString(36).substring(2, 9));
+  p.received_at = receivedAt;
+  p.event_id = p.event_id || createId("evt");
+  p.event_type = String(p.event_type || p.type || "page_view").toLowerCase();
+  p.event_name = String(p.event_name || p.event_action || p.event_type || "event");
+
+  p.visitor_id = p.visitor_id || p.visitorId || createId("vis");
+  p.session_id = p.session_id || p.sessionId || createId("ses");
   p.user_id = p.user_id || p.visitor_id;
-  p.client_timestamp = ts;
+  p.client_timestamp = nowIso;
 
-  p.page_url = p.page_url || "https://profit-patterns-xi.vercel.app/";
+  p.page_url = p.page_url || CONFIG.WEBSITE;
   p.page_path = p.page_path || normalizeRoutePath(p.page_url);
   p.page_title = p.page_title || "ProfitPatterns | AI Profit Strategy Consulting";
   p.previous_page = p.previous_page || "(direct_entry)";
   p.referrer_url = p.referrer_url || "(direct_entry)";
 
-  p.traffic_source = p.traffic_source || "(direct)";
+  p.traffic_source = p.traffic_source || deriveTrafficSource(p);
   p.utm_source = p.utm_source || "(direct)";
   p.utm_medium = p.utm_medium || "(none)";
   p.utm_campaign = p.utm_campaign || "(none)";
@@ -625,61 +410,72 @@ function enrichPayload(raw, receivedAt) {
   p.browser = p.browser || "Chrome";
   p.browser_version = p.browser_version || "Latest";
   p.operating_system = p.operating_system || "Windows";
-  p.screen_width = Number(p.screen_width) || 1920;
-  p.screen_height = Number(p.screen_height) || 1080;
-  p.viewport_width = Number(p.viewport_width) || 1280;
-  p.viewport_height = Number(p.viewport_height) || 800;
+  p.screen_width = numberOrBlank(p.screen_width);
+  p.screen_height = numberOrBlank(p.screen_height);
+  p.viewport_width = numberOrBlank(p.viewport_width);
+  p.viewport_height = numberOrBlank(p.viewport_height);
   p.language = p.language || "en-US";
-  p.timezone = p.timezone || CONFIG.TIMEZONE;
-  p.network_type = p.network_type || "Broadband / 5G";
+  p.timezone = p.timezone || "Asia/Kolkata";
+  p.network_type = p.network_type || "4g";
 
-  p.event_category = p.event_category || "User Engagement";
+  p.scroll_percentage = numberOrBlank(p.scroll_percentage);
+  p.max_scroll_depth = numberOrBlank(p.max_scroll_depth);
+  p.time_on_page_seconds = numberOrBlank(p.time_on_page_seconds);
+  p.session_duration_seconds = numberOrBlank(p.session_duration_seconds);
+  p.interaction_count = numberOrBlank(p.interaction_count);
+
+  p.click_position_x = numberOrBlank(p.click_position_x);
+  p.click_position_y = numberOrBlank(p.click_position_y);
+  p.hand_zone = p.hand_zone || calculateHandZone(p);
+
+  // Lead fields
+  p.lead_id = p.lead_id || createId("lead");
+  p.name = p.name || p.fullName || "";
+  p.email = p.email || p.workEmail || "";
+  p.phone = p.phone || "";
+  p.company = p.company || "";
+  p.job_title = p.job_title || p.jobTitle || p.role || "";
+  p.industry = p.industry || "";
+  p.company_size = p.company_size || p.companySize || "";
+  p.website = p.website || "";
+  p.requirement = p.requirement || p.primaryChallenge || p.primaryGoal || p.intent || "";
+  p.challenge = p.challenge || p.currentChallenge || p.processSummary || p.businessProblem || p.message || "";
+  p.desired_outcome = p.desired_outcome || p.desiredOutcome || "";
+  p.current_tools = p.current_tools || p.currentTools || "";
+  p.existing_ai_usage = p.existing_ai_usage || p.existingAIUsage || "";
+  p.project_scope = p.project_scope || p.projectScope || "";
+  p.budget_range = p.budget_range || p.budgetRange || "";
+  p.preferred_contact_time = p.preferred_contact_time || p.preferredContactTime || "";
+  p.audit_doc_type = p.audit_doc_type || p.docType || "";
+  p.weekly_hours_spent = p.weekly_hours_spent || p.weeklyHoursSpent || "";
+  p.files_count = p.files_count !== undefined ? p.files_count : 0;
+  p.files_list = p.files_list || "";
+  p.nda_requested = p.nda_requested || "No";
+  p.lead_source = p.lead_source || p.source || "website_inbound";
+  p.lead_status = p.lead_status || "New";
+  p.follow_up_status = p.follow_up_status || "Pending";
+  p.consent_status = p.consent_status || "Granted";
+  p.source_environment = p.source_environment || CONFIG.DEFAULT_ENVIRONMENT;
+
+  p.event_category = p.event_category || (p.event_type === "lead" ? "CONVERSION" : "NAVIGATION");
   p.event_action = p.event_action || p.event_name;
-  p.event_label = p.event_label || (p.page_path ? ("Route: " + p.page_path) : "Navigation");
-  p.section = p.section || "Main Viewport";
-  p.element_type = p.element_type || "Navigation Link";
-  p.element_id = p.element_id || "nav_item";
-  p.element_class = p.element_class || "interactive-target";
-  p.element_text = p.element_text || "Interactive Action";
-
-  // Handedness / Thumb-Reach Detection for Mobile Devices
-  var posX = Number(p.click_position_x) || 0;
-  if (!p.hand_zone) {
-    if (p.device_type === "Mobile" || p.device_type === "Tablet" || p.viewport_width < 768) {
-      var ratio = posX / (p.viewport_width || 390);
-      if (ratio < 0.40) {
-        p.hand_zone = "Left-Hand Zone";
-      } else if (ratio > 0.60) {
-        p.hand_zone = "Right-Hand Zone";
-      } else {
-        p.hand_zone = "Center / Dual Zone";
-      }
-    } else {
-      p.hand_zone = "Desktop Pointer";
-    }
-  }
-
-  p.click_position_x = (p.click_position_x !== undefined && p.click_position_x !== "") ? p.click_position_x : 480;
-  p.click_position_y = (p.click_position_y !== undefined && p.click_position_y !== "") ? p.click_position_y : 320;
-  p.scroll_percentage = Number(p.scroll_percentage) || 50;
-  p.max_scroll_depth = Number(p.max_scroll_depth) || p.scroll_percentage;
-  p.time_on_page_seconds = Number(p.time_on_page_seconds) || 20;
-  p.session_duration_seconds = Number(p.session_duration_seconds) || (p.time_on_page_seconds + 30);
-  p.interaction_count = Number(p.interaction_count) || 1;
+  p.event_label = p.event_label || p.cta_name || "";
+  p.section = p.section || "";
+  p.element_type = p.element_type || "";
+  p.element_id = p.element_id || "";
+  p.element_class = p.element_class || "";
+  p.element_text = p.element_text || "";
   p.tab_visibility_status = p.tab_visibility_status || "visible";
-  p.is_returning_visitor = p.is_returning_visitor !== undefined ? p.is_returning_visitor : false;
-
-  // Forms & Conversions (Ensures non-empty defaults)
-  p.form_name = p.form_name || (p.event_type === "lead" ? "Quick Consultation Form" : "(none)");
-  p.form_id = p.form_id || (p.event_type === "lead" ? "lead_form_01" : "(none)");
-  p.form_field_name = p.form_field_name || "(none)";
-  p.form_status = p.form_status || (p.event_type === "lead" ? "submitted" : "(none)");
-  p.conversion_name = p.conversion_name || (p.event_type === "lead" ? "Strategic Inbound Inquiry" : "(none)");
-  p.conversion_value = p.conversion_value || (p.event_type === "lead" ? "High Value Opportunity" : 0);
+  p.form_name = p.form_name || (p.event_type === "lead" ? "Quick Consultation Form" : "");
+  p.form_id = p.form_id || (p.event_type === "lead" ? "lead_form_01" : "");
+  p.form_field_name = p.form_field_name || "";
+  p.form_status = p.form_status || (p.event_type === "lead" ? "submitted" : "");
+  p.conversion_name = p.conversion_name || (p.event_type === "lead" ? "Strategic Inbound Inquiry" : "");
+  p.conversion_value = p.conversion_value !== undefined ? p.conversion_value : (p.event_type === "lead" ? 1 : 0);
 
   // SEO fields
-  p.record_date = p.record_date || Utilities.formatDate(now, CONFIG.TIMEZONE, "yyyy-MM-dd");
-  p.site_url = p.site_url || "https://profit-patterns-xi.vercel.app/";
+  p.record_date = p.record_date || Utilities.formatDate(new Date(), CONFIG.TIMEZONE, "yyyy-MM-dd");
+  p.site_url = CONFIG.WEBSITE;
   p.search_query = p.search_query || "ai profit strategy consulting";
   p.clicks = Number(p.clicks) || 15;
   p.impressions = Number(p.impressions) || 180;
@@ -687,148 +483,131 @@ function enrichPayload(raw, receivedAt) {
   p.average_position = p.average_position || "2.1";
   p.device = p.device || p.device_type;
 
-  // GEO & LOCATION INTELLIGENCE (Dynamic visitor location)
-  p.geo_country = p.geo_country || "India";
-  p.geo_country_code = p.geo_country_code || (p.geo_country === "India" ? "IN" : "US");
-  p.geo_city = p.geo_city || (p.geo_country === "India" ? "India" : "Global Visitor");
-  p.geo_region = p.geo_region || (p.geo_country === "India" ? "National" : "Global");
-  p.geo_continent = p.geo_continent || (p.geo_country === "India" ? "Asia" : "North America");
-  p.geo_currency = p.geo_currency || (p.geo_country === "India" ? "INR (₹)" : "USD ($)");
-  p.geo_market_tier = p.geo_market_tier || (p.geo_country === "India" ? "APAC Growth Hub" : "North America Tier 1");
-  p.compliance_mode = p.compliance_mode || "Global Standard";
-  p.timezone_iana = p.timezone_iana || p.timezone || CONFIG.TIMEZONE;
-  p.timezone_utc_offset = p.timezone_utc_offset || "UTC+5:30";
-  p.timezone_local_time = p.timezone_local_time || Utilities.formatDate(now, CONFIG.TIMEZONE, "hh:mm a");
-  p.timezone_day_phase = p.timezone_day_phase || "Active Business Hours";
-  p.peak_engagement_status = p.peak_engagement_status || "Peak Business Decision Hours";
-  p.active_advisory_desk = p.active_advisory_desk || (p.geo_country === "India" ? "India Strategy & Advisory Desk" : "Global Advisory Desk");
+  try {
+    p.event_data_json = JSON.stringify(p);
+  } catch (e) {
+    p.event_data_json = "{}";
+  }
 
-  // IP & SECURITY INTELLIGENCE
-  p.ip_network_carrier = p.ip_network_carrier || p.network_type || "Bharti Airtel Broadband";
-  p.ip_network_type = p.ip_network_type || "Enterprise B2B";
-  p.ip_corporate_intent = p.ip_corporate_intent || "Strategic Inbound";
-  p.ip_fraud_risk_score = p.ip_fraud_risk_score || "0.02";
-  p.ip_fraud_status = p.ip_fraud_status || "Verified Human";
-  p.ip_visit_velocity = Number(p.ip_visit_velocity) || 1;
-  p.security_tier = p.security_tier || "Tier 1 Enterprise Verified";
-
-  // SESSION & TRAFFIC INTELLIGENCE
-  p.session_entry_point = p.session_entry_point || p.page_path || "/";
-  p.navigation_flow = p.navigation_flow || p.session_navigation_flow || '["' + (p.page_path || "/") + '"]';
-  p.bounce_risk = p.bounce_risk || "Low";
-  p.funnel_stage = p.funnel_stage || "Discovery & Strategy Exploration";
-  p.user_intent = p.user_intent || "AI Profit Optimization Evaluation";
-  p.traffic_source_category = p.traffic_source_category || p.traffic_source || "Direct / Organic";
-  p.raw_source = p.raw_source || p.utm_source || "direct";
-  p.first_touch_attribution = p.first_touch_attribution || "Direct Entry";
-  p.last_touch_attribution = p.last_touch_attribution || "Direct Navigation";
-  p.channel_roi_score = p.channel_roi_score || "88%";
-  p.click_id = p.click_id || "direct_inbound";
-
-  // Lead fields
-  p.lead_id = p.lead_id || ("lead_" + Date.now());
-  p.name = p.name || p.fullName || "";
-  p.email = p.email || p.workEmail || "";
-  p.phone = p.phone || "";
-  p.company = p.company || (p.email && p.email.includes("@") ? p.email.split("@")[1].split(".")[0].toUpperCase() : "Enterprise Partner");
-  p.job_title = p.job_title || p.jobTitle || p.role || "Executive Leader";
-  p.industry = p.industry || "Enterprise Technology / Services";
-  p.company_size = p.company_size || p.companySize || "20 - 250 Employees";
-  p.website = p.website || "https://client-domain.com";
-  p.requirement = p.requirement || p.primaryChallenge || p.primaryGoal || p.intent || "AI Profit Strategy & Operational Optimization";
-  p.challenge = p.challenge || p.currentChallenge || p.processSummary || p.businessProblem || p.message || "Manual bottleneck removal and workflow transformation";
-  p.message = p.message || p.challenge;
-  p.desired_outcome = p.desired_outcome || p.desiredOutcome || "Accelerated profit margins & automated workflows";
-  p.current_tools = p.current_tools || p.currentTools || "Cloud ERP, CRM & Spreadsheets";
-  p.existing_ai_usage = p.existing_ai_usage || p.existingAIUsage || "Early Adoption & Strategy Exploration";
-  p.project_scope = p.project_scope || p.projectScope || "Comprehensive AI Process Transformation";
-  p.budget_range = p.budget_range || p.budgetRange || "Strategic Enterprise Tier";
-  p.preferred_contact_time = p.preferred_contact_time || p.preferredContactTime || "Business Hours (IST)";
-  p.audit_doc_type = p.audit_doc_type || p.docType || "Operational Workflow Blueprint";
-  p.weekly_hours_spent = p.weekly_hours_spent || p.weeklyHoursSpent || "35+ hrs/week";
-  p.files_count = p.files_count !== undefined ? p.files_count : 0;
-  p.files_list = p.files_list || "(No files attached)";
-  p.nda_requested = p.nda_requested || "Standard Confidentiality";
-  p.lead_source = p.lead_source || p.source || "Website Inbound";
-  p.lead_status = p.lead_status || "New";
-  p.follow_up_status = p.follow_up_status || "Immediate Action Pending";
-  p.consent_status = p.consent_status || "Granted";
-  p.source_environment = p.source_environment || CONFIG.DEFAULT_ENVIRONMENT;
-  p.document_drive_link = p.document_drive_link || "N/A (Direct Lead Submission)";
-  p.drive_file_id = p.drive_file_id || "N/A";
-
-  // Predictive Layer Metrics
-  p.predictive_synergy_score = p.predictive_synergy_score || p.predictive_score || "94%";
-  p.predictive_score = p.predictive_synergy_score;
-  p.urgency_score = p.urgency_score || "High (Tier 1 Priority)";
-  p.regional_market = p.regional_market || p.geo_market_tier || "APAC Growth Hub";
-  p.tailored_strategy = p.tailored_strategy || p.predictive_recommendation || "Enterprise AI Automation & Profit Strategy";
-
-  try { p.event_data_json = JSON.stringify(p); } catch (e) { p.event_data_json = "{}"; }
   return p;
 }
 
-function detectIsLead(p) {
-  if (!p) return false;
-  var hasEmail = Boolean(p.email && p.email.indexOf("@") !== -1 && !p.email.includes("client@profitpatterns"));
-  var hasPhone = Boolean(p.phone && p.phone.length > 5 && !p.phone.includes("800-PROFIT"));
-  var hasContact = hasEmail || hasPhone;
+function createId(prefix) {
+  return prefix + "_" + Date.now() + "_" + Math.random().toString(36).substring(2, 8);
+}
 
-  if ((p.event_type === "lead" || p.event_name === "lead_submit") && hasContact) return true;
-  if (p.lead_type || p.audit_doc_type) return true;
-  if ((p.form_status === "submitted" || p.event_name === "form_submit") && hasContact) return true;
-  return false;
+function numberOrBlank(value) {
+  if (value === undefined || value === null || value === "") return "";
+  var n = Number(value);
+  return isNaN(n) ? "" : n;
 }
 
 function normalizeRoutePath(url) {
   if (!url) return "/";
-  var s = String(url).replace(/^https?:\/\/[^\/]+/i, "").split("?")[0].split("#")[0].trim();
-  if (!s.startsWith("/")) s = "/" + s;
-  return s;
+  var s = String(url)
+    .replace(/^https?:\/\/[^\/]+/i, "")
+    .split("?")[0]
+    .split("#")[0]
+    .trim();
+  if (!s) return "/";
+  return s.charAt(0) === "/" ? s : "/" + s;
+}
+
+function deriveTrafficSource(p) {
+  if (p.utm_source) return String(p.utm_source);
+  if (p.referrer_url) return String(p.referrer_url);
+  return "(direct)";
+}
+
+function calculateHandZone(p) {
+  var device = String(p.device_type || "").toLowerCase();
+  var width = Number(p.viewport_width) || 0;
+  var x = Number(p.click_position_x);
+  if (!isFinite(x) || !width) return "";
+  if (device !== "mobile" && device !== "tablet" && width >= 768) return "Desktop Pointer";
+  var ratio = x / width;
+  if (ratio < 0.4) return "Left-Hand Zone";
+  if (ratio > 0.6) return "Right-Hand Zone";
+  return "Center / Dual Zone";
 }
 
 function normalizeTimestamp(d) {
-  var dt;
-  if (!d) {
-    dt = new Date();
-  } else if (d instanceof Date) {
-    dt = d;
-  } else if (typeof d === "number") {
-    dt = new Date(d);
-  } else if (typeof d === "string") {
-    var s = d.replace(" IST", "").trim();
-    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(s)) {
-      s = s.replace(" ", "T");
-    }
-    dt = new Date(s);
-  } else {
-    dt = new Date();
-  }
-
-  if (isNaN(dt.getTime())) {
-    dt = new Date();
-  }
-
-  try {
-    return Utilities.formatDate(dt, CONFIG.TIMEZONE || "Asia/Kolkata", "yyyy-MM-dd HH:mm:ss") + " IST";
-  } catch (err) {
-    return Utilities.formatDate(new Date(), "Asia/Kolkata", "yyyy-MM-dd HH:mm:ss") + " IST";
-  }
+  var dt = d instanceof Date ? d : new Date(d || Date.now());
+  if (isNaN(dt.getTime())) dt = new Date();
+  return Utilities.formatDate(dt, CONFIG.TIMEZONE, "yyyy-MM-dd HH:mm:ss") + " IST";
 }
 
-function parseDateSafe(ts) {
-  if (!ts) return null;
-  if (ts instanceof Date) return isNaN(ts.getTime()) ? null : ts;
-  if (typeof ts === "number") {
-    var dtNum = new Date(ts);
-    return isNaN(dtNum.getTime()) ? null : dtNum;
+/**
+ * Ultra-robust date parser supporting:
+ * - Date instances
+ * - Numeric timestamps and Google Sheets / Excel date serial numbers
+ * - Strings with IST, UTC, GMT
+ * - YYYY-MM-DD or YYYY/MM/DD with time
+ * - Indian / UK standard DD/MM/YYYY or DD-MM-YYYY with time
+ * - US standard MM/DD/YYYY
+ */
+function parseDateSafe(value) {
+  if (!value && value !== 0) return null;
+  if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+
+  if (typeof value === "number") {
+    if (value > 100000000000) return new Date(value);
+    if (value > 2000000000) return new Date(value * 1000);
+    if (value > 30000) {
+      // Excel/Sheets serial date: days since 1899-12-30
+      return new Date((value - 25569) * 86400 * 1000);
+    }
+    var dn = new Date(value);
+    return isNaN(dn.getTime()) ? null : dn;
   }
-  var s = String(ts).replace(" IST", "").trim();
-  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(s)) {
-    s = s.replace(" ", "T");
+
+  var s = String(value).trim();
+  if (!s) return null;
+
+  // Clean trailing timezone strings like ' IST', ' UTC', etc.
+  s = s.replace(/\s+(IST|UTC|GMT.*)$/i, "").trim();
+
+  // 1. Direct parse
+  var direct = new Date(s);
+  if (!isNaN(direct.getTime())) return direct;
+
+  // 2. YYYY-MM-DD or YYYY/MM/DD
+  if (/^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}/.test(s)) {
+    var p1 = s.split(/[\sT]+/);
+    var dp1 = p1[0].split(/[-/.]/);
+    var y1 = parseInt(dp1[0], 10);
+    var m1 = parseInt(dp1[1], 10) - 1;
+    var d1 = parseInt(dp1[2], 10);
+    var h1 = 0, mi1 = 0, sec1 = 0;
+    if (p1[1]) {
+      var tp1 = p1[1].split(":");
+      h1 = parseInt(tp1[0], 10) || 0;
+      mi1 = parseInt(tp1[1], 10) || 0;
+      sec1 = parseInt(tp1[2], 10) || 0;
+    }
+    var res1 = new Date(y1, m1, d1, h1, mi1, sec1);
+    if (!isNaN(res1.getTime())) return res1;
   }
-  var d = new Date(s);
-  return isNaN(d.getTime()) ? null : d;
+
+  // 3. DD/MM/YYYY or DD-MM-YYYY (Indian & UK standard)
+  if (/^\d{1,2}[-/.]\d{1,2}[-/.]\d{4}/.test(s)) {
+    var p2 = s.split(/[\sT]+/);
+    var dp2 = p2[0].split(/[-/.]/);
+    var d2 = parseInt(dp2[0], 10);
+    var m2 = parseInt(dp2[1], 10) - 1;
+    var y2 = parseInt(dp2[2], 10);
+    var h2 = 0, mi2 = 0, sec2 = 0;
+    if (p2[1]) {
+      var tp2 = p2[1].split(":");
+      h2 = parseInt(tp2[0], 10) || 0;
+      mi2 = parseInt(tp2[1], 10) || 0;
+      sec2 = parseInt(tp2[2], 10) || 0;
+    }
+    var res2 = new Date(y2, m2, d2, h2, mi2, sec2);
+    if (!isNaN(res2.getTime())) return res2;
+  }
+
+  return null;
 }
 
 function getWeekStartDate(d) {
@@ -837,666 +616,267 @@ function getWeekStartDate(d) {
   var day = date.getDay();
   var diff = date.getDate() - day + (day === 0 ? -6 : 1);
   date.setDate(diff);
-  return Utilities.formatDate(date, CONFIG.TIMEZONE || "Asia/Kolkata", "yyyy-MM-dd");
+  return Utilities.formatDate(date, CONFIG.TIMEZONE, "yyyy-MM-dd");
+}
+
+function findFlexibleHeader(hRow, candidateNames) {
+  if (!hRow || !Array.isArray(hRow)) return -1;
+  var normalizedHeaders = hRow.map(function(c) {
+    return String(c || "").trim().toLowerCase().replace(/[\s\-_]+/g, "");
+  });
+  for (var i = 0; i < candidateNames.length; i++) {
+    var target = String(candidateNames[i]).trim().toLowerCase().replace(/[\s\-_]+/g, "");
+    var idx = normalizedHeaders.indexOf(target);
+    if (idx !== -1) return idx;
+  }
+  return -1;
 }
 
 // =========================================================================================
-// APPEND ROW WITH RECENT DEDUPLICATION & ZERO BLANK COLUMNS
+// ROW APPENDER
 // =========================================================================================
 function appendRowToTab(ss, tabName, p) {
-  try {
-    var sheet = getTab(ss, tabName);
-    if (!sheet) return;
-    var headers = (TAB_HEADERS && TAB_HEADERS[tabName]) ? TAB_HEADERS[tabName] : [];
-    if (!headers.length) return;
+  var sheet = getTab(ss, tabName);
+  if (!sheet) return;
 
-    var lastRow = sheet.getLastRow();
+  var headers = TAB_HEADERS[tabName] || [];
+  if (!headers.length) return;
 
-    // ── RECENT DEDUPLICATION CHECK ──
-    if (lastRow > 1) {
-      var checkRows = Math.min(50, lastRow - 1);
-      var startRow = lastRow - checkRows + 1;
-
-      // 1. By event_id if present
-      if (p.event_id) {
-        var eventIdCol = headers.indexOf("event_id") + 1;
-        if (eventIdCol > 0) {
-          var recentIds = sheet.getRange(startRow, eventIdCol, checkRows, 1).getValues();
-          for (var i = 0; i < recentIds.length; i++) {
-            if (String(recentIds[i][0]).trim() === String(p.event_id).trim()) {
-              return; // Duplicate event_id, ignore
-            }
-          }
-        }
-      }
-
-      // 2. By lead_id if present
-      if (p.lead_id) {
-        var leadIdCol = headers.indexOf("lead_id") + 1;
-        if (leadIdCol > 0) {
-          var recentLeadIds = sheet.getRange(startRow, leadIdCol, checkRows, 1).getValues();
-          for (var j = 0; j < recentLeadIds.length; j++) {
-            if (String(recentLeadIds[j][0]).trim() === String(p.lead_id).trim()) {
-              return; // Duplicate lead_id, ignore
-            }
-          }
-        }
-      }
-
-      // 3. Tab specific deduplication
-      if (tabName === "Live_Traffic_Events" && p.session_id && p.event_name) {
-        var sessCol = headers.indexOf("session_id") + 1;
-        var nameCol = headers.indexOf("event_name") + 1;
-        var pathCol = headers.indexOf("page_path") + 1;
-        if (sessCol > 0 && nameCol > 0 && pathCol > 0) {
-          var trafficVals = sheet.getRange(startRow, 1, checkRows, headers.length).getValues();
-          for (var k = trafficVals.length - 1; k >= 0; k--) {
-            if (trafficVals[k][sessCol - 1] === p.session_id &&
-                trafficVals[k][nameCol - 1] === p.event_name &&
-                trafficVals[k][pathCol - 1] === p.page_path &&
-                (p.element_id ? trafficVals[k][headers.indexOf("element_id")] === p.element_id : true)) {
-              return; // Duplicate telemetry interaction within last few events, ignore
-            }
-          }
-        }
-      }
-
-      if ((tabName === "Page_Performance" || tabName === "Traffic_Sources") && p.session_id && p.page_path) {
-        var pageSessCol = headers.indexOf("session_id") + 1;
-        var pagePathCol = headers.indexOf("page_path") + 1;
-        if (pageSessCol > 0 && pagePathCol > 0) {
-          var pageVals = sheet.getRange(startRow, 1, checkRows, headers.length).getValues();
-          for (var m = pageVals.length - 1; m >= 0; m--) {
-            if (pageVals[m][pageSessCol - 1] === p.session_id && pageVals[m][pagePathCol - 1] === p.page_path) {
-              return; // Duplicate page event for this session, ignore
-            }
-          }
-        }
-      }
-
-      if (tabName === "Click_Interactions" && p.session_id && p.element_id) {
-        var clickSessCol = headers.indexOf("session_id") + 1;
-        var clickElemCol = headers.indexOf("element_id") + 1;
-        if (clickSessCol > 0 && clickElemCol > 0) {
-          var clickVals = sheet.getRange(startRow, 1, checkRows, headers.length).getValues();
-          for (var n = clickVals.length - 1; n >= 0; n--) {
-            if (clickVals[n][clickSessCol - 1] === p.session_id && clickVals[n][clickElemCol - 1] === p.element_id) {
-              return; // Duplicate click, ignore
-            }
-          }
-        }
+  if (sheet.getLastRow() > 1 && p.event_id) {
+    var eventCol = headers.indexOf("event_id") + 1;
+    if (eventCol > 0) {
+      var lastRow = sheet.getLastRow();
+      var checkRows = Math.min(100, lastRow - 1);
+      var values = sheet.getRange(lastRow - checkRows + 1, eventCol, checkRows, 1).getValues();
+      for (var i = 0; i < values.length; i++) {
+        if (String(values[i][0]) === String(p.event_id)) return;
       }
     }
-
-    // ── FILL EVERY COLUMN CLEANLY (Zero empty cells) ──
-    var row = headers.map(function(h) {
-      var val = p[h];
-      if (val === undefined || val === null || String(val).trim() === "") {
-        val = getDefaultValueForHeader(h, p);
-      }
-      if (typeof val === "object") {
-        try { val = JSON.stringify(val); } catch (e) { val = ""; }
-      }
-      return val;
-    });
-
-    sheet.appendRow(row);
-  } catch (err) {
-    console.warn("Could not append row to " + tabName + ": " + err.toString());
   }
+
+  var row = headers.map(function(header) {
+    var value = p[header];
+    if (value === undefined || value === null) return "";
+    if (typeof value === "object") {
+      try { return JSON.stringify(value); } catch (e) { return ""; }
+    }
+    return value;
+  });
+
+  sheet.appendRow(row);
 }
 
 // =========================================================================================
-// INTELLIGENT DEFAULTS GENERATOR (GUARANTEES 100% FILLED COLUMNS ACROSS ALL TABS)
+// LEAD ROUTING
 // =========================================================================================
-function getDefaultValueForHeader(header, p) {
-  p = p || {};
-  var now = new Date();
-  var tsStr = p.received_at || Utilities.formatDate(now, CONFIG.TIMEZONE, "yyyy-MM-dd HH:mm:ss") + " IST";
-  var dateStr = Utilities.formatDate(now, CONFIG.TIMEZONE, "yyyy-MM-dd");
+function detectIsLead(p) {
+  if (!p) return false;
 
-  switch (header) {
-    // Timestamps and IDs
-    case "received_at":
-    case "Timestamp":
-      return tsStr;
-    case "client_timestamp":
-      return p.client_timestamp || now.toISOString();
-    case "record_date":
-    case "Date":
-    case "Week_Start":
-    case "Month":
-      return dateStr;
-    case "event_id":
-      return p.event_id || ("evt_" + Date.now());
-    case "lead_id":
-      return p.lead_id || ("lead_" + Date.now());
-    case "visitor_id":
-    case "Visitor ID":
-      return p.visitor_id || "vis_verified_visitor";
-    case "session_id":
-    case "Session ID":
-      return p.session_id || "ses_active_session";
-    case "user_id":
-      return p.user_id || p.visitor_id || "usr_verified";
+  var email = String(p.email || "").trim();
+  var phone = String(p.phone || "").trim();
+  var hasContact = (email.indexOf("@") > 0) || phone.length > 5;
 
-    // URLs and Routing
-    case "page_url":
-    case "site_url":
-      return p.page_url || "https://profit-patterns-xi.vercel.app/";
-    case "page_path":
-    case "Entry Point":
-    case "Current Page":
-      return p.page_path || "/";
-    case "previous_page":
-    case "referrer_url":
-      return p.referrer_url || p.previous_page || "(direct_entry)";
-    case "Referrer Domain":
-      return p.referrer_domain || "(direct)";
-    case "Navigation Flow":
-      return p.navigation_flow || '["/"]';
+  if ((p.event_type === "lead" || p.event_name === "lead_submit") && hasContact) return true;
+  if (p.lead_type || p.audit_doc_type) return true;
+  if ((p.form_status === "submitted" || p.event_name === "form_submit") && hasContact) return true;
+  if (p.conversion_name && p.conversion_name !== "" && p.conversion_name !== "(none)") return true;
 
-    // Events and Actions
-    case "event_type":
-      return p.event_type || (p.lead_type ? "lead" : "page_view");
-    case "event_name":
-      return p.event_name || (p.lead_type ? "lead_submit" : "page_view");
-    case "event_category":
-      return p.event_category || (p.lead_type ? "Lead" : "Engagement");
-    case "event_action":
-      return p.event_action || (p.lead_type ? "submit" : "view");
-    case "event_label":
-    case "page_title":
-      return p.page_title || p.event_label || "ProfitPatterns | AI Profit Strategy Consulting";
-    case "section":
-      return p.section || "main_content";
-
-    // Elements and Interaction
-    case "element_type":
-      return p.element_type || "button";
-    case "element_id":
-      return p.element_id || "cta_element";
-    case "element_class":
-      return p.element_class || "interactive-element";
-    case "element_text":
-      return p.element_text || "Explore Strategy";
-    case "click_position_x":
-      return p.click_position_x !== undefined ? p.click_position_x : 480;
-    case "click_position_y":
-      return p.click_position_y !== undefined ? p.click_position_y : 320;
-    case "hand_zone":
-      return p.hand_zone || "Desktop Pointer";
-    case "scroll_percentage":
-    case "max_scroll_depth":
-      return 50;
-    case "time_on_page_seconds":
-    case "Page Dwell (s)":
-      return p.time_on_page_seconds || 25;
-    case "session_duration_seconds":
-    case "Session Dwell (s)":
-      return p.session_duration_seconds || 45;
-    case "interaction_count":
-    case "Interactions Count":
-      return p.interaction_count || 1;
-    case "tab_visibility_status":
-      return "visible";
-    case "is_returning_visitor":
-      return false;
-
-    // Traffic and Sources
-    case "traffic_source":
-    case "Traffic Category":
-      return p.traffic_source || "Direct Inbound";
-    case "raw_source":
-    case "Raw Source":
-      return p.raw_source || p.utm_source || "direct";
-    case "utm_source":
-      return p.utm_source || "direct";
-    case "utm_medium":
-    case "Medium":
-      return p.utm_medium || "none";
-    case "utm_campaign":
-    case "Campaign":
-      return p.utm_campaign || "(organic)";
-    case "utm_term":
-    case "Search Term":
-    case "search_query":
-      return p.utm_term || "ai profit strategy consulting";
-    case "utm_content":
-    case "Ad Content":
-      return p.utm_content || "standard";
-    case "click_id":
-    case "Click ID / Tag":
-      return p.click_id || "direct_inbound";
-    case "first_touch_attribution":
-    case "First-Touch Attribution":
-      return p.first_touch_attribution || "Direct Entry";
-    case "last_touch_attribution":
-    case "Last-Touch Attribution":
-      return p.last_touch_attribution || "Direct Navigation";
-    case "channel_roi_score":
-    case "Channel ROI Score":
-      return p.channel_roi_score || "88%";
-
-    // Device and Environment
-    case "device_type":
-    case "Device Type":
-    case "device":
-      return p.device_type || "Desktop";
-    case "browser":
-      return p.browser || "Chrome";
-    case "browser_version":
-      return p.browser_version || "Latest";
-    case "operating_system":
-      return p.operating_system || "Windows";
-    case "Browser / OS":
-      return (p.browser || "Chrome") + " (" + (p.operating_system || "Windows") + ")";
-    case "screen_width":
-      return 1920;
-    case "screen_height":
-      return 1080;
-    case "viewport_width":
-      return 1280;
-    case "viewport_height":
-      return 800;
-    case "language":
-      return "en-US";
-    case "timezone":
-    case "Timezone (IANA)":
-      return p.timezone_iana || p.timezone || CONFIG.TIMEZONE;
-    case "network_type":
-    case "Network Type":
-      return p.network_type || "Broadband / 5G";
-    case "source_environment":
-      return p.source_environment || CONFIG.DEFAULT_ENVIRONMENT;
-
-    // Geo and Location (REAL VISITOR GEOLOCATION)
-    case "Country":
-    case "geo_country":
-      return p.geo_country || "India";
-    case "Country Code":
-    case "geo_country_code":
-      return p.geo_country_code || (p.geo_country === "India" ? "IN" : "US");
-    case "City":
-    case "geo_city":
-      return p.geo_city || (p.geo_country ? (p.geo_country + " Visitor") : "Visitor Location");
-    case "Region":
-    case "geo_region":
-      return p.geo_region || (p.geo_country === "India" ? "National" : "Global");
-    case "Continent":
-    case "geo_continent":
-      return p.geo_continent || (p.geo_country === "India" ? "Asia" : "North America");
-    case "Currency":
-    case "geo_currency":
-      return p.geo_currency || (p.geo_country === "India" ? "INR (₹)" : "USD ($)");
-    case "Market Tier":
-    case "geo_market_tier":
-    case "regional_market":
-      return p.geo_market_tier || (p.geo_country === "India" ? "APAC Growth Hub" : "North America Tier 1");
-    case "Compliance Mode":
-    case "compliance_mode":
-      return p.compliance_mode || "Global Standard";
-    case "Local Clock Time":
-    case "timezone_local_time":
-      return Utilities.formatDate(now, CONFIG.TIMEZONE, "hh:mm a");
-    case "UTC Offset":
-    case "timezone_utc_offset":
-      return p.timezone_utc_offset || "UTC+5:30";
-    case "Day Phase":
-    case "timezone_day_phase":
-      return "Active Business Hours";
-    case "Peak Hours Status":
-    case "peak_engagement_status":
-      return "Peak Business Decision Hours";
-    case "Active Advisory Desk":
-    case "active_advisory_desk":
-      return p.active_advisory_desk || (p.geo_country === "India" ? "India Strategy & Advisory Desk" : "Global Advisory Desk");
-
-    // IP and Security
-    case "Network Carrier / ISP":
-    case "ip_network_carrier":
-      return p.ip_network_carrier || "Broadband Provider";
-    case "ip_network_type":
-      return "Enterprise B2B";
-    case "Corporate Intent":
-    case "ip_corporate_intent":
-      return "Strategic Inbound";
-    case "Fraud Risk Score":
-    case "ip_fraud_risk_score":
-      return "0.02";
-    case "Fraud Status":
-    case "ip_fraud_status":
-      return "Verified Human";
-    case "Repeat Visits Velocity":
-    case "ip_visit_velocity":
-      return 1;
-    case "Security Tier":
-    case "security_tier":
-      return "Tier 1 Enterprise Verified";
-
-    // Behavioral Intelligence
-    case "Bounce Risk":
-    case "bounce_risk":
-      return "Low";
-    case "Funnel Stage":
-    case "funnel_stage":
-      return "Discovery & Strategy Exploration";
-    case "User Intent":
-    case "user_intent":
-      return "AI Profit Optimization Evaluation";
-
-    // Forms and Conversions
-    case "form_name":
-      return p.form_name || (p.lead_type === "CHATBOT" ? "Interactive AI Assistant" : "Quick Contact Form");
-    case "form_id":
-      return p.form_id || "lead_form";
-    case "form_field_name":
-      return "(none)";
-    case "form_status":
-      return "submitted";
-    case "conversion_name":
-      return p.conversion_name || (p.lead_type === "CHATBOT" ? "Assistant Lead Submission" : "Strategic Inbound Inquiry");
-    case "conversion_value":
-      return 1;
-
-    // Leads & Contact Info (CHATBOT & FORMS)
-    case "name":
-      return p.name || "Executive Prospect";
-    case "email":
-      return p.email || "prospect@lead.inbound";
-    case "phone":
-      return p.phone || "(Not Provided)";
-    case "company":
-      return p.company || (p.email && p.email.includes("@") && !p.email.includes("lead.inbound") ? p.email.split("@")[1].split(".")[0].toUpperCase() : "Enterprise Partner");
-    case "job_title":
-      return p.job_title || "Executive Director / Decision-Maker";
-    case "industry":
-      return p.industry || "Enterprise Technology / Services";
-    case "company_size":
-      return p.company_size || "20 - 250 Employees";
-    case "website":
-      return p.website || "https://client-company.com";
-    case "requirement":
-      return p.requirement || "Executive AI Strategy & Workflow Automation";
-    case "challenge":
-    case "message":
-      return p.challenge || p.message || "Manual operational bottleneck elimination and profit margin scaling";
-    case "desired_outcome":
-      return "Accelerated operating margins and autonomous reporting";
-    case "current_tools":
-      return "Cloud ERP, CRM & Spreadsheets";
-    case "existing_ai_usage":
-      return "Ad-hoc experimentation seeking systematic scaling";
-    case "project_scope":
-      return "Full-cycle AI automation & strategic advisory";
-    case "budget_range":
-      return "Strategic Enterprise Tier";
-    case "preferred_contact_time":
-      return "Business Hours (IST)";
-    case "lead_type":
-      return p.lead_type || "QUICK_FORM";
-    case "lead_source":
-      return p.lead_source || (p.lead_type === "CHATBOT" ? "assistant_chatbot" : "Website Inbound");
-    case "lead_status":
-      return "New";
-    case "follow_up_status":
-      return "Immediate Action Pending";
-    case "consent_status":
-      return "Granted";
-    case "audit_doc_type":
-      return "Operational Process Blueprint";
-    case "weekly_hours_spent":
-      return "35+ hrs/week";
-    case "files_count":
-      return 0;
-    case "files_list":
-      return "(No files attached)";
-    case "nda_requested":
-      return "Standard Mutual Confidentiality";
-    case "document_drive_link":
-      return p.document_drive_link || "N/A (Direct Submission)";
-    case "drive_file_id":
-      return p.drive_file_id || "N/A";
-    case "predictive_synergy_score":
-    case "predictive_score":
-      return "95%";
-    case "urgency_score":
-      return "High (Tier 1 Priority)";
-    case "tailored_strategy":
-      return "Autonomous Workflow Implementation & Profit Margin Engineering";
-
-    // SEO metrics
-    case "clicks":
-      return 15;
-    case "impressions":
-      return 180;
-    case "ctr":
-      return "8.33%";
-    case "average_position":
-      return "2.1";
-
-    // Summary tabs
-    case "Total_Events":
-      return 1;
-    case "Unique_Visitors":
-      return 1;
-    case "Page_Views":
-      return 1;
-    case "Quick_Leads":
-      return 0;
-    case "Consultation_Leads":
-      return 0;
-    case "Audit_Dossiers":
-      return 0;
-    case "Chatbot_Leads":
-      return 0;
-    case "Total_Leads":
-      return 0;
-    case "Conversion_Rate":
-      return "0.0%";
-    case "Avg_Engagement_Sec":
-      return "45";
-
-    case "event_data_json":
-      try { return JSON.stringify(p); } catch (e) { return "{}"; }
-
-    default:
-      return "-";
-  }
-}
-
-// =========================================================================================
-// LEAD DEDUPLICATION & IN-PLACE ROW UPDATER
-// =========================================================================================
-function checkAndUpdateExistingLead(ss, p, receivedAt) {
-  var sheet = getTab(ss, "Lead_Management");
-  if (!sheet) return false;
-  var lastRow = sheet.getLastRow();
-  if (lastRow < 2) return false;
-
-  var checkRows = Math.min(100, lastRow - 1);
-  var startRow = lastRow - checkRows + 1;
-  // Columns in Lead_Management:
-  // 1: received_at, 2: lead_id, 3: lead_type, 4: visitor_id, 5: session_id,
-  // 6: name, 7: email, 8: phone, 9: company
-  var dataRange = sheet.getRange(startRow, 1, checkRows, 9);
-  var values = dataRange.getValues();
-
-  var cleanEmail = String(p.email || "").trim().toLowerCase();
-  var isDummyEmail = cleanEmail.includes("@chat.lead") || cleanEmail.includes("@prospect.lead") || cleanEmail.includes("@lead.inbound") || cleanEmail === "";
-  var cleanPhone = String(p.phone || "").replace(/\D/g, "");
-  var hasPhone = cleanPhone.length >= 7;
-  var cleanLeadId = String(p.lead_id || "").trim();
-
-  for (var i = values.length - 1; i >= 0; i--) {
-    var rowEmail = String(values[i][6] || "").trim().toLowerCase();
-    var rowPhone = String(values[i][7] || "").replace(/\D/g, "");
-    var rowLeadId = String(values[i][1] || "").trim();
-    var rowSession = String(values[i][4] || "").trim();
-
-    var isMatch = false;
-
-    // 1. Match by exact lead_id
-    if (cleanLeadId && cleanLeadId === rowLeadId) {
-      isMatch = true;
-    }
-    // 2. Match by genuine email
-    else if (!isDummyEmail && cleanEmail && cleanEmail === rowEmail) {
-      isMatch = true;
-    }
-    // 3. Match by valid phone number
-    else if (hasPhone && rowPhone && (cleanPhone === rowPhone || cleanPhone.endsWith(rowPhone) || rowPhone.endsWith(cleanPhone))) {
-      isMatch = true;
-    }
-    // 4. Match by session_id + lead_type within recent submissions
-    else if (p.session_id && p.session_id === rowSession && values[i][2] === p.lead_type) {
-      isMatch = true;
-    }
-
-    if (isMatch) {
-      // Update any fields in existing row that are newly provided
-      var actualRow = startRow + i;
-      var fullRowRange = sheet.getRange(actualRow, 1, 1, TAB_HEADERS.Lead_Management.length);
-      var rowVals = fullRowRange.getValues()[0];
-      var headers = TAB_HEADERS.Lead_Management;
-      var updated = false;
-
-      for (var h = 0; h < headers.length; h++) {
-        var hName = headers[h];
-        if ((rowVals[h] === "" || rowVals[h] === null || String(rowVals[h]).includes("Not Provided") || String(rowVals[h]).includes("not provided")) && p[hName]) {
-          rowVals[h] = p[hName];
-          updated = true;
-        }
-      }
-      if (updated) {
-        fullRowRange.setValues([rowVals]);
-      }
-      return true; // Already recorded, do not duplicate!
-    }
-  }
   return false;
 }
 
-// =========================================================================================
-// VISITOR SESSION UPSERT (1 UNIQUE ROW PER SESSION)
-// =========================================================================================
-function upsertVisitorSession(ss, p, receivedAt) {
-  var sheet = getTab(ss, "Visitor_Sessions");
-  if (!sheet) return;
+function routeLead(ss, p, attachments) {
+  var leadType = String(p.lead_type || "").toUpperCase();
+  var formName = String(p.form_name || "").toLowerCase();
 
-  var sessionId = p.session_id || "";
-  var rowIndex = findRowByValue(sheet, 4, sessionId); // Column 4 is session_id
+  if (!leadType) {
+    if (formName.indexOf("quick") >= 0) leadType = "QUICK_FORM";
+    else if (formName.indexOf("consult") >= 0 || formName.indexOf("long") >= 0) leadType = "LONG_FORM";
+    else if (formName.indexOf("audit") >= 0 || (attachments && attachments.length > 0)) leadType = "PROCESS_AUDIT_SUBMISSION";
+    else if (formName.indexOf("chat") >= 0 || formName.indexOf("assistant") >= 0) leadType = "CHATBOT";
+    else leadType = "QUICK_FORM";
+  }
 
-  var headers = TAB_HEADERS.Visitor_Sessions;
-  var rowData = headers.map(function(h) {
-    var val = p[h];
-    if (val === undefined || val === null || String(val).trim() === "") {
-      val = getDefaultValueForHeader(h, p);
-    }
-    if (typeof val === "object") {
-      try { val = JSON.stringify(val); } catch (e) { val = ""; }
-    }
-    return val;
-  });
+  p.lead_type = leadType;
 
-  if (rowIndex > 1) {
-    sheet.getRange(rowIndex, 1, 1, rowData.length).setValues([rowData]);
+  appendRowToTab(ss, "Lead_Management", p);
+
+  if (leadType === "QUICK_FORM") {
+    appendRowToTab(ss, "Quick_Form_Leads", p);
+  } else if (leadType === "LONG_FORM") {
+    appendRowToTab(ss, "Long_Form_Leads", p);
+  } else if (leadType === "PROCESS_AUDIT_SUBMISSION") {
+    appendRowToTab(ss, "Audit_Document_Leads", p);
+  } else if (leadType === "CHATBOT") {
+    appendRowToTab(ss, "Chatbot_Leads", p);
   } else {
-    sheet.appendRow(rowData);
+    appendRowToTab(ss, "Quick_Form_Leads", p);
+  }
+
+  sendLeadAlertEmail(p, attachments || []);
+}
+
+// =========================================================================================
+// STANDARD TELEMETRY ROUTING
+// =========================================================================================
+function routeTelemetry(ss, p) {
+  if (p.event_type === "session" || p.event_name === "session_start" || p.event_name === "session_end") {
+    appendRowToTab(ss, "Visitor_Sessions", p);
+  }
+
+  if (p.event_type === "page_view" || p.event_name === "page_view") {
+    appendRowToTab(ss, "Page_Performance", p);
+    appendRowToTab(ss, "Traffic_Sources", p);
+  }
+
+  if (p.event_type === "click" || String(p.event_name).toLowerCase().indexOf("click") >= 0 || p.event_category === "CTA") {
+    appendRowToTab(ss, "Click_Interactions", p);
+  }
+
+  if (p.event_type === "scroll" || Number(p.scroll_percentage) > 0) {
+    appendRowToTab(ss, "Scroll_Engagement", p);
+  }
+
+  if (p.event_type === "form" || String(p.event_name).toLowerCase().indexOf("form") >= 0 ||
+      p.form_status === "submitted" || p.form_status === "in_progress") {
+    appendRowToTab(ss, "Form_Interactions", p);
+  }
+
+  if (p.event_type === "conversion" || p.conversion_name) {
+    appendRowToTab(ss, "Conversion_Events", p);
+  }
+
+  if (p.event_type === "seo_performance" || p.search_query) {
+    appendRowToTab(ss, "SEO_Performance", p);
   }
 }
 
 // =========================================================================================
-// SCROLL ENGAGEMENT UPSERT (1 ROW PER PAGE PER SESSION)
+// ANALYTICS INTELLIGENCE LAYER
 // =========================================================================================
-function upsertScrollEngagement(ss, p, receivedAt) {
-  var sheet = getTab(ss, "Scroll_Engagement");
+function updateAnalyticsIntelligence(ss, p) {
+  var now = p.received_at || normalizeTimestamp(new Date());
+
+  if (p.session_id) {
+    appendAnalyticsRow(ss, "Session_Intelligence", [
+      now,
+      p.session_id,
+      p.visitor_id,
+      p.session_entry_point || p.page_path || "/",
+      p.page_path || p.page_url || "/",
+      p.page_dwell_seconds || p.time_on_page_seconds || "",
+      p.session_dwell_seconds || p.session_duration_seconds || "",
+      p.session_navigation_flow || '["/"]',
+      p.bounce_risk || "Low",
+      p.funnel_stage || "Engagement",
+      p.user_intent || "Research & Evaluation",
+      p.interaction_count || "1"
+    ], p.event_id);
+  }
+
+  if (p.traffic_source || p.utm_source || p.first_touch_attribution) {
+    appendAnalyticsRow(ss, "Traffic_Intelligence", [
+      now,
+      p.session_id,
+      p.visitor_id,
+      p.traffic_source_category || p.traffic_source || "(direct)",
+      p.raw_source || p.utm_source || "(direct)",
+      p.utm_medium || "(none)",
+      p.utm_campaign || "(none)",
+      p.utm_term || "(none)",
+      p.utm_content || "(none)",
+      p.click_id || "",
+      p.first_touch_attribution || p.traffic_source || "Direct Organic",
+      p.last_touch_attribution || p.traffic_source || "Direct Organic",
+      p.channel_roi_score || "8.5",
+      p.referrer_url || p.previous_page || "(direct)"
+    ], p.event_id);
+  }
+
+  if (p.geo_country || p.timezone_iana || p.geo_city || p.timezone) {
+    appendAnalyticsRow(ss, "Geo_Timezone_Intelligence", [
+      now,
+      p.visitor_id,
+      p.geo_country || "India",
+      p.geo_country_code || "IN",
+      p.geo_city || "Bengaluru",
+      p.geo_region || "Karnataka",
+      p.geo_continent || "Asia",
+      p.geo_currency || "INR (₹)",
+      p.geo_market_tier || "APAC Growth Hub",
+      p.compliance_mode || "Full Consent Required",
+      p.timezone_local_time || now,
+      p.timezone_iana || p.timezone || "Asia/Kolkata",
+      p.timezone_utc_offset || "+05:30",
+      p.timezone_day_phase || "Peak Business Hours",
+      p.peak_engagement_status || "Active",
+      p.active_advisory_desk || "Primary IST Operations Desk"
+    ], p.event_id);
+  }
+
+  if (p.ip_network_carrier || p.network_carrier_type || p.fraud_risk_score || p.network_type) {
+    appendAnalyticsRow(ss, "IP_Security_Intelligence", [
+      now,
+      p.visitor_id,
+      p.session_id,
+      p.ip_network_carrier || p.network_carrier_type || "Direct Enterprise Fiber",
+      p.network_type || "High Speed Broadband",
+      p.ip_corporate_intent || "Commercial Enterprise",
+      p.ip_fraud_risk_score || p.fraud_risk_score || "Low (0.02)",
+      p.ip_fraud_status || "Verified Safe",
+      p.ip_visit_velocity || "Standard",
+      p.security_tier || "Tier 1 Verified",
+      p.device_type || "Desktop",
+      (p.browser || "Chrome") + (p.operating_system ? " (" + p.operating_system + ")" : "")
+    ], p.event_id);
+  }
+
+  if (detectIsLead(p)) {
+    appendAnalyticsRow(ss, "Lead_Intelligence", [
+      now,
+      p.lead_id,
+      p.name || p.fullName || "",
+      p.email || p.workEmail || "",
+      p.phone || "",
+      p.company || "",
+      p.job_title || p.jobTitle || "",
+      p.industry || "",
+      p.lead_type || p.docType || "Strategy Consultation",
+      p.requirement || p.primaryGoal || "",
+      p.challenge || p.message || p.processSummary || "",
+      p.page_url || p.page_path || "/",
+      p.traffic_source || "(direct)",
+      p.first_touch_attribution || "Website Inbound",
+      p.lead_status || "New"
+    ], p.event_id);
+  }
+
+  appendAnalyticsRow(ss, "Master_Event_Log", [
+    now,
+    p.event_name || "",
+    p.event_type || "",
+    p.event_category || "",
+    p.page_path || p.page_url || "/",
+    p.visitor_id || "",
+    p.session_id || "",
+    p.event_label || p.cta_name || p.element_text || "",
+    p.predictive_synergy_score || "92%",
+    p.traffic_source || "(direct)"
+  ], p.event_id);
+}
+
+function appendAnalyticsRow(ss, tabName, row, eventId) {
+  var sheet = getTab(ss, tabName);
   if (!sheet) return;
-
-  var sessionId = String(p.session_id || "").trim();
-  var pagePath = String(p.page_path || "/").trim();
-  var lastRow = sheet.getLastRow();
-
-  if (lastRow > 1) {
-    var checkRows = Math.min(80, lastRow - 1);
-    var startRow = lastRow - checkRows + 1;
-    // Column 4 is session_id, Column 6 is page_path
-    var range = sheet.getRange(startRow, 1, checkRows, 11);
-    var values = range.getValues();
-
-    for (var i = values.length - 1; i >= 0; i--) {
-      var rowSession = String(values[i][3] || "").trim();
-      var rowPath = String(values[i][5] || "").trim();
-
-      if (rowSession === sessionId && rowPath === pagePath) {
-        var existingScroll = Number(values[i][7]) || 0;
-        var newScroll = Number(p.scroll_percentage) || 50;
-        var existingMax = Number(values[i][8]) || 0;
-        var newMax = Number(p.max_scroll_depth) || newScroll;
-
-        values[i][0] = receivedAt;
-        values[i][7] = Math.max(existingScroll, newScroll);
-        values[i][8] = Math.max(existingMax, newMax);
-        values[i][9] = Math.max(Number(values[i][9]) || 0, Number(p.time_on_page_seconds) || 10);
-
-        sheet.getRange(startRow + i, 1, 1, 11).setValues([values[i]]);
-        return; // Upserted in place!
-      }
-    }
-  }
-
-  // Not found: append row with all columns filled
-  appendRowToTab(ss, "Scroll_Engagement", p);
+  sheet.appendRow(row);
 }
 
 // =========================================================================================
-// GOOGLE DRIVE DOCUMENT ARCHIVAL
+// GOOGLE DRIVE DOCUMENT HANDLING
 // =========================================================================================
-function archiveDocumentToDrive(p) {
-  if (!p || (!p.fileBase64 && !p.fileBlob)) {
-    return [];
-  }
-
-  try {
-    var rawBase64 = String(p.fileBase64 || p.fileBlob || "");
-    if (rawBase64.indexOf(",") > -1) {
-      rawBase64 = rawBase64.split(",")[1];
-    }
-
-    var decoded = Utilities.base64Decode(rawBase64);
-    var compName = String(p.company || "Client").replace(/[^a-zA-Z0-9]/g, "_");
-    var timeStamp = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, "yyyyMMdd_HHmmss");
-    var fileName = String(p.fileName || ("Audit_Dossier_" + compName + "_" + timeStamp + ".pdf"));
-    var mimeType = String(p.fileMimeType || "application/pdf");
-    var blob = Utilities.newBlob(decoded, mimeType, fileName);
-
-    var folderName = CONFIG.AUDIT_DOCUMENTS_FOLDER_NAME || "ProfitPatterns_Audit_Dossiers";
-    var folder;
-    var folders = DriveApp.getFoldersByName(folderName);
-    if (folders.hasNext()) {
-      folder = folders.next();
-    } else {
-      folder = DriveApp.createFolder(folderName);
-    }
-
-    var driveFile = folder.createFile(blob);
-    try {
-      driveFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    } catch (shareErr) {
-      console.warn("Sharing permission warning: " + shareErr.toString());
-    }
-
-    var driveUrl = driveFile.getUrl();
-    p.document_drive_link = driveUrl;
-    p.drive_file_id = driveFile.getId();
-    p.files_list = fileName + " (" + Math.round(decoded.length / 1024) + " KB)";
-
-    console.log("✅ File archived to Google Drive: " + driveUrl);
-    return [blob];
-  } catch (err) {
-    console.error("❌ archiveDocumentToDrive failed: " + err.toString());
-    return [];
-  }
+function getOrCreateAuditFolder() {
+  var folders = DriveApp.getFoldersByName(CONFIG.AUDIT_DOCUMENTS_FOLDER_NAME);
+  if (folders.hasNext()) return folders.next();
+  return DriveApp.createFolder(CONFIG.AUDIT_DOCUMENTS_FOLDER_NAME);
 }
 
 function getAttachmentBlobs(data, defaultName) {
@@ -1506,433 +886,485 @@ function getAttachmentBlobs(data, defaultName) {
   var raw = data.documentBlob || data.docBlob || data.fileBlob || data.resumeBlob ||
             data.fileBase64 || data.attachmentBlob || "";
 
-  var clientName = String(data.name || defaultName || "Client").replace(/[^a-zA-Z0-9_\s]/g, "").trim();
-  var cleanName = (data.fileName || data.documentFileName || (clientName + "_Process_Audit_Document.pdf"))
-    .replace(/[/\\?%*:|"<>]/g, "_").trim();
+  var clientName = String(data.name || defaultName || "Client")
+    .replace(/[^a-zA-Z0-9_\s]/g, "")
+    .trim();
+
+  var cleanName = String(data.fileName || data.documentFileName ||
+    (clientName + "_Process_Audit_Document.pdf"))
+    .replace(/[\/\\?%*:|"<>]/g, "_")
+    .trim();
 
   if (raw && typeof raw !== "string" && raw.getBytes) {
     try {
-      attachments.push(Utilities.newBlob(raw.getBytes(), "application/pdf", cleanName));
+      attachments.push(Utilities.newBlob(raw.getBytes(), data.fileMimeType || "application/pdf", cleanName));
       return attachments;
     } catch (e) {}
   }
 
   var base64 = typeof raw === "string" ? raw.trim() : "";
-  var commaIdx = base64.indexOf("base64,");
-  if (commaIdx !== -1) base64 = base64.substring(commaIdx + 7);
+  var marker = base64.indexOf("base64,");
+  if (marker !== -1) base64 = base64.substring(marker + 7);
   base64 = base64.replace(/[\r\n\s"']/g, "").replace(/-/g, "+").replace(/_/g, "/");
   while (base64.length % 4 !== 0) base64 += "=";
 
   if (base64.length > 20) {
     try {
-      var bytes = Utilities.base64Decode(base64);
-      attachments.push(Utilities.newBlob(bytes, "application/pdf", cleanName));
-    } catch (e) {}
+      attachments.push(Utilities.newBlob(
+        Utilities.base64Decode(base64),
+        data.fileMimeType || "application/pdf",
+        cleanName
+      ));
+    } catch (e2) {}
   }
+
   return attachments;
 }
 
-function safeSendEmail(mailOptions) {
+function archiveDocumentToDrive(p, attachments) {
+  if (!attachments || !attachments.length) return {};
+
   try {
-    MailApp.sendEmail(mailOptions);
+    var folder = getOrCreateAuditFolder();
+    var blob = attachments[0];
+    var file = folder.createFile(blob);
+
+    p.files_list = file.getName() + " (" + Math.round(blob.getBytes().length / 1024) + " KB)";
+
+    return {
+      driveLink: file.getUrl(),
+      driveFileId: file.getId(),
+      fileName: file.getName()
+    };
+  } catch (err) {
+    console.error("Drive archival failed: " + err);
+    return {};
+  }
+}
+
+// =========================================================================================
+// EMAIL ALERTS
+// =========================================================================================
+function safeSendEmail(options) {
+  try {
+    MailApp.sendEmail(options);
     return true;
   } catch (err) {
-    console.warn("⚠️ Failed sending with attachment (" + err.toString() + "). Retrying without attachment...");
+    console.warn("Email with attachment failed; retrying without attachment: " + err);
     try {
-      var fallback = Object.assign({}, mailOptions);
-      delete fallback.attachments;
+      var fallback = {};
+      Object.keys(options).forEach(function(k) {
+        if (k !== "attachments") fallback[k] = options[k];
+      });
       MailApp.sendEmail(fallback);
       return true;
     } catch (err2) {
-      console.error("❌ Email sending failed completely: " + err2.toString());
+      console.error("Email failed completely: " + err2);
       return false;
     }
   }
 }
 
-// =========================================================================================
-// INSTANT LEAD & DOCUMENT ALERT NOTIFICATION (15 COLUMNS + PREDICTIVE SCORES + DRIVE LINK)
-// =========================================================================================
 function sendLeadAlertEmail(p, attachments) {
-  if (!p || typeof p !== "object") {
-    p = {
-      received_at: Utilities.formatDate(new Date(), CONFIG.TIMEZONE, "yyyy-MM-dd HH:mm:ss 'IST'"),
-      lead_id: "lead_" + Date.now() + "_test",
-      visitor_id: "vis_sample_test",
-      session_id: "ses_sample_test",
-      name: "Asmitha V",
-      email: "asmitha.int2027g3@gmail.com",
-      phone: "+91 7339693105",
-      company: "ProfitPatterns Strategic AI",
-      requirement: "AI Process Audit & Business Automation",
-      message: "Please evaluate our workflow diagram and manual operational bottlenecks.",
-      page_path: "/audit-submission",
-      lead_source: "audit_submission_form",
-      lead_status: "New",
-      follow_up_status: "Pending",
-      source_environment: "production",
-      predictive_synergy_score: "94%",
-      urgency_score: "High (Tier 1 Priority)",
-      regional_market: "APAC Growth Hub (Madurai / Bengaluru)",
-      document_drive_link: "https://drive.google.com/",
-      fileName: "Process_Audit_Dossier.pdf"
-    };
-    attachments = [Utilities.newBlob("Sample Audit Document", "application/pdf", "Process_Audit_Dossier.pdf")];
-  }
-
   attachments = attachments || [];
 
-  var receivedAt       = String(p.received_at || Utilities.formatDate(new Date(), CONFIG.TIMEZONE, "yyyy-MM-dd HH:mm:ss 'IST'")).trim();
-  var leadId           = String(p.lead_id || ("lead_" + Date.now())).trim();
-  var visitorId        = String(p.visitor_id || "vis_direct").trim();
-  var sessionId        = String(p.session_id || "ses_direct").trim();
-  var userName         = String(p.name || p.fullName || "Executive Lead").trim();
-  var userEmail        = String(p.email || p.workEmail || "").trim();
-  var userPhone        = String(p.phone || "Not provided").trim();
-  var userCompany      = String(p.company || "Enterprise").trim();
-  var requirement      = String(p.requirement || p.primaryGoal || p.primaryChallenge || "AI Strategy & Automation").trim();
-  var message          = String(p.message || p.challenge || p.processSummary || "Audit submission details").trim();
-  var pagePath         = String(p.page_path || p.page || "/contact").trim();
-  var leadSource       = String(p.lead_source || p.source || "website_inbound").trim();
-  var leadStatus       = String(p.lead_status || "New").trim();
-  var followUpStatus   = String(p.follow_up_status || "Pending").trim();
-  var sourceEnvironment= String(p.source_environment || "production").trim();
-  var driveLink        = String(p.document_drive_link || p.drive_url || "").trim();
-  var attachedFileName = attachments.length > 0 ? attachments[0].getName() : (p.fileName || "");
-  var predictiveScore  = String(p.predictive_synergy_score || p.predictive_score || "88%").trim();
-  var urgencyScore     = String(p.urgency_score || "High Priority").trim();
+  var receivedAt = String(p.received_at || normalizeTimestamp(new Date()));
+  var userName = String(p.name || "Website Visitor");
+  var userEmail = String(p.email || "");
+  var userPhone = String(p.phone || "");
+  var userCompany = String(p.company || "");
+  var requirement = String(p.requirement || "");
+  var message = String(p.message || p.challenge || "");
+  var driveLink = String(p.document_drive_link || "");
 
-  var cfg = EMAIL_CONFIG;
-
-  function makeRow(key, val, isHighlight) {
-    var bg = isHighlight ? "#f0fdf4" : "#ffffff";
-    var color = isHighlight ? "#15803d" : "#0f172a";
-    return '<tr style="background:' + bg + ';border-bottom:1px solid #e2e8f0;">' +
-           '<td style="padding:10px 14px;font-family:monospace;font-size:12px;font-weight:700;color:#64748b;width:32%;">' + escapeHtml(key) + '</td>' +
-           '<td style="padding:10px 14px;font-size:13px;font-weight:' + (isHighlight ? '700' : '500') + ';color:' + color + ';">' + escapeHtml(val) + '</td>' +
-           '</tr>';
+  function row(key, value) {
+    return '<tr style="border-bottom:1px solid #e2e8f0;">' +
+      '<td style="padding:9px 12px;color:#64748b;font-weight:700;width:32%;">' + escapeHtml(key) + '</td>' +
+      '<td style="padding:9px 12px;color:#0f172a;">' + escapeHtml(value) + '</td></tr>';
   }
 
-  // Document Section
-  var documentSectionHtml = "";
-  if (driveLink || attachments.length > 0) {
-    documentSectionHtml = [
-      '<div style="margin:20px 24px;padding:18px;background:#ecfdf5;border:2px solid #10b981;border-radius:12px;">',
-      '  <div style="font-size:12px;font-weight:800;color:#047857;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">',
-      '    📁 ATTACHED AUDIT DOSSIER &amp; DRIVE ARCHIVE',
-      '  </div>',
-      driveLink ? [
-        '  <div style="margin-bottom:12px;">',
-        '    <span style="font-size:12px;color:#334155;font-weight:600;">Google Drive URL:</span><br/>',
-        '    <a href="' + driveLink + '" target="_blank" style="font-size:13px;color:#059669;font-weight:700;word-break:break-all;text-decoration:underline;">' + driveLink + '</a>',
-        '  </div>',
-        '  <div style="margin-bottom:8px;">',
-        '    <a href="' + driveLink + '" target="_blank" style="display:inline-block;background:#10b981;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:800;font-size:13px;">📂 Open Document in Google Drive &rarr;</a>',
-        '  </div>'
-      ].join('') : '',
-      attachments.length > 0 ? [
-        '  <div style="margin-top:10px;padding:8px 12px;background:#ffffff;border:1px solid #a7f3d0;border-radius:6px;font-size:12px;color:#065f46;">',
-        '    📎 <strong>Direct Email Attachment:</strong> ' + escapeHtml(attachedFileName) + ' (' + Math.round(attachments[0].getBytes().length / 1024) + ' KB)',
-        '  </div>'
-      ].join('') : '',
-      '</div>'
-    ].join('');
-  }
+  var documentBlock = driveLink ?
+    '<div style="margin:18px 24px;padding:14px;background:#ecfdf5;border:1px solid #10b981;border-radius:8px;">' +
+    '<strong>Audit document:</strong><br>' +
+    '<a href="' + escapeHtml(driveLink) + '" target="_blank">Open archived document in Google Drive</a>' +
+    '</div>' : '';
 
-  // Predictive Intelligence Badge
-  var predictiveBadgeHtml = [
-    '<div style="margin:16px 24px 0 24px;padding:14px 18px;background:#f8fafc;border-left:4px solid #047857;border-radius:6px;">',
-    '  <div style="display:flex;justify-content:space-between;align-items:center;">',
-    '    <span style="font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:1px;">⚡ Layer 3 Predictive Score:</span>',
-    '    <span style="background:#047857;color:#ffffff;padding:4px 12px;border-radius:12px;font-weight:800;font-size:13px;">' + escapeHtml(predictiveScore) + '</span>',
-    '  </div>',
-    '  <div style="margin-top:6px;font-size:12px;color:#475569;">Urgency Level: <strong>' + escapeHtml(urgencyScore) + '</strong> &bull; Market: <strong>' + escapeHtml(p.regional_market || "APAC Growth Hub") + '</strong></div>',
-    '</div>'
-  ].join('');
-
-  var htmlEmail = [
-    '<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>',
-    '<body style="margin:0;padding:20px;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;">',
-    '<div style="max-width:680px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #cbd5e1;box-shadow:0 10px 25px rgba(0,0,0,0.06);">',
-
-    // Top Header
-    '<div style="background:linear-gradient(135deg,#064e3b 0%,#042f26 60%,#0f172a 100%);padding:26px 24px;border-bottom:3px solid #10b981;">',
-    '  <div style="display:inline-block;background:#10b981;color:#022c22;padding:4px 12px;border-radius:16px;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">PROFITPATTERNS STRATEGIC INBOUND</div>',
-    '  <h1 style="color:#ffffff;margin:0 0 6px 0;font-size:24px;font-weight:800;">' + escapeHtml(userName) + ' — ' + escapeHtml(userCompany) + '</h1>',
-    '  <p style="color:#a7f3d0;margin:0;font-size:13px;font-weight:600;">' + escapeHtml(receivedAt) + '</p>',
+  var html = [
+    '<!DOCTYPE html><html><body style="margin:0;padding:20px;background:#f8fafc;font-family:Arial,sans-serif;">',
+    '<div style="max-width:680px;margin:auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">',
+    '<div style="background:#064e3b;padding:24px;color:#fff;">',
+    '<div style="font-size:11px;font-weight:bold;letter-spacing:1px;">PROFITPATTERNS FORM SUBMISSION</div>',
+    '<h2 style="margin:8px 0 4px;">' + escapeHtml(userName) + '</h2>',
+    '<div style="font-size:13px;opacity:.85;">' + escapeHtml(receivedAt) + '</div>',
     '</div>',
-
-    predictiveBadgeHtml,
-    documentSectionHtml,
-
-    // Data Table
-    '<div style="padding:10px 24px 20px 24px;">',
-    '  <h3 style="margin:0 0 12px 0;font-size:13px;color:#475569;text-transform:uppercase;letter-spacing:1px;">📋 Form Submission &amp; Intelligence Telemetry</h3>',
-    '  <table width="100%" style="border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">',
-    makeRow("received_at", receivedAt, true),
-    makeRow("lead_id", leadId),
-    makeRow("visitor_id", visitorId),
-    makeRow("session_id", sessionId),
-    makeRow("name", userName, true),
-    makeRow("email", userEmail, true),
-    makeRow("phone", userPhone),
-    makeRow("company", userCompany, true),
-    makeRow("requirement", requirement, true),
-    makeRow("message", message),
-    makeRow("predictive_score", predictiveScore, true),
-    makeRow("page_path", pagePath),
-    makeRow("lead_source", leadSource),
-    makeRow("lead_status", leadStatus),
-    makeRow("follow_up_status", followUpStatus),
-    makeRow("source_environment", sourceEnvironment),
-    '  </table>',
+    documentBlock,
+    '<div style="padding:18px 24px;">',
+    '<table width="100%" style="border-collapse:collapse;">',
+    row("Lead ID", p.lead_id || ""),
+    row("Email", userEmail),
+    row("Phone", userPhone),
+    row("Company", userCompany),
+    row("Lead Type", p.lead_type || ""),
+    row("Requirement", requirement),
+    row("Message / Challenge", message),
+    row("Page", p.page_path || ""),
+    row("Traffic Source", p.traffic_source || ""),
+    row("UTM Source", p.utm_source || ""),
+    row("UTM Campaign", p.utm_campaign || ""),
+    '</table>',
     '</div>',
-
-    // Quick Action Bar
-    '<div style="background:#f8fafc;padding:16px 24px;border-top:1px solid #e2e8f0;text-align:center;">',
-    userEmail ? '<a href="mailto:' + escapeHtml(userEmail) + '?subject=' + encodeURIComponent('Re: ProfitPatterns AI Strategy — ' + userCompany) + '" style="display:inline-block;background:#0284c7;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:13px;margin:4px 6px;">✉️ Reply via Email</a>' : '',
-    userPhone ? '<a href="tel:' + escapeHtml(userPhone) + '" style="display:inline-block;background:#334155;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:13px;margin:4px 6px;">📞 Call Client</a>' : '',
-    '<a href="https://wa.me/' + (cfg.whatsappNumber || "917339693105") + '" target="_blank" style="display:inline-block;background:#16a34a;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:700;font-size:13px;margin:4px 6px;">💬 WhatsApp</a>',
-    '</div>',
-
-    // Footer
-    '<div style="background:#0f172a;padding:12px 24px;text-align:center;font-size:11px;color:#94a3b8;">',
-    'ProfitPatterns Multi-Intelligence Engine &bull; ' + receivedAt + ' &bull; Confidential',
-    '</div>',
-
+    '<div style="padding:14px 24px;background:#f8fafc;color:#64748b;font-size:11px;">ProfitPatterns Automated Notification Engine</div>',
     '</div></body></html>'
   ].join('');
 
-  var emailSubject = "⚡ [ProfitPatterns] " + userName + " (" + userCompany + ") — " + receivedAt;
-
-  // Send to Internal Admin / Strategy Team
-  var recipients = (cfg.leadEmails && cfg.leadEmails.length) ? cfg.leadEmails : ["asmitha.int2027g3@gmail.com", "asmitha.int2027gs@gmail.com", "asmithaveera1346@gmail.com"];
-  recipients.forEach(function(adminEmail) {
-    var mailOpts = {
-      to: adminEmail,
-      subject: emailSubject,
-      htmlBody: htmlEmail,
-      name: cfg.name,
-      replyTo: (userEmail && userEmail.includes("@")) ? userEmail : cfg.replyTo
+  var recipients = (EMAIL_CONFIG.leadEmails && EMAIL_CONFIG.leadEmails.length) ? EMAIL_CONFIG.leadEmails : ["janegracy.int2027g3@gmail.com"];
+  var uniqueRecips = Array.from(new Set(recipients));
+  uniqueRecips.forEach(function(email) {
+    var options = {
+      to: email,
+      subject: "[ProfitPatterns] New Lead — " + userName + " (" + userCompany + ")",
+      htmlBody: html,
+      name: EMAIL_CONFIG.name,
+      replyTo: userEmail || EMAIL_CONFIG.replyTo
     };
-    if (attachments.length > 0) mailOpts.attachments = attachments;
-    safeSendEmail(mailOpts);
+    if (attachments.length) options.attachments = attachments;
+    safeSendEmail(options);
   });
 
-  // Client confirmation copy
-  if (userEmail && userEmail.includes("@")) {
-    var clientMailOpts = {
+  if (userEmail && userEmail.indexOf("@") > 0) {
+    safeSendEmail({
       to: userEmail,
-      subject: "ProfitPatterns — Strategic Consultation Received (" + userCompany + ")",
-      htmlBody: htmlEmail,
-      name: cfg.companyName,
-      replyTo: cfg.replyTo
-    };
-    if (attachments.length > 0) clientMailOpts.attachments = attachments;
-    safeSendEmail(clientMailOpts);
+      subject: "ProfitPatterns — Submission Received",
+      htmlBody: html,
+      name: EMAIL_CONFIG.companyName,
+      replyTo: EMAIL_CONFIG.replyTo
+    });
   }
 }
 
 // =========================================================================================
-// EXECUTIVE REPORTS & AGGREGATION ENGINE (DAILY, WEEKLY, MONTHLY)
+// ANALYTICS AGGREGATION ENGINE (DAILY, WEEKLY, MONTHLY)
 // =========================================================================================
-function BUILD_AGGREGATED_INTERVAL_SUMMARIES() {
-  var ss = getSpreadsheet();
-  if (!ss) return;
-
-  var liveSheet = ss.getSheetByName("Live_Traffic_Events");
-  if (!liveSheet || liveSheet.getLastRow() < 2) {
-    writeIntervalTable(ss, "Daily_Summary", {}, "Date");
-    writeIntervalTable(ss, "Weekly_Summary", {}, "Week_Start");
-    writeIntervalTable(ss, "Monthly_Summary", {}, "Month");
-    return;
-  }
-
-  var data = liveSheet.getDataRange().getValues();
-  if (!data || data.length < 2) return;
-
-  var h = data[0];
-  var findHeader = function(names) {
-    for (var n = 0; n < names.length; n++) {
-      var idx = h.indexOf(names[n]);
-      if (idx !== -1) return idx;
-    }
-    return -1;
-  };
-
-  var tsCol = findHeader(["received_at", "client_timestamp", "Timestamp"]);
-  var typeCol = findHeader(["event_type", "type"]);
-  var vidCol = findHeader(["visitor_id", "visitorId"]);
-  var durCol = findHeader(["time_on_page_seconds", "session_duration_seconds"]);
-  var formNameCol = findHeader(["form_name", "formName"]);
-
-  var daily = {}, weekly = {}, monthly = {};
-
-  for (var i = 1; i < data.length; i++) {
-    var rawTs = tsCol > -1 ? data[i][tsCol] : null;
-    var d = parseDateSafe(rawTs);
-    if (!d) continue;
-
-    var tz = CONFIG.TIMEZONE || "Asia/Kolkata";
-    var dayKey = Utilities.formatDate(d, tz, "yyyy-MM-dd");
-    var monthKey = Utilities.formatDate(d, tz, "yyyy-MM");
-    var weekKey = getWeekStartDate(d);
-
-    var vid = (vidCol > -1 && data[i][vidCol]) ? String(data[i][vidCol]) : ("v_" + i);
-    var isPageView = typeCol > -1 ? (String(data[i][typeCol]).toLowerCase() === "page_view") : false;
-    var isLead = typeCol > -1 ? (String(data[i][typeCol]).toLowerCase() === "lead") : false;
-    var formName = formNameCol > -1 ? String(data[i][formNameCol] || "").toLowerCase() : "";
-    var dur = durCol > -1 ? (Number(data[i][durCol]) || 0) : 0;
-
-    var isQuick = isLead && formName.includes("quick");
-    var isConsultation = isLead && formName.includes("consultation");
-    var isAudit = isLead && formName.includes("audit");
-    var isChat = isLead && (formName.includes("chat") || formName.includes("assistant"));
-
-    accumulateMetrics(daily, dayKey, vid, isPageView, isQuick, isConsultation, isAudit, isChat, isLead, dur);
-    accumulateMetrics(weekly, weekKey, vid, isPageView, isQuick, isConsultation, isAudit, isChat, isLead, dur);
-    accumulateMetrics(monthly, monthKey, vid, isPageView, isQuick, isConsultation, isAudit, isChat, isLead, dur);
-  }
-
-  writeIntervalTable(ss, "Daily_Summary", daily, "Date");
-  writeIntervalTable(ss, "Weekly_Summary", weekly, "Week_Start");
-  writeIntervalTable(ss, "Monthly_Summary", monthly, "Month");
-}
-
-function accumulateMetrics(bucket, key, vid, isPv, isQuick, isConsultation, isAudit, isChat, isLead, dur) {
-  if (!bucket || typeof bucket !== "object") return;
-  if (!key) return;
+function accumulateMetrics(bucket, key, visitor, isPageView, isQuick, isConsult, isAudit, isChat, isLead, duration) {
+  if (!bucket || typeof bucket !== "object" || !key) return;
 
   if (!bucket[key]) {
     bucket[key] = {
       events: 0,
       visitors: new Set(),
-      pvs: 0,
+      pageViews: 0,
       quick: 0,
-      consultation: 0,
+      consult: 0,
       audit: 0,
       chat: 0,
       leads: 0,
-      totalDur: 0,
-      timedEvents: 0
+      durationTotal: 0,
+      durationCount: 0
     };
   }
 
-  bucket[key].events++;
-  if (vid) bucket[key].visitors.add(vid);
-  if (isPv) bucket[key].pvs++;
-  if (isQuick) bucket[key].quick++;
-  if (isConsultation) bucket[key].consultation++;
-  if (isAudit) bucket[key].audit++;
-  if (isChat) bucket[key].chat++;
-  if (isLead) bucket[key].leads++;
-  if (dur > 0) {
-    bucket[key].totalDur += dur;
-    bucket[key].timedEvents++;
+  var b = bucket[key];
+  b.events++;
+  if (visitor) b.visitors.add(String(visitor));
+  if (isPageView) b.pageViews++;
+  if (isLead) {
+    b.leads++;
+    if (isQuick) b.quick++;
+    else if (isConsult) b.consult++;
+    else if (isAudit) b.audit++;
+    else if (isChat) b.chat++;
+    else b.quick++; // fallback so categories sum up
+  }
+  if (duration > 0) {
+    b.durationTotal += Number(duration);
+    b.durationCount++;
   }
 }
 
-function writeIntervalTable(ss, tabName, bucket, label) {
-  if (!tabName) tabName = "Daily_Summary";
-  if (!ss) ss = getSpreadsheet();
+function BUILD_AGGREGATED_INTERVAL_SUMMARIES() {
+  var ss = getSpreadsheet();
   if (!ss) return;
-  if (!bucket || typeof bucket !== "object") bucket = {};
 
-  var sh = getTab(ss, tabName);
-  if (!sh) return;
+  initializeAllTabs();
 
-  var defaultHeaders = [
-    label || "Period",
-    "Total_Events",
-    "Unique_Visitors",
-    "Page_Views",
-    "Quick_Leads",
-    "Consultation_Leads",
-    "Audit_Dossiers",
-    "Chatbot_Leads",
-    "Total_Leads",
-    "Conversion_Rate",
-    "Avg_Engagement_Sec"
-  ];
+  var tz = CONFIG.TIMEZONE || "Asia/Kolkata";
+  var daily = {}, weekly = {}, monthly = {};
+  var countedLeadIds = new Set();
 
-  var headers = (typeof TAB_HEADERS !== "undefined" && TAB_HEADERS && TAB_HEADERS[tabName])
-    ? TAB_HEADERS[tabName]
-    : defaultHeaders;
+  // ── Source 1: Live_Traffic_Events ──
+  var sheet = ss.getSheetByName("Live_Traffic_Events");
+  if (sheet && sheet.getLastRow() >= 2) {
+    var data = sheet.getDataRange().getValues();
+    if (data && data.length >= 2) {
+      var headers = data[0];
+      var tsCol = findFlexibleHeader(headers, ["received_at", "client_timestamp", "Timestamp", "Date", "time"]);
+      var typeCol = findFlexibleHeader(headers, ["event_type", "type", "event_category"]);
+      var nameCol = findFlexibleHeader(headers, ["event_name", "action", "event_action"]);
+      var visitorCol = findFlexibleHeader(headers, ["visitor_id", "visitorId", "user_id"]);
+      var durationCol = findFlexibleHeader(headers, ["time_on_page_seconds", "session_duration_seconds", "duration"]);
+      var leadTypeCol = findFlexibleHeader(headers, ["lead_type", "leadType"]);
+      var formNameCol = findFlexibleHeader(headers, ["form_name", "formName", "form_id"]);
+      var convCol = findFlexibleHeader(headers, ["conversion_name", "conversion"]);
+      var eventIdCol = findFlexibleHeader(headers, ["event_id", "lead_id"]);
 
-  try { sh.clearContents(); } catch (e) {}
+      for (var i = 1; i < data.length; i++) {
+        var rawTs = tsCol > -1 ? data[i][tsCol] : data[i][0];
+        var d = parseDateSafe(rawTs);
+        if (!d) {
+          var clientTsCol = findFlexibleHeader(headers, ["client_timestamp"]);
+          if (clientTsCol > -1) d = parseDateSafe(data[i][clientTsCol]);
+        }
+        if (!d) d = new Date();
 
-  sh.getRange(1, 1, 1, headers.length)
+        var dayKey = Utilities.formatDate(d, tz, "yyyy-MM-dd");
+        var monthKey = Utilities.formatDate(d, tz, "yyyy-MM");
+        var weekKey = getWeekStartDate(d);
+
+        var visitor = visitorCol >= 0 && data[i][visitorCol] ? String(data[i][visitorCol]) : ("v_" + i);
+        var type = typeCol >= 0 ? String(data[i][typeCol] || "").toLowerCase() : "";
+        var eventName = nameCol >= 0 ? String(data[i][nameCol] || "").toLowerCase() : "";
+        var duration = durationCol >= 0 ? Number(data[i][durationCol]) || 0 : 0;
+        var leadType = leadTypeCol >= 0 ? String(data[i][leadTypeCol] || "").toUpperCase() : "";
+        var formName = formNameCol >= 0 ? String(data[i][formNameCol] || "").toLowerCase() : "";
+        var convName = convCol >= 0 ? String(data[i][convCol] || "").toLowerCase() : "";
+        var eventId = eventIdCol >= 0 ? String(data[i][eventIdCol] || "") : "";
+
+        var isPageView = type === "page_view" || eventName === "page_view" || type === "pageview";
+        var isLead = (
+          type === "lead" ||
+          eventName === "lead_submit" ||
+          eventName === "lead" ||
+          leadType !== "" ||
+          eventName === "form_submit" ||
+          formName.indexOf("quick") >= 0 ||
+          formName.indexOf("consult") >= 0 ||
+          formName.indexOf("audit") >= 0 ||
+          formName.indexOf("chat") >= 0 ||
+          convName.indexOf("lead") >= 0
+        );
+
+        var isQuick = formName.indexOf("quick") >= 0 || leadType === "QUICK_FORM" || convName.indexOf("quick") >= 0;
+        var isConsult = formName.indexOf("consult") >= 0 || formName.indexOf("long") >= 0 || leadType === "LONG_FORM";
+        var isAudit = formName.indexOf("audit") >= 0 || formName.indexOf("dossier") >= 0 || leadType === "PROCESS_AUDIT_SUBMISSION";
+        var isChat = formName.indexOf("chat") >= 0 || formName.indexOf("assistant") >= 0 || leadType === "CHATBOT";
+
+        if (isLead && eventId) {
+          countedLeadIds.add(eventId);
+        }
+
+        accumulateMetrics(daily, dayKey, visitor, isPageView, isQuick, isConsult, isAudit, isChat, isLead, duration);
+        accumulateMetrics(weekly, weekKey, visitor, isPageView, isQuick, isConsult, isAudit, isChat, isLead, duration);
+        accumulateMetrics(monthly, monthKey, visitor, isPageView, isQuick, isConsult, isAudit, isChat, isLead, duration);
+      }
+    }
+  }
+
+  // ── Source 2: Lead_Management (Ensure all direct leads are counted) ──
+  var leadSheet = ss.getSheetByName("Lead_Management");
+  if (leadSheet && leadSheet.getLastRow() >= 2) {
+    var leadData = leadSheet.getDataRange().getValues();
+    if (leadData && leadData.length >= 2) {
+      var lh = leadData[0];
+      var lTsCol = findFlexibleHeader(lh, ["received_at", "Timestamp", "Date"]);
+      var lIdCol = findFlexibleHeader(lh, ["lead_id", "id"]);
+      var lTypeCol = findFlexibleHeader(lh, ["lead_type", "type"]);
+      var lVidCol = findFlexibleHeader(lh, ["visitor_id", "visitorId"]);
+      var lFormCol = findFlexibleHeader(lh, ["form_name", "formName"]);
+
+      for (var j = 1; j < leadData.length; j++) {
+        var lId = lIdCol > -1 ? String(leadData[j][lIdCol] || "") : ("lead_" + j);
+        if (lId && countedLeadIds.has(lId)) continue; // already accounted for
+
+        var ld = parseDateSafe(lTsCol > -1 ? leadData[j][lTsCol] : leadData[j][0]) || new Date();
+        var lDayKey = Utilities.formatDate(ld, tz, "yyyy-MM-dd");
+        var lMonthKey = Utilities.formatDate(ld, tz, "yyyy-MM");
+        var lWeekKey = getWeekStartDate(ld);
+
+        var lVid = (lVidCol > -1 && leadData[j][lVidCol]) ? String(leadData[j][lVidCol]) : ("lv_" + j);
+        var lType = lTypeCol > -1 ? String(leadData[j][lTypeCol] || "").toUpperCase() : "";
+        var lForm = lFormCol > -1 ? String(leadData[j][lFormCol] || "").toLowerCase() : "";
+
+        var isQuickL = lForm.indexOf("quick") >= 0 || lType === "QUICK_FORM";
+        var isConsultL = lForm.indexOf("consult") >= 0 || lForm.indexOf("long") >= 0 || lType === "LONG_FORM";
+        var isAuditL = lForm.indexOf("audit") >= 0 || lType === "PROCESS_AUDIT_SUBMISSION";
+        var isChatL = lForm.indexOf("chat") >= 0 || lForm.indexOf("assistant") >= 0 || lType === "CHATBOT";
+
+        accumulateMetrics(daily, lDayKey, lVid, false, isQuickL, isConsultL, isAuditL, isChatL, true, 0);
+        accumulateMetrics(weekly, lWeekKey, lVid, false, isQuickL, isConsultL, isAuditL, isChatL, true, 0);
+        accumulateMetrics(monthly, lMonthKey, lVid, false, isQuickL, isConsultL, isAuditL, isChatL, true, 0);
+
+        if (lId) countedLeadIds.add(lId);
+      }
+    }
+  }
+
+  // ── Source 3: Page_Performance fallback (if no page views in liveSheet) ──
+  var pageSheet = ss.getSheetByName("Page_Performance");
+  if (pageSheet && pageSheet.getLastRow() >= 2 && Object.keys(daily).length === 0) {
+    var pData = pageSheet.getDataRange().getValues();
+    if (pData && pData.length >= 2) {
+      var ph = pData[0];
+      var pTsCol = findFlexibleHeader(ph, ["received_at", "Timestamp", "Date"]);
+      var pVidCol = findFlexibleHeader(ph, ["visitor_id", "visitorId"]);
+      var pDurCol = findFlexibleHeader(ph, ["time_on_page_seconds", "duration"]);
+
+      for (var k = 1; k < pData.length; k++) {
+        var pd = parseDateSafe(pTsCol > -1 ? pData[k][pTsCol] : pData[k][0]) || new Date();
+        var pDay = Utilities.formatDate(pd, tz, "yyyy-MM-dd");
+        var pMonth = Utilities.formatDate(pd, tz, "yyyy-MM");
+        var pWeek = getWeekStartDate(pd);
+        var pVid = (pVidCol > -1 && pData[k][pVidCol]) ? String(pData[k][pVidCol]) : ("pv_" + k);
+        var pDur = pDurCol > -1 ? (Number(pData[k][pDurCol]) || 0) : 0;
+
+        accumulateMetrics(daily, pDay, pVid, true, false, false, false, false, false, pDur);
+        accumulateMetrics(weekly, pWeek, pVid, true, false, false, false, false, false, pDur);
+        accumulateMetrics(monthly, pMonth, pVid, true, false, false, false, false, false, pDur);
+      }
+    }
+  }
+
+  // Guarantee current active period baseline rows exist so sheets are never empty
+  var now = new Date();
+  var todayKey = Utilities.formatDate(now, tz, "yyyy-MM-dd");
+  var curWeekKey = getWeekStartDate(now);
+  var curMonthKey = Utilities.formatDate(now, tz, "yyyy-MM");
+
+  if (!daily[todayKey]) accumulateMetrics(daily, todayKey, null, false, false, false, false, false, false, 0);
+  if (!weekly[curWeekKey]) accumulateMetrics(weekly, curWeekKey, null, false, false, false, false, false, false, 0);
+  if (!monthly[curMonthKey]) accumulateMetrics(monthly, curMonthKey, null, false, false, false, false, false, false, 0);
+
+  // Write all 3 interval tables with distinct theme colors & styles
+  writeIntervalTable(ss, "Daily_Summary", daily, "Date", "#047857");
+  writeIntervalTable(ss, "Weekly_Summary", weekly, "Week_Start", "#0284c7");
+  writeIntervalTable(ss, "Monthly_Summary", monthly, "Month", "#7c3aed");
+
+  console.log("✅ Daily, Weekly & Monthly Executive Summaries successfully generated and stored.");
+}
+
+function writeIntervalTable(ss, tabName, bucket, label, headerColor) {
+  var sheet = getTab(ss, tabName);
+  if (!sheet) return;
+
+  var headers = TAB_HEADERS[tabName];
+  var color = headerColor || (tabName === "Daily_Summary" ? "#047857" : (tabName === "Weekly_Summary" ? "#0284c7" : "#7c3aed"));
+
+  try { sheet.clearContents(); } catch (e) {}
+
+  sheet.getRange(1, 1, 1, headers.length)
     .setValues([headers])
     .setFontWeight("bold")
-    .setBackground("#064e3b")
+    .setBackground(color)
     .setFontColor("#ffffff")
     .setHorizontalAlignment("center");
-  sh.setFrozenRows(1);
+  sheet.setFrozenRows(1);
 
   var keys = Object.keys(bucket).sort().reverse();
   var rows = [];
 
-  for (var i = 0; i < keys.length; i++) {
-    var b = bucket[keys[i]];
-    if (!b) continue;
-    var uCount = b.visitors ? (b.visitors.size || 0) : 0;
-    var convRate = uCount > 0 ? ((b.leads / uCount) * 100).toFixed(1) + "%" : "0.0%";
-    var avgSec = b.timedEvents > 0 ? Math.round(b.totalDur / b.timedEvents) : 0;
+  keys.forEach(function(key) {
+    var b = bucket[key];
+    var uniqueVisitors = b.visitors ? (b.visitors.size !== undefined ? b.visitors.size : Object.keys(b.visitors).length) : 0;
+    var totalLeads = Number(b.leads || 0);
+    var conversion = uniqueVisitors > 0 ? ((totalLeads / uniqueVisitors) * 100).toFixed(1) + "%" : (totalLeads > 0 ? "100.0%" : "0.0%");
+    var avgEngagement = b.durationCount > 0 ? Math.round(b.durationTotal / b.durationCount) : 0;
 
     rows.push([
-      keys[i],
-      b.events || 0,
-      uCount,
-      b.pvs || 0,
-      b.quick || 0,
-      b.consultation || 0,
-      b.audit || 0,
-      b.chat || 0,
-      b.leads || 0,
-      convRate,
-      avgSec
+      key,
+      Number(b.events || 0),
+      Number(uniqueVisitors),
+      Number(b.pageViews || 0),
+      Number(b.quick || 0),
+      Number(b.consult || 0),
+      Number(b.audit || 0),
+      Number(b.chat || 0),
+      totalLeads,
+      conversion,
+      Number(avgEngagement)
     ]);
-  }
+  });
 
-  if (rows.length > 0) {
-    sh.getRange(2, 1, rows.length, headers.length).setValues(rows);
+  if (rows.length) {
+    sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+    sheet.getRange(2, 1, rows.length, 1).setHorizontalAlignment("center").setFontWeight("bold");
+    sheet.getRange(2, 2, rows.length, headers.length - 1).setHorizontalAlignment("right");
+    for (var r = 0; r < rows.length; r++) {
+      var rowBg = (r % 2 === 0) ? "#ffffff" : "#f8fafc";
+      sheet.getRange(r + 2, 1, 1, headers.length).setBackground(rowBg);
+    }
   }
 }
 
+// =========================================================================================
+// EXECUTIVE REPORTS ENGINE (INDIVIDUAL EMAIL DISPATCH TO JANEGRACY)
+// =========================================================================================
 function sendPeriodicExecutiveDigest(intervalName) {
   var ss = getSpreadsheet();
-  if (!ss) return;
-  BUILD_AGGREGATED_INTERVAL_SUMMARIES();
+  if (!ss) return false;
 
-  var tabMap = { Daily: "Daily_Summary", Weekly: "Weekly_Summary", Monthly: "Monthly_Summary" };
-  var sheet = ss.getSheetByName(tabMap[intervalName]);
-  if (!sheet || sheet.getLastRow() < 2) return;
+  var map = {
+    Daily: "Daily_Summary",
+    Weekly: "Weekly_Summary",
+    Monthly: "Monthly_Summary"
+  };
 
-  var topRow = sheet.getRange(2, 1, 1, 11).getValues()[0];
-  var period       = topRow[0] || "N/A";
-  var events       = topRow[1] || 0;
-  var visitors     = topRow[2] || 0;
-  var pageViews    = topRow[3] || 0;
-  var quickLeads   = topRow[4] || 0;
-  var consultLeads = topRow[5] || 0;
-  var auditLeads   = topRow[6] || 0;
-  var chatLeads    = topRow[7] || 0;
-  var totalLeads   = topRow[8] || 0;
-  var convRate     = topRow[9] || "0%";
-  var avgSec       = topRow[10] || 0;
+  var targetTab = map[intervalName] || "Daily_Summary";
+  var sheet = ss.getSheetByName(targetTab);
 
-  var cfg = EMAIL_CONFIG;
+  if (!sheet || sheet.getLastRow() < 2) {
+    BUILD_AGGREGATED_INTERVAL_SUMMARIES();
+    sheet = ss.getSheetByName(targetTab);
+  }
+
+  var tz = CONFIG.TIMEZONE || "Asia/Kolkata";
+  var now = new Date();
+  var defaultPeriod = intervalName === "Daily"
+    ? Utilities.formatDate(now, tz, "yyyy-MM-dd")
+    : (intervalName === "Weekly" ? getWeekStartDate(now) : Utilities.formatDate(now, tz, "yyyy-MM"));
+
+  var period       = defaultPeriod;
+  var events       = 0;
+  var visitors     = 0;
+  var pageViews    = 0;
+  var quick        = 0;
+  var consult      = 0;
+  var audit        = 0;
+  var chat         = 0;
+  var leads        = 0;
+  var conversion   = "0.0%";
+  var avg          = 0;
+
+  if (sheet && sheet.getLastRow() >= 2) {
+    var r = sheet.getRange(2, 1, 1, 11).getValues()[0];
+    period     = r[0] || defaultPeriod;
+    events     = Number(r[1]) || 0;
+    visitors   = Number(r[2]) || 0;
+    pageViews  = Number(r[3]) || 0;
+    quick      = Number(r[4]) || 0;
+    consult    = Number(r[5]) || 0;
+    audit      = Number(r[6]) || 0;
+    chat       = Number(r[7]) || 0;
+    leads      = Number(r[8]) || 0;
+    conversion = String(r[9] || "0.0%");
+    avg        = Number(r[10]) || 0;
+  }
+
   var themeColor = intervalName === "Daily" ? "#047857" : (intervalName === "Weekly" ? "#0284c7" : "#7c3aed");
+  var badgeLabel = intervalName.toUpperCase() + " EXECUTIVE DIGEST";
+  var reportTitle = intervalName === "Daily"
+    ? "ProfitPatterns Daily Intelligence Report"
+    : (intervalName === "Weekly" ? "ProfitPatterns Weekly Executive Performance" : "ProfitPatterns Monthly Strategic Review");
 
-  var reportHtml = [
+  var periodFormatted = intervalName === "Weekly" ? ("Week Starting " + period) : period;
+
+  var html = [
     '<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>',
     '<body style="margin:0;padding:20px;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;">',
     '<div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,0.06);">',
 
     '<div style="background:linear-gradient(135deg,' + themeColor + ' 0%,#0f172a 100%);padding:28px 24px;">',
-    '  <div style="display:inline-block;background:rgba(255,255,255,0.2);color:#ffffff;padding:4px 12px;border-radius:16px;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">' + intervalName.toUpperCase() + ' EXECUTIVE DIGEST</div>',
-    '  <h1 style="color:#ffffff;margin:0 0 4px 0;font-size:22px;font-weight:800;">ProfitPatterns Day-End Report</h1>',
-    '  <p style="color:rgba(255,255,255,0.8);margin:0;font-size:13px;">Period: ' + period + '</p>',
+    '  <div style="display:inline-block;background:rgba(255,255,255,0.2);color:#ffffff;padding:4px 12px;border-radius:16px;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">' + badgeLabel + '</div>',
+    '  <h1 style="color:#ffffff;margin:0 0 4px 0;font-size:22px;font-weight:800;">' + reportTitle + '</h1>',
+    '  <p style="color:rgba(255,255,255,0.85);margin:0;font-size:13px;">Period: ' + periodFormatted + '</p>',
     '</div>',
 
     // KPI Cards
@@ -1941,19 +1373,19 @@ function sendPeriodicExecutiveDigest(intervalName) {
     '  <tr>',
     '    <td style="background:#f1f5f9;padding:14px;border-radius:8px;text-align:center;width:25%;">',
     '      <div style="font-size:11px;color:#64748b;font-weight:700;">VISITORS</div>',
-    '      <div style="font-size:22px;font-weight:800;color:#0f172a;margin-top:4px;">' + Number(visitors).toLocaleString() + '</div>',
+    '      <div style="font-size:22px;font-weight:800;color:#0f172a;margin-top:4px;">' + visitors.toLocaleString() + '</div>',
     '    </td>',
     '    <td style="background:#f1f5f9;padding:14px;border-radius:8px;text-align:center;width:25%;">',
     '      <div style="font-size:11px;color:#64748b;font-weight:700;">TOTAL LEADS</div>',
-    '      <div style="font-size:22px;font-weight:800;color:' + themeColor + ';margin-top:4px;">' + Number(totalLeads).toLocaleString() + '</div>',
+    '      <div style="font-size:22px;font-weight:800;color:' + themeColor + ';margin-top:4px;">' + leads.toLocaleString() + '</div>',
     '    </td>',
     '    <td style="background:#f1f5f9;padding:14px;border-radius:8px;text-align:center;width:25%;">',
     '      <div style="font-size:11px;color:#64748b;font-weight:700;">CONVERSION</div>',
-    '      <div style="font-size:22px;font-weight:800;color:#d97706;margin-top:4px;">' + convRate + '</div>',
+    '      <div style="font-size:22px;font-weight:800;color:#d97706;margin-top:4px;">' + conversion + '</div>',
     '    </td>',
     '    <td style="background:#f1f5f9;padding:14px;border-radius:8px;text-align:center;width:25%;">',
     '      <div style="font-size:11px;color:#64748b;font-weight:700;">AVG ENGAGE</div>',
-    '      <div style="font-size:22px;font-weight:800;color:#0f172a;margin-top:4px;">' + avgSec + 's</div>',
+    '      <div style="font-size:22px;font-weight:800;color:#0f172a;margin-top:4px;">' + avg + 's</div>',
     '    </td>',
     '  </tr>',
     '</table>',
@@ -1962,221 +1394,198 @@ function sendPeriodicExecutiveDigest(intervalName) {
     // Breakdown Table
     '<div style="padding:16px 24px;">',
     '  <table width="100%" style="border-collapse:collapse;font-size:13px;">',
-    '    <tr style="background:#f8fafc;"><td style="padding:8px 12px;color:#64748b;border-bottom:1px solid #e2e8f0;">⚡ Quick Form Leads</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#10b981;border-bottom:1px solid #e2e8f0;">' + quickLeads + '</td></tr>',
-    '    <tr><td style="padding:8px 12px;color:#64748b;border-bottom:1px solid #e2e8f0;">📋 Consultation Requests</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#0284c7;border-bottom:1px solid #e2e8f0;">' + consultLeads + '</td></tr>',
-    '    <tr style="background:#f8fafc;"><td style="padding:8px 12px;color:#64748b;border-bottom:1px solid #e2e8f0;">📁 Process Audit Dossiers</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#d97706;border-bottom:1px solid #e2e8f0;">' + auditLeads + '</td></tr>',
-    '    <tr><td style="padding:8px 12px;color:#64748b;border-bottom:1px solid #e2e8f0;">💬 Chatbot Leads</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#7c3aed;border-bottom:1px solid #e2e8f0;">' + chatLeads + '</td></tr>',
-    '    <tr style="background:#f8fafc;"><td style="padding:8px 12px;color:#64748b;">📊 Telemetry Events Logged</td><td style="padding:8px 12px;text-align:right;font-weight:700;color:#0f172a;">' + Number(events).toLocaleString() + '</td></tr>',
+    '    <tr style="background:#f8fafc;"><td style="padding:10px 12px;color:#475569;border-bottom:1px solid #e2e8f0;">⚡ Quick Contact Form Leads</td><td style="padding:10px 12px;text-align:right;font-weight:700;color:#10b981;border-bottom:1px solid #e2e8f0;">' + quick + '</td></tr>',
+    '    <tr><td style="padding:10px 12px;color:#475569;border-bottom:1px solid #e2e8f0;">📋 Enterprise Consultation Requests</td><td style="padding:10px 12px;text-align:right;font-weight:700;color:#0284c7;border-bottom:1px solid #e2e8f0;">' + consult + '</td></tr>',
+    '    <tr style="background:#f8fafc;"><td style="padding:10px 12px;color:#475569;border-bottom:1px solid #e2e8f0;">📁 Process AI Audit Dossiers</td><td style="padding:10px 12px;text-align:right;font-weight:700;color:#d97706;border-bottom:1px solid #e2e8f0;">' + audit + '</td></tr>',
+    '    <tr><td style="padding:10px 12px;color:#475569;border-bottom:1px solid #e2e8f0;">💬 AI Chatbot Strategic Leads</td><td style="padding:10px 12px;text-align:right;font-weight:700;color:#7c3aed;border-bottom:1px solid #e2e8f0;">' + chat + '</td></tr>',
+    '    <tr style="background:#f8fafc;"><td style="padding:10px 12px;color:#475569;border-bottom:1px solid #e2e8f0;">👁️ Page Views Logged</td><td style="padding:10px 12px;text-align:right;font-weight:700;color:#0f172a;border-bottom:1px solid #e2e8f0;">' + pageViews.toLocaleString() + '</td></tr>',
+    '    <tr><td style="padding:10px 12px;color:#475569;">📊 Total Telemetry Events</td><td style="padding:10px 12px;text-align:right;font-weight:700;color:#0f172a;">' + events.toLocaleString() + '</td></tr>',
     '  </table>',
     '</div>',
 
     '<div style="padding:16px 24px;text-align:center;">',
-    '  <a href="' + ss.getUrl() + '" target="_blank" style="display:inline-block;background:' + themeColor + ';color:#ffffff;text-decoration:none;padding:10px 22px;border-radius:6px;font-weight:700;font-size:13px;">Open Google Sheet &rarr;</a>',
+    '  <a href="' + ss.getUrl() + '" target="_blank" style="display:inline-block;background:' + themeColor + ';color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:6px;font-weight:700;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">Open Google Sheet Intelligence &rarr;</a>',
+    '</div>',
+
+    '<div style="background:#0f172a;padding:12px 24px;text-align:center;font-size:11px;color:#94a3b8;">',
+    'ProfitPatterns Multi-Intelligence Engine &bull; Confidential Executive Briefing &bull; ' + Utilities.formatDate(now, tz, "yyyy-MM-dd HH:mm:ss") + ' IST',
     '</div>',
 
     '</div></body></html>'
   ].join('');
 
-  var reportRecipients = (cfg.reportEmails && cfg.reportEmails.length) ? cfg.reportEmails : ["asmitha.int2027g3@gmail.com", "asmitha.int2027gs@gmail.com", "asmithaveera1346@gmail.com"];
-  reportRecipients.forEach(function(recip) {
-    safeSendEmail({
+  var reportRecipients = (EMAIL_CONFIG.reportEmails && EMAIL_CONFIG.reportEmails.length) ? EMAIL_CONFIG.reportEmails : ["janegracy.int2027g3@gmail.com"];
+  var uniqueRecips = Array.from(new Set(reportRecipients));
+  var emailSubject = "[ProfitPatterns] " + intervalName + " Digest — " + periodFormatted + " (" + leads + " Leads)";
+
+  var sentCount = 0;
+  uniqueRecips.forEach(function(recip) {
+    var ok = safeSendEmail({
       to: recip,
-      subject: "[ProfitPatterns] " + intervalName + " Digest — " + period + " (" + totalLeads + " Leads)",
-      htmlBody: reportHtml,
-      name: cfg.name,
-      replyTo: cfg.replyTo
+      subject: emailSubject,
+      htmlBody: html,
+      name: EMAIL_CONFIG.name,
+      replyTo: EMAIL_CONFIG.replyTo
     });
+    if (ok) sentCount++;
   });
+
+  console.log("📤 Sent " + intervalName + " report individually to " + uniqueRecips.join(", ") + " (Status: " + sentCount + "/" + uniqueRecips.length + ")");
+  return sentCount > 0;
 }
 
 function dailyReport() { sendPeriodicExecutiveDigest("Daily"); }
 function weeklyReport() { sendPeriodicExecutiveDigest("Weekly"); }
 function monthlyReport() { sendPeriodicExecutiveDigest("Monthly"); }
 
-// =========================================================================================
-// ONE-CLICK REFRESH, DUPLICATE PURGE & INITIALIZATION
-// =========================================================================================
-function INITIALIZE_ALL_TABS() {
-  var ss = getSpreadsheet();
-  if (!ss) {
-    console.error("❌ Could not connect to spreadsheet.");
-    return;
-  }
-  Object.keys(TAB_HEADERS).forEach(function(tabName) {
-    getTab(ss, tabName);
-  });
-  console.log("✅ All tabs successfully initialized with enterprise headers.");
+/**
+ * MASTER ACTION: Generates/Stores Daily, Weekly, and Monthly data in Google Sheet
+ * and sends all three reports INDIVIDUALLY to janegracy.int2027g3@gmail.com
+ */
+function GENERATE_AND_SEND_ALL_REPORTS() {
+  console.log("🚀 Step 1: Generating and storing Daily, Weekly, and Monthly reports data in Google Sheet...");
+  BUILD_AGGREGATED_INTERVAL_SUMMARIES();
+
+  console.log("📧 Step 2: Dispatching all 3 reports individually to janegracy.int2027g3@gmail.com...");
+
+  // 1. Send Daily Report individually
+  sendPeriodicExecutiveDigest("Daily");
+  Utilities.sleep(1200);
+
+  // 2. Send Weekly Report individually
+  sendPeriodicExecutiveDigest("Weekly");
+  Utilities.sleep(1200);
+
+  // 3. Send Monthly Report individually
+  sendPeriodicExecutiveDigest("Monthly");
+
+  console.log("✅ All three reports dispatched individually to janegracy.int2027g3@gmail.com");
   try {
-    SpreadsheetApp.getUi().alert("✅ All ProfitPatterns tabs initialized successfully!");
+    SpreadsheetApp.getUi().alert(
+      "✅ All 3 Reports Successfully Generated & Sent Individually!\n\n" +
+      "1. 📅 Daily Digest → sent individually to janegracy.int2027g3@gmail.com\n" +
+      "2. 📅 Weekly Digest → sent individually to janegracy.int2027g3@gmail.com\n" +
+      "3. 📅 Monthly Digest → sent individually to janegracy.int2027g3@gmail.com\n\n" +
+      "All Google Sheet summary tabs (Daily_Summary, Weekly_Summary, Monthly_Summary) have been updated."
+    );
   } catch(e) {}
 }
 
-function MASTER_REFRESH_RAW_DATA() {
-  INITIALIZE_ALL_TABS();
-  PURGE_DUPLICATES_FROM_ALL_TABS();
-  BUILD_AGGREGATED_INTERVAL_SUMMARIES();
+function TEST_SEND_ALL_REPORTS_NOW() {
+  GENERATE_AND_SEND_ALL_REPORTS();
+}
+
+function sendAllReportsIndividually() {
+  GENERATE_AND_SEND_ALL_REPORTS();
+}
+
+function sendAllThreeReportsIndividually() {
+  GENERATE_AND_SEND_ALL_REPORTS();
+}
+
+function MASTER_REFRESH_AND_SEND_REPORTS() {
+  MASTER_REFRESH_RAW_DATA();
+  GENERATE_AND_SEND_ALL_REPORTS();
+}
+
+function setupAllProfitPatternsTriggers() {
+  var triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(function(trigger) {
+    var fn = trigger.getHandlerFunction();
+    if (fn === "dailyReport" || fn === "weeklyReport" || fn === "monthlyReport") {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
+
+  // Daily report every evening at 8:00 PM IST
+  ScriptApp.newTrigger("dailyReport")
+    .timeBased().everyDays(1).atHour(20).create();
+
+  // Weekly report every Monday morning at 9:00 AM IST
+  ScriptApp.newTrigger("weeklyReport")
+    .timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(9).create();
+
+  // Monthly report on the 1st of every month at 9:00 AM IST
+  ScriptApp.newTrigger("monthlyReport")
+    .timeBased().onMonthDay(1).atHour(9).create();
+
   try {
-    SpreadsheetApp.getUi().alert("✅ Master Refresh Complete!\n\n• All Tabs Verified (Telemetry + 4 Intelligence Tabs).\n• Duplicate rows purged.\n• Daily, Weekly & Monthly summaries recalculated.");
-  } catch(e) {}
+    SpreadsheetApp.getUi().alert("✅ Automated Email Report Triggers Activated (Daily, Weekly & Monthly)!");
+  } catch (e) {}
+}
+
+// =========================================================================================
+// MAINTENANCE & UI MENU
+// =========================================================================================
+function INITIALIZE_ALL_TABS() {
+  initializeAllTabs();
+  try { SpreadsheetApp.getUi().alert("✅ All ProfitPatterns tabs initialized successfully."); } catch (e) {}
+}
+
+function MASTER_REFRESH_RAW_DATA() {
+  initializeAllTabs();
+  BUILD_AGGREGATED_INTERVAL_SUMMARIES();
+  try { SpreadsheetApp.getUi().alert("✅ Master Refresh Complete: Daily, Weekly & Monthly summaries recalculated."); } catch (e) {}
 }
 
 function PURGE_DUPLICATES_FROM_ALL_TABS() {
   var ss = getSpreadsheet();
   if (!ss) return;
-  var tabs = Object.keys(TAB_HEADERS);
-  var totalRemoved = 0;
 
-  tabs.forEach(function(tabName) {
+  var removed = 0;
+  Object.keys(TAB_HEADERS).forEach(function(tabName) {
     var sheet = ss.getSheetByName(tabName);
     if (!sheet || sheet.getLastRow() < 3) return;
+
     var data = sheet.getDataRange().getValues();
-    if (!data || data.length < 3) return;
-
     var headers = data[0];
-    if (!headers || headers.length === 0) return;
-
     var idCol = headers.indexOf("event_id");
-    if (idCol === -1) idCol = headers.indexOf("lead_id");
-    if (idCol === -1) idCol = headers.indexOf("visitor_id");
-    if (idCol === -1) idCol = headers.indexOf("Session ID");
-    if (idCol === -1) idCol = headers.indexOf("session_id");
-    if (idCol === -1) idCol = headers.indexOf("Visitor ID");
 
-    var emailCol = headers.indexOf("email");
-    var phoneCol = headers.indexOf("phone");
+    if (idCol === -1) idCol = headers.indexOf("lead_id");
+    if (idCol === -1) return;
 
     var seen = {};
-    var rowsToKeep = [headers];
+    var keep = [headers];
 
-    for (var r = 1; r < data.length; r++) {
-      var row = data[r];
-      var key = "";
-
-      // Deduplicate leads by genuine email or phone
-      if (emailCol !== -1 && row[emailCol] && !String(row[emailCol]).includes("@chat.lead") && !String(row[emailCol]).includes("@prospect.lead")) {
-        key = "email_" + String(row[emailCol]).trim().toLowerCase();
-      } else if (phoneCol !== -1 && row[phoneCol] && String(row[phoneCol]).replace(/\D/g, "").length >= 7) {
-        key = "phone_" + String(row[phoneCol]).replace(/\D/g, "");
-      } else if (idCol > -1 && row[idCol]) {
-        key = "id_" + String(row[idCol]).trim();
+    for (var i = 1; i < data.length; i++) {
+      var key = String(data[i][idCol] || "");
+      if (!key || !seen[key]) {
+        if (key) seen[key] = true;
+        keep.push(data[i]);
       } else {
-        key = "tuple_" + row.slice(0, 5).join("|");
-      }
-
-      if (!seen[key]) {
-        seen[key] = true;
-        rowsToKeep.push(row);
-      } else {
-        totalRemoved++;
+        removed++;
       }
     }
 
-    if (rowsToKeep.length < data.length && rowsToKeep.length > 0) {
+    if (keep.length !== data.length) {
       sheet.clearContents();
-      sheet.getRange(1, 1, rowsToKeep.length, headers.length).setValues(rowsToKeep);
+      sheet.getRange(1, 1, keep.length, headers.length).setValues(keep);
     }
   });
 
-  console.log("🧹 Duplicates removed: " + totalRemoved);
-  return totalRemoved;
-}
-
-function setupAllProfitPatternsTriggers() {
-  var triggers = ScriptApp.getProjectTriggers();
-  triggers.forEach(function(t) { ScriptApp.deleteTrigger(t); });
-
-  // 1. Daily Executive Briefing every morning at 8:00 AM IST
-  ScriptApp.newTrigger("dailyReport").timeBased().everyDays(1).atHour(8).create();
-
-  // 2. Weekly Executive Digest every Monday at 9:00 AM IST
-  ScriptApp.newTrigger("weeklyReport").timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(9).create();
-
-  // 3. Monthly Executive Summary on the 1st of every month
-  ScriptApp.newTrigger("monthlyReport").timeBased().onMonthDay(1).atHour(9).create();
-
-  try {
-    SpreadsheetApp.getUi().alert("✅ Automated Email Report Triggers Activated (Daily, Weekly & Monthly)!");
-  } catch(e) {}
+  console.log("Duplicate event/lead rows removed: " + removed);
+  try { SpreadsheetApp.getUi().alert("Duplicate rows removed: " + removed); } catch (e) {}
 }
 
 function onOpen() {
   SpreadsheetApp.getUi()
-    .createMenu('🚀 PROFITPATTERNS MULTI-INTELLIGENCE ENGINE')
-    .addItem('✨ Fill All Empty Columns Across All Tabs', 'BACKFILL_EMPTY_COLUMNS_ACROSS_ALL_TABS')
-    .addItem('🧹 Purge All Duplicate Data Across All Tabs', 'PURGE_DUPLICATES_FROM_ALL_TABS')
-    .addItem('🔄 Master Refresh Telemetry & Summaries', 'MASTER_REFRESH_RAW_DATA')
-    .addItem('📁 Initialize All Database Tabs', 'INITIALIZE_ALL_TABS')
+    .createMenu("🚀 PROFITPATTERNS MULTI-INTELLIGENCE")
+    .addItem("📧 Generate & Send All 3 Reports Individually (Daily, Weekly, Monthly)", "GENERATE_AND_SEND_ALL_REPORTS")
+    .addItem("📊 Refresh & Recalculate Analytics Summaries", "BUILD_AGGREGATED_INTERVAL_SUMMARIES")
+    .addItem("🔄 Master Refresh & Send All Reports", "MASTER_REFRESH_AND_SEND_REPORTS")
     .addSeparator()
-    .addItem('⏰ Enable Automated Daily/Weekly/Monthly Reports', 'setupAllProfitPatternsTriggers')
+    .addItem("🧹 Purge Event/Lead Duplicates", "PURGE_DUPLICATES_FROM_ALL_TABS")
+    .addItem("📁 Initialize All Tabs", "INITIALIZE_ALL_TABS")
+    .addSeparator()
+    .addItem("⏰ Enable Automated Daily/Weekly/Monthly Reports", "setupAllProfitPatternsTriggers")
     .addToUi();
 }
 
-// =========================================================================================
-// ONE-CLICK DATA FILLER & DEDUPLICATION (PRESERVES REAL VISITOR LOCATION)
-// =========================================================================================
-function BACKFILL_EMPTY_COLUMNS_ACROSS_ALL_TABS() {
-  var ss = getSpreadsheet();
-  if (!ss) {
-    try { SpreadsheetApp.getUi().alert("❌ Could not connect to spreadsheet."); } catch(e) {}
-    return;
-  }
-
-  var totalFilled = 0;
-  var tabs = Object.keys(TAB_HEADERS);
-
-  tabs.forEach(function(tabName) {
-    var sheet = ss.getSheetByName(tabName);
-    if (!sheet || sheet.getLastRow() < 2) return;
-
-    var range = sheet.getDataRange();
-    var values = range.getValues();
-    if (!values || values.length < 2) return;
-
-    var headers = values[0];
-    var modified = false;
-
-    for (var r = 1; r < values.length; r++) {
-      // Build row context object for smart default generation
-      var rowObj = {};
-      for (var c0 = 0; c0 < headers.length; c0++) {
-        rowObj[headers[c0]] = values[r][c0];
-      }
-
-      for (var c = 0; c < headers.length; c++) {
-        var h = String(headers[c] || "").trim();
-        var currentVal = values[r][c];
-
-        // Fill only genuinely empty cells without touching existing valid visitor locations
-        if (currentVal === "" || currentVal === null || currentVal === undefined) {
-          values[r][c] = getDefaultValueForHeader(h, rowObj);
-          totalFilled++;
-          modified = true;
-        }
-      }
-    }
-
-    if (modified) {
-      range.setValues(values);
-    }
-  });
-
-  // Purge any duplicates automatically
-  var dupesRemoved = PURGE_DUPLICATES_FROM_ALL_TABS() || 0;
-
-  // Rebuild summaries with filled, deduplicated data
-  BUILD_AGGREGATED_INTERVAL_SUMMARIES();
-
-  var msg = "✅ Data Fill & Deduplication Complete!\n\n" +
-            "• Empty columns/cells filled: " + totalFilled + " cells\n" +
-            "• Duplicate records purged: " + dupesRemoved + " rows\n" +
-            "• Visitor real locations preserved without forced overrides\n" +
-            "• Executive Summaries recalculated (Daily, Weekly, Monthly)";
-  console.log(msg);
-  try {
-    SpreadsheetApp.getUi().alert(msg);
-  } catch (e) {}
-}
-
-function escapeHtml(s) {
-  return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function escapeHtml(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }

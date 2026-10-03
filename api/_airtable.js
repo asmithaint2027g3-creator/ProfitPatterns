@@ -45,87 +45,151 @@ const recentLeadSubmissions = new Map();
 
 export async function saveLeadToAirtable(lead) {
   const creds = getCredentials();
-  if (!creds) { console.warn("[Airtable] Missing credentials for Leads."); return { ok: false }; }
 
-  const cleanEmail = (lead.email || "").trim().toLowerCase();
-  const cleanPhone = (lead.phone || "").trim();
-  const leadKey = cleanEmail || cleanPhone;
+  if (!creds) {
+    console.warn(
+      "[Airtable] Missing AIRTABLE_PERSONAL_ACCESS_TOKEN or AIRTABLE_BASE_ID."
+    );
 
-  // 1. Debounce rapid simultaneous submissions (within 30 seconds)
-  if (leadKey) {
-    const lastTime = recentLeadSubmissions.get(leadKey);
-    if (lastTime && Date.now() - lastTime < 30_000) {
-      console.log(`[Airtable] Debouncing duplicate lead submission for: ${leadKey}`);
-      return { ok: true, duplicate: true };
-    }
-    recentLeadSubmissions.set(leadKey, Date.now());
-  }
-
-  // 2. Query Airtable to prevent creating duplicate records for the same email
-  if (cleanEmail) {
-    try {
-      const filter = encodeURIComponent(`LOWER({Email}) = "${cleanEmail}"`);
-      const checkRes = await fetch(
-        `https://api.airtable.com/v0/${creds.baseId}/Leads?filterByFormula=${filter}&maxRecords=1`,
-        { headers: { Authorization: `Bearer ${creds.token}` } }
-      );
-      if (checkRes.ok) {
-        const checkData = await checkRes.json();
-        if (checkData.records && checkData.records.length > 0) {
-          const existing = checkData.records[0];
-          console.log(`[Airtable] Lead already exists (${existing.id}) for ${cleanEmail}. Updating record instead of duplicating.`);
-          
-          const updateFields = {};
-          if (lead.phone && !existing.fields["Phone"]) updateFields["Phone"] = String(lead.phone).slice(0, 50);
-          if (lead.company && !existing.fields["Company"]) updateFields["Company"] = String(lead.company).slice(0, 255);
-          if ((lead.jobTitle || lead.job_title) && !existing.fields["Job Title"]) 
-            updateFields["Job Title"] = String(lead.jobTitle || lead.job_title).slice(0, 255);
-          if (lead.requirement && !existing.fields["Requirement"]) 
-            updateFields["Requirement"] = String(lead.requirement).slice(0, 2000);
-          if ((lead.challenge || lead.message) && !existing.fields["Message"]) 
-            updateFields["Message"] = String(lead.challenge || lead.message).slice(0, 2000);
-
-          if (Object.keys(updateFields).length > 0) {
-            await fetch(`https://api.airtable.com/v0/${creds.baseId}/Leads/${existing.id}`, {
-              method: "PATCH",
-              headers: { Authorization: `Bearer ${creds.token}`, "Content-Type": "application/json" },
-              body: JSON.stringify({ fields: updateFields, typecast: true }),
-            });
-          }
-          return { ok: true, id: existing.id, updated: true };
-        }
-      }
-    } catch (e) {
-      console.warn("[Airtable] Lead deduplication lookup error:", e.message);
-    }
+    return {
+      ok: false,
+      error: "Missing Airtable credentials",
+    };
   }
 
   const fields = {
-    Name:   (lead.name  || "Inbound Lead").slice(0, 255),
-    Email:  cleanEmail.slice(0, 255),
-    Status: "New",
+    Name: cleanText(
+      lead.name || lead.fullName || "Inbound Lead"
+    ),
+
+    Status: cleanText(
+      lead.status || "New",
+      100
+    ),
   };
 
-  if (lead.phone)          fields["Phone"]        = String(lead.phone).slice(0, 50);
-  if (lead.company)        fields["Company"]      = String(lead.company).slice(0, 255);
-  if (lead.jobTitle || lead.job_title)
-                           fields["Job Title"]    = String(lead.jobTitle || lead.job_title).slice(0, 255);
-  if (lead.industry)       fields["Industry"]     = String(lead.industry).slice(0, 255);
-  if (lead.leadType || lead.lead_type)
-                           fields["Lead Type"]    = String(lead.leadType || lead.lead_type).slice(0, 100);
-  if (lead.requirement)    fields["Requirement"]  = String(lead.requirement).slice(0, 2000);
-  if (lead.challenge || lead.message)
-                           fields["Message"]      = String(lead.challenge || lead.message).slice(0, 2000);
-  if (lead.pageUrl || lead.page_url)
-                           fields["Source Page"]  = String(lead.pageUrl || lead.page_url).slice(0, 500);
-  if (lead.utm_source)     fields["UTM Source"]   = String(lead.utm_source).slice(0, 100);
-  if (lead.utm_medium)     fields["UTM Medium"]   = String(lead.utm_medium).slice(0, 100);
-  if (lead.utm_campaign)   fields["UTM Campaign"] = String(lead.utm_campaign).slice(0, 200);
-  fields["Submitted At"] = lead.timestamp || new Date().toISOString();
+  // Email
+  if (lead.email) {
+    fields.Email = cleanEmail(lead.email);
+  }
 
-  const result = await insertRecord("Leads", fields, creds);
-  if (result.ok) console.log("✅ [Airtable] Lead saved:", result.id);
-  return result;
+  // Phone
+  if (lead.phone) {
+    fields.Phone = cleanText(lead.phone, 50);
+  }
+
+  // IMPORTANT: your Airtable field is "Comp"
+  if (lead.company) {
+    fields.Comp = cleanText(lead.company);
+  }
+
+  // Job Title
+  if (lead.jobTitle || lead.job_title) {
+    fields["Job Title"] = cleanText(
+      lead.jobTitle || lead.job_title
+    );
+  }
+
+  // Industry
+  if (lead.industry) {
+    fields.Industry = cleanText(lead.industry);
+  }
+
+  // Lead Type
+  if (lead.leadType || lead.lead_type) {
+    fields["Lead Type"] = cleanText(
+      lead.leadType || lead.lead_type,
+      100
+    );
+  }
+
+  // IMPORTANT: your Airtable field is "Req"
+  if (
+    lead.requirement ||
+    lead.req ||
+    lead.primaryChallenge ||
+    lead.primaryGoal
+  ) {
+    fields.Req = cleanText(
+      lead.requirement ||
+        lead.req ||
+        lead.primaryChallenge ||
+        lead.primaryGoal,
+      2000
+    );
+  }
+
+  // IMPORTANT: your Airtable field is "Challenge"
+  if (
+    lead.challenge ||
+    lead.currentChallenge ||
+    lead.message ||
+    lead.processSummary
+  ) {
+    fields.Challenge = cleanText(
+      lead.challenge ||
+        lead.currentChallenge ||
+        lead.message ||
+        lead.processSummary,
+      2000
+    );
+  }
+
+  // IMPORTANT: your Airtable field is "Src Page"
+  if (
+    lead.pageUrl ||
+    lead.page_url ||
+    lead.sourcePage
+  ) {
+    fields["Src Page"] = cleanText(
+      lead.pageUrl ||
+        lead.page_url ||
+        lead.sourcePage,
+      500
+    );
+  }
+
+  // Notes
+  if (lead.notes) {
+    fields.Notes = cleanText(
+      lead.notes,
+      2000
+    );
+  }
+
+  // Jira
+  if (
+    lead.jira ||
+    lead.jiraUrl ||
+    lead.jiraIssueKey
+  ) {
+    fields.Jira = cleanText(
+      lead.jira ||
+        lead.jiraUrl ||
+        lead.jiraIssueKey,
+      500
+    );
+  }
+
+  // Attachment
+  if (lead.fileUrl) {
+    fields.Attachment = [
+      {
+        url: lead.fileUrl,
+      },
+    ];
+  }
+
+  console.log(
+    "[Airtable] Creating Lead:",
+    JSON.stringify(fields)
+  );
+
+  return insertRecord(
+    "Leads",
+    fields,
+    creds
+  );
 }
 
 // ─── 2. PAGE VIEWS ────────────────────────────────────────────────────────────
@@ -331,8 +395,28 @@ export async function routeEventToAirtable(event) {
   const promises = [];
 
   const isExplicitLead = (name === "lead_submit" || type === "lead") && name !== "form_submit" && name !== "form_start";
-  if (isExplicitLead && (event.email || event.phone || event.name))
-    promises.push(saveLeadToAirtable(event).catch(e => console.warn("[Airtable] Lead:", e.message)));
+  const hasContactData = Boolean(
+  event.email ||
+  event.phone ||
+  event.name ||
+  event.fullName
+);
+
+const isLead =
+  name === "lead_submit" ||
+  type === "lead" ||
+  (name === "form_submit" && hasContactData);
+
+if (isLead && hasContactData) {
+  promises.push(
+    saveLeadToAirtable(event).catch((e) =>
+      console.warn(
+        "[Airtable] Lead:",
+        e.message
+      )
+    )
+  );
+}
   if (name === "page_view" || name === "pageview")
     promises.push(savePageViewToAirtable(event).catch(e => console.warn("[Airtable] PageView:", e.message)));
   if (["cta_click", "navigation_click", "whatsapp_click"].includes(name))

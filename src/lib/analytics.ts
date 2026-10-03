@@ -53,29 +53,6 @@ export const sheetsAdapter: AnalyticsAdapter = {
   },
 };
 
-const adapters: AnalyticsAdapter[] = [sheetsAdapter];
-
-export function registerAdapter(adapter: AnalyticsAdapter) {
-  if (!adapters.some((a) => a.name === adapter.name)) adapters.push(adapter);
-}
-
-export function track(event: AnalyticsEventName, payload: AnalyticsPayload = {}) {
-  if (typeof window === "undefined") return;
-  const enriched: AnalyticsPayload = {
-    ...payload,
-    page: payload["page"] ?? window.location.pathname,
-  };
-  for (const adapter of adapters) {
-    try {
-      adapter.track(event, enriched);
-    } catch {
-      /* analytics must never break the UI */
-    }
-  }
-}
-
-/* ---------------- Adapters (activated only when the provider is present) --------------- */
-
 type AnyWindow = Window & {
   dataLayer?: unknown[];
   gtag?: (...args: unknown[]) => void;
@@ -111,16 +88,48 @@ export const metaPixelAdapter: AnalyticsAdapter = {
 
 export const microsoftClarityAdapter: AnalyticsAdapter = {
   name: "clarity",
-  track: (event) => {
-    const w = window as AnyWindow & { clarity?: (action: string, eventName: string) => void };
+  track: (event, payload) => {
+    const w = window as AnyWindow & {
+      clarity?: (action: string, ...args: unknown[]) => void;
+    };
     if (typeof w.clarity !== "function") return;
     try {
       w.clarity("event", event);
+      if (payload?.page && typeof payload.page === "string") {
+        w.clarity("set", "page", payload.page);
+      }
     } catch {
       /* Clarity event must never break the UI */
     }
   },
 };
+
+const adapters: AnalyticsAdapter[] = [
+  sheetsAdapter,
+  microsoftClarityAdapter,
+  googleTagManagerAdapter,
+  googleAnalyticsAdapter,
+  metaPixelAdapter,
+];
+
+export function registerAdapter(adapter: AnalyticsAdapter) {
+  if (!adapters.some((a) => a.name === adapter.name)) adapters.push(adapter);
+}
+
+export function track(event: AnalyticsEventName, payload: AnalyticsPayload = {}) {
+  if (typeof window === "undefined") return;
+  const enriched: AnalyticsPayload = {
+    ...payload,
+    page: payload["page"] ?? window.location.pathname,
+  };
+  for (const adapter of adapters) {
+    try {
+      adapter.track(event, enriched);
+    } catch {
+      /* analytics must never break the UI */
+    }
+  }
+}
 
 export function initAnalytics() {
   registerAdapter(googleTagManagerAdapter);

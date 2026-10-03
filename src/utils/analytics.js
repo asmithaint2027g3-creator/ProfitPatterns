@@ -206,6 +206,15 @@ export async function trackEvent(eventName, details = {}) {
   lastEventKey = eventKey;
   lastEventTime = now;
 
+  // Forward event to Microsoft Clarity
+  if (typeof window !== "undefined" && typeof window.clarity === "function") {
+    try {
+      window.clarity("event", eventName);
+    } catch {
+      // Fail silently
+    }
+  }
+
   const params = new URLSearchParams(window.location.search);
   const interactionCount = getAndIncrementInteractionCount();
   const eventType = details.event_type || inferEventType(eventName);
@@ -758,6 +767,19 @@ export function initAnalytics() {
   if (typeof window === "undefined") return;
   if (window.__ppAnalyticsInitialized) return;
   window.__ppAnalyticsInitialized = true;
+
+  // Identify visitor and session in Microsoft Clarity
+  if (typeof window.clarity === "function") {
+    try {
+      const visitorId = getVisitorId();
+      const sessionId = getSessionId();
+      window.clarity("identify", visitorId, sessionId, window.location.pathname);
+      window.clarity("set", "visitor_id", visitorId);
+      window.clarity("set", "traffic_source", getTrafficSource());
+    } catch {
+      // Fail silently
+    }
+  }
 
   // Track session start
   trackEvent("session_start", {
