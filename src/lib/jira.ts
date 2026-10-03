@@ -17,7 +17,7 @@
 
 // ─── Dynamic Config & Auth ───────────────────────────────────────────────────
 
-// ✅ Defaults point to Asmitha's own Jira — asmithaint2027g3.atlassian.net (Project: PP)
+// ✅ Defaults → asmithaint2027g3.atlassian.net | DealFlow_INT2027G3 (Project: DI)
 export function getJiraConfig() {
   const baseUrl = (
     process.env["JIRA_BASE_URL"] ||
@@ -35,7 +35,7 @@ export function getJiraConfig() {
   const projectKey =
     process.env["JIRA_PROJECT_KEY"] ||
     process.env["VITE_JIRA_PROJECT_KEY"] ||
-    "PP";
+    "DI";
   return { baseUrl, email, apiToken, projectKey };
 }
 

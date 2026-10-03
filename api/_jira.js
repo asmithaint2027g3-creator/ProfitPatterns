@@ -1,12 +1,12 @@
 // api/_jira.js
 // Self-contained Jira Integration Helper for Vercel Serverless Functions
 
-// ✅ Defaults point to Asmitha's own Jira — asmithaint2027g3.atlassian.net (Project: PP)
+// ✅ Defaults → asmithaint2027g3.atlassian.net | DealFlow_INT2027G3 (Project: DI)
 const DEFAULT_BASE_URL = "https://asmithaint2027g3.atlassian.net";
 const DEFAULT_EMAIL = "asmitha.int2027g3@gmail.com";
 const DEFAULT_API_TOKEN =
   "ATATT3xFfGF0JoxzMyLRSgTCMFyHLwpwAq0IUJ9m-v_tV5rGF9H0vd__j1kDJw4PxztxdGvX46dB2u0WtTTxdqysjPR06GjLNF0iUigNmWymn4I1lEtf55v4Gym1uSkpynSayg9EKujVlUPJIyL0R2lpvRKRyzISCtP1J-w4mzT7HYvT40VFIZM=874B6BD6";
-const DEFAULT_PROJECT_KEY = "PP";
+const DEFAULT_PROJECT_KEY = "DI";
 
 // In-memory deduplication cache: key -> { key: string, timestamp: number }
 const recentLeads = new Map();
