@@ -10,7 +10,7 @@
  * 6. Instant VIP lead email alerts
  * 7. Automated individual Daily, Weekly, and Monthly executive digest emails
  *
- * Target Recipient: janegracy.int2027g3@gmail.com
+ * Target Recipient: asmitha.int2027g3@gmail.com
  */
 
 var CONFIG = {
@@ -26,14 +26,14 @@ var EMAIL_CONFIG = {
   name: "ProfitPatterns Strategic Intelligence",
   companyName: "ProfitPatterns",
   website: CONFIG.WEBSITE,
-  replyTo: "janegracy.int2027g3@gmail.com",
-  adminEmail: "janegracy.int2027g3@gmail.com",
+  replyTo: "asmitha.int2027g3@gmail.com",
+  adminEmail: "asmitha.int2027g3@gmail.com",
   leadEmails: [
-    "janegracy.int2027g3@gmail.com",
-    "janegracy2005@gmail.com"
+    "asmitha.int2027g3@gmail.com",
+    "asmitha.int2027g3@gmail.com"
   ],
   reportEmails: [
-    "janegracy.int2027g3@gmail.com"
+    "asmitha.int2027g3@gmail.com"
   ],
   whatsappNumber: "7845072426"
 };
@@ -260,7 +260,7 @@ function doPost(e) {
             lead_type: "QUICK_FORM",
             form_name: "Quick Contact Form",
             name: "Jane Gracy",
-            email: "janegracy.int2027g3@gmail.com",
+            email: "asmitha.int2027g3@gmail.com",
             phone: "+91 7845072426",
             company: "ProfitPatterns AI",
             requirement: "Strategic Consultation",
@@ -354,7 +354,7 @@ function doGet(e) {
       GENERATE_AND_SEND_ALL_REPORTS();
       return jsonResponse({
         status: "success",
-        message: "Daily, Weekly, and Monthly reports generated, stored, and sent individually to janegracy.int2027g3@gmail.com",
+        message: "Daily, Weekly, and Monthly reports generated, stored, and sent individually to asmitha.int2027g3@gmail.com",
         timestamp: new Date().toISOString()
       });
     } catch (err) {
@@ -1017,7 +1017,7 @@ function sendLeadAlertEmail(p, attachments) {
     '</div></body></html>'
   ].join('');
 
-  var recipients = (EMAIL_CONFIG.leadEmails && EMAIL_CONFIG.leadEmails.length) ? EMAIL_CONFIG.leadEmails : ["janegracy.int2027g3@gmail.com"];
+  var recipients = (EMAIL_CONFIG.leadEmails && EMAIL_CONFIG.leadEmails.length) ? EMAIL_CONFIG.leadEmails : ["asmitha.int2027g3@gmail.com"];
   var uniqueRecips = Array.from(new Set(recipients));
   uniqueRecips.forEach(function(email) {
     var options = {
@@ -1295,7 +1295,7 @@ function writeIntervalTable(ss, tabName, bucket, label, headerColor) {
 }
 
 // =========================================================================================
-// EXECUTIVE REPORTS ENGINE (INDIVIDUAL EMAIL DISPATCH TO JANEGRACY)
+// EXECUTIVE REPORTS ENGINE (INDIVIDUAL EMAIL DISPATCH TO ASMITHA)
 // =========================================================================================
 function sendPeriodicExecutiveDigest(intervalName) {
   var ss = getSpreadsheet();
@@ -1414,7 +1414,7 @@ function sendPeriodicExecutiveDigest(intervalName) {
     '</div></body></html>'
   ].join('');
 
-  var reportRecipients = (EMAIL_CONFIG.reportEmails && EMAIL_CONFIG.reportEmails.length) ? EMAIL_CONFIG.reportEmails : ["janegracy.int2027g3@gmail.com"];
+  var reportRecipients = (EMAIL_CONFIG.reportEmails && EMAIL_CONFIG.reportEmails.length) ? EMAIL_CONFIG.reportEmails : ["asmitha.int2027g3@gmail.com"];
   var uniqueRecips = Array.from(new Set(reportRecipients));
   var emailSubject = "[ProfitPatterns] " + intervalName + " Digest — " + periodFormatted + " (" + leads + " Leads)";
 
@@ -1440,13 +1440,13 @@ function monthlyReport() { sendPeriodicExecutiveDigest("Monthly"); }
 
 /**
  * MASTER ACTION: Generates/Stores Daily, Weekly, and Monthly data in Google Sheet
- * and sends all three reports INDIVIDUALLY to janegracy.int2027g3@gmail.com
+ * and sends all three reports INDIVIDUALLY to asmitha.int2027g3@gmail.com
  */
 function GENERATE_AND_SEND_ALL_REPORTS() {
   console.log("🚀 Step 1: Generating and storing Daily, Weekly, and Monthly reports data in Google Sheet...");
   BUILD_AGGREGATED_INTERVAL_SUMMARIES();
 
-  console.log("📧 Step 2: Dispatching all 3 reports individually to janegracy.int2027g3@gmail.com...");
+  console.log("📧 Step 2: Dispatching all 3 reports individually to asmitha.int2027g3@gmail.com...");
 
   // 1. Send Daily Report individually
   sendPeriodicExecutiveDigest("Daily");
@@ -1459,13 +1459,13 @@ function GENERATE_AND_SEND_ALL_REPORTS() {
   // 3. Send Monthly Report individually
   sendPeriodicExecutiveDigest("Monthly");
 
-  console.log("✅ All three reports dispatched individually to janegracy.int2027g3@gmail.com");
+  console.log("✅ All three reports dispatched individually to asmitha.int2027g3@gmail.com");
   try {
     SpreadsheetApp.getUi().alert(
       "✅ All 3 Reports Successfully Generated & Sent Individually!\n\n" +
-      "1. 📅 Daily Digest → sent individually to janegracy.int2027g3@gmail.com\n" +
-      "2. 📅 Weekly Digest → sent individually to janegracy.int2027g3@gmail.com\n" +
-      "3. 📅 Monthly Digest → sent individually to janegracy.int2027g3@gmail.com\n\n" +
+      "1. 📅 Daily Digest → sent individually to asmitha.int2027g3@gmail.com\n" +
+      "2. 📅 Weekly Digest → sent individually to asmitha.int2027g3@gmail.com\n" +
+      "3. 📅 Monthly Digest → sent individually to asmitha.int2027g3@gmail.com\n\n" +
       "All Google Sheet summary tabs (Daily_Summary, Weekly_Summary, Monthly_Summary) have been updated."
     );
   } catch(e) {}
@@ -1589,3 +1589,4 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
+

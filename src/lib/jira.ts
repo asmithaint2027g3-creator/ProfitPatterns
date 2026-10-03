@@ -26,7 +26,7 @@ export function getJiraConfig() {
   const email =
     process.env["JIRA_EMAIL"] ||
     process.env["VITE_JIRA_EMAIL"] ||
-    "janegracy.int2027g3@gmail.com";
+    "asmitha.int2027g3@gmail.com";
   const apiToken =
     process.env["JIRA_API_TOKEN"] ||
     process.env["VITE_JIRA_API_TOKEN"] ||
@@ -401,3 +401,4 @@ export async function createJiraLeadTask(payload: JiraLeadPayload): Promise<Jira
     subTaskKeys,
   };
 }
+
