@@ -17,11 +17,12 @@
 
 // ─── Dynamic Config & Auth ───────────────────────────────────────────────────
 
+// ✅ Defaults point to Asmitha's own Jira — asmithaint2027g3.atlassian.net (Project: PP)
 export function getJiraConfig() {
   const baseUrl = (
     process.env["JIRA_BASE_URL"] ||
     process.env["VITE_JIRA_BASE_URL"] ||
-    "https://trustworkz.atlassian.net"
+    "https://asmithaint2027g3.atlassian.net"
   ).replace(/\/+$/, "");
   const email =
     process.env["JIRA_EMAIL"] ||
@@ -30,11 +31,11 @@ export function getJiraConfig() {
   const apiToken =
     process.env["JIRA_API_TOKEN"] ||
     process.env["VITE_JIRA_API_TOKEN"] ||
-    "ATATT3xFfGF0kSxqsxW2VQB1HDoEK2a7Imd9ORnLk648J2sekIcpmqhL38amLPZHtYngemmMU3tCpbe3IykSL5dsvoNCDZot9vAtITRX7UBDJ_isvP2f0z_gZCu48PPy9tK_2YvwVomoY9h9REsDQVO0r97T_geEW6fH2sJji1r7djRFmlCPTjg=E5CC331B";
+    "ATATT3xFfGF0JoxzMyLRSgTCMFyHLwpwAq0IUJ9m-v_tV5rGF9H0vd__j1kDJw4PxztxdGvX46dB2u0WtTTxdqysjPR06GjLNF0iUigNmWymn4I1lEtf55v4Gym1uSkpynSayg9EKujVlUPJIyL0R2lpvRKRyzISCtP1J-w4mzT7HYvT40VFIZM=874B6BD6";
   const projectKey =
     process.env["JIRA_PROJECT_KEY"] ||
     process.env["VITE_JIRA_PROJECT_KEY"] ||
-    "DI";
+    "PP";
   return { baseUrl, email, apiToken, projectKey };
 }
 
@@ -241,14 +242,15 @@ function buildDocumentsDescription(p: JiraLeadPayload): object {
 
 // ─── Active Sprint helper ─────────────────────────────────────────────────────
 
-const ACTIVE_SPRINT_ID = "35";
-const JANE_GRACY_ACCOUNT_ID = "712020:4a35214c-ba12-4524-a70a-699fdcfafb65";
-
 async function addToActiveSprint(issueKey: string): Promise<void> {
+  const sprintId = process.env["JIRA_SPRINT_ID"] || process.env["VITE_JIRA_SPRINT_ID"];
+  if (!sprintId) {
+    console.log(`ℹ️ No JIRA_SPRINT_ID set — ${issueKey} will stay in Backlog.`);
+    return;
+  }
   try {
     const cfg = getJiraConfig();
     const auth = getAuthHeader();
-    const sprintId = process.env["JIRA_SPRINT_ID"] || ACTIVE_SPRINT_ID;
     const res = await fetch(`${cfg.baseUrl}/rest/agile/1.0/sprint/${sprintId}/issue`, {
       method: "POST",
       headers: {
@@ -259,7 +261,7 @@ async function addToActiveSprint(issueKey: string): Promise<void> {
       body: JSON.stringify({ issues: [issueKey] }),
     });
     if (res.ok) {
-      console.log(`📌 Moved ${issueKey} from Backlog to Active Sprint ${sprintId} (DI Board)`);
+      console.log(`📌 Moved ${issueKey} to Active Sprint ${sprintId} (PP Board)`);
     } else {
       const errText = await res.text();
       console.warn(`Sprint assignment notice for ${issueKey}:`, errText.slice(0, 200));
@@ -283,14 +285,19 @@ async function createIssue(
     summary,
     description,
     issuetype: { name: issueType === "Subtask" ? "Subtask" : "Task" },
-    assignee: { accountId: JANE_GRACY_ACCOUNT_ID },
   };
+
+  // Optionally assign to a specific account if JIRA_ASSIGNEE_ID is set
+  const assigneeId = process.env["JIRA_ASSIGNEE_ID"] || process.env["VITE_JIRA_ASSIGNEE_ID"];
+  if (assigneeId) {
+    fields["assignee"] = { accountId: assigneeId };
+  }
 
   if (issueType === "Subtask" && parentKey) {
     fields["parent"] = { key: parentKey };
   }
 
-  // Attempt creation with Jane Gracy assigned
+  // Attempt issue creation
   let result = await jiraPost("issue", { fields });
 
   // If assignee field fails, retry without assignee
