@@ -1,12 +1,13 @@
 // api/_jira.js
 // Self-contained Jira Integration Helper for Vercel Serverless Functions
 
-// ✅ Defaults → asmithaint2027g3.atlassian.net | DealFlow_INT2027G3 (Project: DI)
-const DEFAULT_BASE_URL = "https://asmithaint2027g3.atlassian.net";
+// ✅ Defaults → trustworkz.atlassian.net | DealFlow_INT2027G3 (Project: DI)
+const DEFAULT_BASE_URL = "https://trustworkz.atlassian.net";
 const DEFAULT_EMAIL = "asmitha.int2027g3@gmail.com";
 const DEFAULT_API_TOKEN =
-  "ATATT3xFfGF0JoxzMyLRSgTCMFyHLwpwAq0IUJ9m-v_tV5rGF9H0vd__j1kDJw4PxztxdGvX46dB2u0WtTTxdqysjPR06GjLNF0iUigNmWymn4I1lEtf55v4Gym1uSkpynSayg9EKujVlUPJIyL0R2lpvRKRyzISCtP1J-w4mzT7HYvT40VFIZM=874B6BD6";
+  "ATATT3xFfGF0ZI9BTfm9JkdD0PjvWYle6DBxrQ0puxXIYMLqPb_Ry6QRoWY5LdRdLZyo43BBROTkba4IkJKl9thc3kyfhzmcrSp0bbS0mBw7s3WtYru5bvKv0gSdAz_BOODzmyINlLASkjXkF0z26smsi67zb4aJidlw6e2Uif6MEsfaxmVvJeI=E7953F81";
 const DEFAULT_PROJECT_KEY = "DI";
+
 
 // In-memory deduplication cache: key -> { key: string, timestamp: number }
 const recentLeads = new Map();
@@ -189,25 +190,25 @@ export async function createJiraLeadTask(p) {
     leadType === "Quick Form"
       ? "⚡"
       : leadType === "Consultation"
-      ? "🤝"
-      : leadType === "Process Audit"
-      ? "🔍"
-      : "🤖";
+        ? "🤝"
+        : leadType === "Process Audit"
+          ? "🔍"
+          : "🤖";
 
   const parentSummary = `${emoji} [${leadType}] ${leadName} — ${dateStr}`;
 
   // 1. Parent Task Description
   const parentDesc = textDoc(
     `📊 LEAD OVERVIEW\n` +
-      `Lead Type: ${leadType}\n` +
-      `Contact Name: ${leadName}\n` +
-      `Email: ${leadEmail || "—"}\n` +
-      `Phone: ${p.phone || "—"}\n` +
-      `Company: ${p.company || "—"}\n` +
-      `Job Title: ${p.jobTitle || "—"}\n` +
-      `Source Page: ${p.pageUrl || p.page_url || "—"}\n` +
-      `Submitted: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}\n\n` +
-      `Sub-tasks below contain Contact Information, Detailed Requirements, and Follow-up Actions.`
+    `Lead Type: ${leadType}\n` +
+    `Contact Name: ${leadName}\n` +
+    `Email: ${leadEmail || "—"}\n` +
+    `Phone: ${p.phone || "—"}\n` +
+    `Company: ${p.company || "—"}\n` +
+    `Job Title: ${p.jobTitle || "—"}\n` +
+    `Source Page: ${p.pageUrl || p.page_url || "—"}\n` +
+    `Submitted: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}\n\n` +
+    `Sub-tasks below contain Contact Information, Detailed Requirements, and Follow-up Actions.`
   );
 
   // 2. Create Parent Task
@@ -223,29 +224,29 @@ export async function createJiraLeadTask(p) {
   // 3. Sub-task 1: Contact Information
   const contactDesc = textDoc(
     `📋 CONTACT INFORMATION\n\n` +
-      `Full Name: ${leadName}\n` +
-      `Email: ${leadEmail || "—"}\n` +
-      `Phone: ${p.phone || "—"}\n` +
-      `Company: ${p.company || "—"}\n` +
-      `Job Title: ${p.jobTitle || "—"}\n` +
-      `Industry: ${p.industry || "—"}\n` +
-      `Company Size: ${p.companySize || "—"}\n` +
-      `Website: ${p.website || "—"}\n` +
-      `Preferred Contact Time: ${p.preferredContactTime || "—"}`
+    `Full Name: ${leadName}\n` +
+    `Email: ${leadEmail || "—"}\n` +
+    `Phone: ${p.phone || "—"}\n` +
+    `Company: ${p.company || "—"}\n` +
+    `Job Title: ${p.jobTitle || "—"}\n` +
+    `Industry: ${p.industry || "—"}\n` +
+    `Company Size: ${p.companySize || "—"}\n` +
+    `Website: ${p.website || "—"}\n` +
+    `Preferred Contact Time: ${p.preferredContactTime || "—"}`
   );
 
   // 4. Sub-task 2: Requirement & Context
   const reqDesc = textDoc(
     `📝 REQUIREMENT & BUSINESS CONTEXT\n\n` +
-      `Requirement: ${p.requirement || p.primaryChallenge || p.primaryGoal || "—"}\n` +
-      `Challenge / Message: ${p.challenge || p.currentChallenge || p.message || p.processSummary || "—"}\n` +
-      `Desired Outcome: ${p.desiredOutcome || p.desired_outcome || "—"}\n` +
-      `Current Tools: ${p.currentTools || "—"}\n` +
-      `Existing AI Usage: ${p.existingAIUsage || "—"}\n` +
-      `Project Scope: ${p.projectScope || "—"}\n` +
-      `Budget Range: ${p.budgetRange || "—"}\n` +
-      `Audit Doc Type: ${p.docType || p.auditDocType || "—"}\n` +
-      `Weekly Hours Spent: ${p.weeklyHoursSpent || "—"}`
+    `Requirement: ${p.requirement || p.primaryChallenge || p.primaryGoal || "—"}\n` +
+    `Challenge / Message: ${p.challenge || p.currentChallenge || p.message || p.processSummary || "—"}\n` +
+    `Desired Outcome: ${p.desiredOutcome || p.desired_outcome || "—"}\n` +
+    `Current Tools: ${p.currentTools || "—"}\n` +
+    `Existing AI Usage: ${p.existingAIUsage || "—"}\n` +
+    `Project Scope: ${p.projectScope || "—"}\n` +
+    `Budget Range: ${p.budgetRange || "—"}\n` +
+    `Audit Doc Type: ${p.docType || p.auditDocType || "—"}\n` +
+    `Weekly Hours Spent: ${p.weeklyHoursSpent || "—"}`
   );
 
   // 5. Sub-task 3: Follow-up Actions
@@ -253,16 +254,16 @@ export async function createJiraLeadTask(p) {
     leadType === "Process Audit"
       ? "1. Review uploaded documents\n2. Prepare Process Feasibility Audit Dossier\n3. Schedule discovery consultation\n4. Dispatch mutual NDA"
       : leadType === "Consultation"
-      ? "1. Review consultation brief & requirements\n2. Qualify budget, timeline & scope\n3. Schedule executive strategy session\n4. Prepare engagement proposal"
-      : leadType === "Chatbot"
-      ? "1. Review assistant conversation history\n2. Contact lead within 24 hours\n3. Route to relevant domain specialist"
-      : "1. Respond within 2 business hours\n2. Confirm requirement details\n3. Schedule introductory discussion";
+        ? "1. Review consultation brief & requirements\n2. Qualify budget, timeline & scope\n3. Schedule executive strategy session\n4. Prepare engagement proposal"
+        : leadType === "Chatbot"
+          ? "1. Review assistant conversation history\n2. Contact lead within 24 hours\n3. Route to relevant domain specialist"
+          : "1. Respond within 2 business hours\n2. Confirm requirement details\n3. Schedule introductory discussion";
 
   const followUpDesc = textDoc(
     `✅ FOLLOW-UP ACTION CHECKLIST\n\n` +
-      `Lead: ${leadName} (${leadEmail})\n` +
-      `Form Type: ${leadType}\n\n` +
-      `Action Steps:\n${actionList}`
+    `Lead: ${leadName} (${leadEmail})\n` +
+    `Form Type: ${leadType}\n\n` +
+    `Action Steps:\n${actionList}`
   );
 
   const subTasks = [
@@ -274,11 +275,11 @@ export async function createJiraLeadTask(p) {
   if (leadType === "Process Audit" || p.filesCount || p.fileName) {
     const docDesc = textDoc(
       `📁 NDA & ATTACHED DOCUMENTS\n\n` +
-        `NDA Requested: ${p.ndaRequested ? "✅ Yes (Mutual NDA required)" : "❌ No"}\n` +
-        `Files Count: ${p.filesCount || (p.fileName ? 1 : 0)}\n` +
-        `File Name: ${p.fileName || p.filesList || "—"}\n` +
-        `Reference ID: ${p.referenceId || "—"}\n` +
-        `Document Type: ${p.docType || "—"}`
+      `NDA Requested: ${p.ndaRequested ? "✅ Yes (Mutual NDA required)" : "❌ No"}\n` +
+      `Files Count: ${p.filesCount || (p.fileName ? 1 : 0)}\n` +
+      `File Name: ${p.fileName || p.filesList || "—"}\n` +
+      `Reference ID: ${p.referenceId || "—"}\n` +
+      `Document Type: ${p.docType || "—"}`
     );
     subTasks.push({ summary: `📁 NDA & Documents — ${leadName}`, desc: docDesc });
   }

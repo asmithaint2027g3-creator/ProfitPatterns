@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Honeypot, SelectField, TextAreaField, TextField } from "@/components/ui/field";
 import { track } from "@/lib/analytics";
 import {
+  AI_USAGE_LEVELS,
   BUDGET_RANGES,
   COMPANY_SIZES,
+  CONTACT_TIMES,
   PRIMARY_CHALLENGES,
   PROJECT_SCOPES,
   consultationLeadSchema,
@@ -302,6 +304,39 @@ export function LongForm({ source = "long_form" }: { source?: string }) {
             value={values.currentChallenge}
             error={errors.currentChallenge}
             onChange={(e) => set("currentChallenge", e.target.value)}
+          />
+        </div>
+
+        <div className="mt-4">
+          <TextAreaField
+            id="lf-desiredOutcome"
+            label="Desired outcome"
+            rows={3}
+            placeholder="What does success look like? Describe the specific outcome or business result you want to achieve."
+            value={values.desiredOutcome}
+            error={errors.desiredOutcome}
+            onChange={(e) => set("desiredOutcome", e.target.value)}
+          />
+        </div>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <SelectField
+            id="lf-existingAIUsage"
+            label="Current AI adoption level"
+            options={AI_USAGE_LEVELS}
+            placeholder="Select current AI usage"
+            value={values.existingAIUsage}
+            error={errors.existingAIUsage}
+            onChange={(e) => set("existingAIUsage", e.target.value)}
+          />
+          <SelectField
+            id="lf-preferredContactTime"
+            label="Preferred contact time"
+            options={CONTACT_TIMES}
+            placeholder="Select preferred time"
+            value={values.preferredContactTime}
+            error={errors.preferredContactTime}
+            onChange={(e) => set("preferredContactTime", e.target.value)}
           />
         </div>
       </div>
