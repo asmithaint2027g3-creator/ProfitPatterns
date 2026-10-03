@@ -1348,6 +1348,8 @@ function sendPeriodicExecutiveDigest(intervalName) {
     avg        = Number(r[10]) || 0;
   }
 
+  var periodFormatted = intervalName === "Weekly" ? ("Week Starting " + period) : period;
+
   // Dispatch enriched interval-specific templates
   var html = "";
   var emailSubject = "";
