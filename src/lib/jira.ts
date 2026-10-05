@@ -169,14 +169,25 @@ function textDoc(text: string): object {
   };
 }
 
+export function formatLeadTypeTitle(type?: string): string {
+  if (!type) return "Profit Patterns Lead";
+  const lower = type.toLowerCase();
+  if (lower.includes("quick")) return "Profit Patterns Quick Form";
+  if (lower.includes("consult") || lower.includes("long")) return "Profit Patterns Long Form";
+  if (lower.includes("audit") || lower.includes("doc")) return "Profit Patterns Audit";
+  if (lower.includes("chat")) return "Profit Patterns AI Chatbot";
+  return `Profit Patterns ${type}`;
+}
+
 function buildParentDescription(p: JiraLeadPayload): object {
+  const formattedType = formatLeadTypeTitle(p.leadType);
   const text =
     `📊 LEAD OVERVIEW\n` +
-    `Lead Type: ${p.leadType}\n` +
+    `Lead Type: ${formattedType}\n` +
     `Status: ${p.leadStatus || "New"}\n` +
     `Source Page: ${p.pageUrl || "—"}\n` +
     `Submitted: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}\n\n` +
-    `Sub-tasks contain full Contact Info, Requirement Details, Follow-up Actions, and Documents.`;
+    `13 structured intake & delivery sub-tasks created below covering Contact Enrichment, Requirements Review, NDA Clearance, Feasibility Audit, Strategy Blueprint, Budget Estimation, Discovery Call, Proposal, SOW Sign-off, Client Onboarding, and Milestone Kickoff.`;
   return textDoc(text);
 }
 
@@ -330,7 +341,7 @@ async function createIssue(
 function build13SubTasks(p: JiraLeadPayload): Array<{ summary: string; desc: object }> {
   const leadName = p.name || "Inbound Lead";
   const leadEmail = p.email || "";
-  const leadType = p.leadType || "Inbound Lead";
+  const displayType = formatLeadTypeTitle(p.leadType);
 
   return [
     {
@@ -351,10 +362,10 @@ function build13SubTasks(p: JiraLeadPayload): Array<{ summary: string; desc: obj
       ),
     },
     {
-      summary: `02. 📝 Requirements & Problem Statement Analysis — ${leadType}`,
+      summary: `02. 📝 Requirements & Problem Statement Analysis — ${displayType}`,
       desc: textDoc(
         `📝 STEP 2: REQUIREMENTS & PROBLEM STATEMENT ANALYSIS\n\n` +
-        `• Lead Type: ${leadType}\n` +
+        `• Lead Type: ${displayType}\n` +
         `• Primary Requirement: ${p.requirement || "—"}\n` +
         `• Operational Challenge / Message: ${p.challenge || p.processSummary || p.message || "—"}\n` +
         `• Desired Business Outcome: ${p.desiredOutcome || "—"}\n` +
@@ -460,7 +471,7 @@ function build13SubTasks(p: JiraLeadPayload): Array<{ summary: string; desc: obj
       desc: textDoc(
         `📑 STEP 10: ENGAGEMENT PROPOSAL & DOSSIER GENERATION\n\n` +
         `• Client: ${leadName} — ${p.company || "Independent"}\n` +
-        `• Solution Category: ${leadType}\n\n` +
+        `• Solution Category: ${displayType}\n\n` +
         `Action Items:\n` +
         `[ ] Compile comprehensive Executive Proposal & Roadmap Dossier\n` +
         `[ ] Include architecture diagram, milestone schedule, and pricing\n` +
@@ -525,7 +536,8 @@ export async function createJiraLeadTask(payload: JiraLeadPayload): Promise<Jira
           ? "🔍"
           : "🤖";
 
-  const parentSummary = `${leadEmoji} [${payload.leadType}] ${payload.name} — ${dateStr}`;
+  const formattedType = formatLeadTypeTitle(payload.leadType);
+  const parentSummary = `${leadEmoji} [${formattedType}] ${payload.name} — ${dateStr}`;
 
   // 1. Create parent Task
   const parent = await createIssue(parentSummary, buildParentDescription(payload), "Task");

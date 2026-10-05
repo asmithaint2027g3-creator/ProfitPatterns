@@ -171,10 +171,21 @@ async function createIssue(summary, description, issueType, parentKey) {
   };
 }
 
+export function formatLeadTypeTitle(type) {
+  if (!type) return "Profit Patterns Lead";
+  const lower = String(type).toLowerCase();
+  if (lower.includes("quick")) return "Profit Patterns Quick Form";
+  if (lower.includes("consult") || lower.includes("long")) return "Profit Patterns Long Form";
+  if (lower.includes("audit") || lower.includes("doc")) return "Profit Patterns Audit";
+  if (lower.includes("chat")) return "Profit Patterns AI Chatbot";
+  return `Profit Patterns ${type}`;
+}
+
 export async function createJiraLeadTask(p) {
   const leadName = p.name || p.fullName || "Inbound Lead";
   const leadEmail = (p.email || p.workEmail || "").toLowerCase();
   const leadType = p.leadType || (p.docType ? "Process Audit" : p.workEmail ? "Consultation" : "Quick Form");
+  const displayType = formatLeadTypeTitle(leadType);
 
   // Deduplication check: 15 second window
   const dedupKey = `${leadEmail}_${leadType}`;
@@ -195,12 +206,12 @@ export async function createJiraLeadTask(p) {
           ? "🔍"
           : "🤖";
 
-  const parentSummary = `${emoji} [${leadType}] ${leadName} — ${dateStr}`;
+  const parentSummary = `${emoji} [${displayType}] ${leadName} — ${dateStr}`;
 
   // 1. Parent Task Description
   const parentDesc = textDoc(
     `📊 LEAD OVERVIEW\n` +
-    `Lead Type: ${leadType}\n` +
+    `Lead Type: ${displayType}\n` +
     `Contact Name: ${leadName}\n` +
     `Email: ${leadEmail || "—"}\n` +
     `Phone: ${p.phone || "—"}\n` +
@@ -208,7 +219,7 @@ export async function createJiraLeadTask(p) {
     `Job Title: ${p.jobTitle || "—"}\n` +
     `Source Page: ${p.pageUrl || p.page_url || "—"}\n` +
     `Submitted: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}\n\n` +
-    `Sub-tasks below contain Contact Information, Detailed Requirements, and Follow-up Actions.`
+    `13 structured intake & delivery sub-tasks created below covering Contact Enrichment, Requirements Review, NDA Clearance, Feasibility Audit, Strategy Blueprint, Budget Estimation, Discovery Call, Proposal, SOW Sign-off, Client Onboarding, and Milestone Kickoff.`
   );
 
   // 2. Create Parent Task
@@ -241,10 +252,10 @@ export async function createJiraLeadTask(p) {
       ),
     },
     {
-      summary: `02. 📝 Requirements & Problem Statement Analysis — ${leadType}`,
+      summary: `02. 📝 Requirements & Problem Statement Analysis — ${displayType}`,
       desc: textDoc(
         `📝 STEP 2: REQUIREMENTS & PROBLEM STATEMENT ANALYSIS\n\n` +
-        `• Lead Type: ${leadType}\n` +
+        `• Lead Type: ${displayType}\n` +
         `• Primary Requirement: ${p.requirement || p.primaryChallenge || p.primaryGoal || "—"}\n` +
         `• Operational Challenge / Message: ${p.challenge || p.currentChallenge || p.message || p.processSummary || "—"}\n` +
         `• Desired Business Outcome: ${p.desiredOutcome || p.desired_outcome || "—"}\n` +
@@ -350,7 +361,7 @@ export async function createJiraLeadTask(p) {
       desc: textDoc(
         `📑 STEP 10: ENGAGEMENT PROPOSAL & DOSSIER GENERATION\n\n` +
         `• Client: ${leadName} — ${p.company || "Independent"}\n` +
-        `• Solution Category: ${leadType}\n\n` +
+        `• Solution Category: ${displayType}\n\n` +
         `Action Items:\n` +
         `[ ] Compile comprehensive Executive Proposal & Roadmap Dossier\n` +
         `[ ] Include architecture diagram, milestone schedule, and pricing\n` +
