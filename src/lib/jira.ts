@@ -325,16 +325,189 @@ async function createIssue(
   };
 }
 
+// ─── 13 Sub-Task Workflow Definitions ─────────────────────────────────────────
+
+function build13SubTasks(p: JiraLeadPayload): Array<{ summary: string; desc: object }> {
+  const leadName = p.name || "Inbound Lead";
+  const leadEmail = p.email || "";
+  const leadType = p.leadType || "Inbound Lead";
+
+  return [
+    {
+      summary: `01. 📋 Contact Enrichment & Verification — ${leadName}`,
+      desc: textDoc(
+        `📋 STEP 1: CONTACT ENRICHMENT & VERIFICATION\n\n` +
+        `• Full Name: ${leadName}\n` +
+        `• Work Email: ${leadEmail || "—"}\n` +
+        `• Phone Number: ${p.phone || "—"}\n` +
+        `• Company: ${p.company || "—"}\n` +
+        `• Job Title: ${p.jobTitle || "—"}\n` +
+        `• Company Website: ${p.website || "—"}\n` +
+        `• Preferred Contact Window: ${p.preferredContactTime || "—"}\n\n` +
+        `Action Items:\n` +
+        `[ ] Verify corporate email domain authenticity\n` +
+        `[ ] Check company profile & team presence on LinkedIn\n` +
+        `[ ] Confirm direct phone / WhatsApp reachability`
+      ),
+    },
+    {
+      summary: `02. 📝 Requirements & Problem Statement Analysis — ${leadType}`,
+      desc: textDoc(
+        `📝 STEP 2: REQUIREMENTS & PROBLEM STATEMENT ANALYSIS\n\n` +
+        `• Lead Type: ${leadType}\n` +
+        `• Primary Requirement: ${p.requirement || "—"}\n` +
+        `• Operational Challenge / Message: ${p.challenge || p.processSummary || p.message || "—"}\n` +
+        `• Desired Business Outcome: ${p.desiredOutcome || "—"}\n` +
+        `• Time Invested Weekly on Bottleneck: ${p.weeklyHoursSpent ? `${p.weeklyHoursSpent} hours/week` : "—"}\n\n` +
+        `Action Items:\n` +
+        `[ ] Classify problem urgency and operational complexity\n` +
+        `[ ] Formulate preliminary problem statement and impact assessment`
+      ),
+    },
+    {
+      summary: `03. 🔒 NDA & Confidentiality Clearance — ${leadName}`,
+      desc: textDoc(
+        `🔒 STEP 3: NDA & CONFIDENTIALITY CLEARANCE\n\n` +
+        `• Mutual NDA Requested: ${p.ndaRequested ? "✅ YES — Mutual NDA Required" : "❌ Standard Privacy Policy"}\n` +
+        `• Attached Documents: ${p.filesCount || 0} file(s)\n` +
+        `• File Name(s): ${p.filesList || "—"}\n` +
+        `• Document Type: ${p.auditDocType || "—"}\n` +
+        `• Secure Drive Link: ${p.driveLink || "—"}\n\n` +
+        `Action Items:\n` +
+        (p.ndaRequested
+          ? `[ ] Generate and dispatch bilateral Mutual NDA for e-signature\n[ ] Restrict document access until NDA execution`
+          : `[ ] Ensure confidentiality compliance under standard terms`)
+      ),
+    },
+    {
+      summary: `04. 🔍 Technical & Architecture Feasibility Audit`,
+      desc: textDoc(
+        `🔍 STEP 4: TECHNICAL & ARCHITECTURE FEASIBILITY AUDIT\n\n` +
+        `• Current Tech Stack / Tools: ${p.currentTools || "—"}\n` +
+        `• Existing AI Adoption Level: ${p.existingAIUsage || "—"}\n` +
+        `• Project Scope Defined: ${p.projectScope || "—"}\n` +
+        `• Source Page: ${p.pageUrl || "—"}\n\n` +
+        `Action Items:\n` +
+        `[ ] Assess API integrations and compatibility with existing toolset\n` +
+        `[ ] Evaluate data security, latency, and hosting requirements\n` +
+        `[ ] Complete initial AI/automation feasibility matrix`
+      ),
+    },
+    {
+      summary: `05. 📊 Market & Industry Competitor Benchmarking`,
+      desc: textDoc(
+        `📊 STEP 5: MARKET & INDUSTRY BENCHMARKING\n\n` +
+        `• Industry Vertical: ${p.industry || "—"}\n` +
+        `• Organization Size Tier: ${p.companySize ? `${p.companySize} employees` : "—"}\n` +
+        `• Market Tier: Enterprise / Growth\n\n` +
+        `Action Items:\n` +
+        `[ ] Research standard industry workflows and automation adoption\n` +
+        `[ ] Identify competitive benchmarks and efficiency gain targets`
+      ),
+    },
+    {
+      summary: `06. 🎯 Strategic Solution Design & Blueprint`,
+      desc: textDoc(
+        `🎯 STEP 6: STRATEGIC SOLUTION DESIGN & BLUEPRINT\n\n` +
+        `• Client: ${leadName} (${p.company || "Direct"})\n` +
+        `• Core Objective: ${p.desiredOutcome || p.requirement || "Process Optimization"}\n\n` +
+        `Action Items:\n` +
+        `[ ] Draft solution architecture diagram and data pipeline flow\n` +
+        `[ ] Map key integration points and AI models / agentic layers\n` +
+        `[ ] Document estimated time-to-value and productivity ROI`
+      ),
+    },
+    {
+      summary: `07. 💰 Commercial Scoping & Budget Estimation`,
+      desc: textDoc(
+        `💰 STEP 7: COMMERCIAL SCOPING & BUDGET ESTIMATION\n\n` +
+        `• Declared Budget Range: ${p.budgetRange || "Not defined yet"}\n` +
+        `• Project Scope: ${p.projectScope || "—"}\n` +
+        `• Engagement Model: Fixed Deliverable / Retainer Advisory\n\n` +
+        `Action Items:\n` +
+        `[ ] Calculate resource allocation & development sprint hours\n` +
+        `[ ] Validate project scope feasibility against client budget\n` +
+        `[ ] Define tiered commercial options (MVP vs. Full Transformation)`
+      ),
+    },
+    {
+      summary: `08. 📅 Stakeholder Discovery Call Scheduling`,
+      desc: textDoc(
+        `📅 STEP 8: STAKEHOLDER DISCOVERY CALL SCHEDULING\n\n` +
+        `• Point of Contact: ${leadName} (${leadEmail})\n` +
+        `• Preferred Contact Window: ${p.preferredContactTime || "Any time"}\n` +
+        `• Direct Contact: ${p.phone || "Email preferred"}\n\n` +
+        `Action Items:\n` +
+        `[ ] Send calendar invite / booking link for 30-min strategy session\n` +
+        `[ ] Dispatch pre-call briefing questionnaire\n` +
+        `[ ] Confirm attendee list from client leadership team`
+      ),
+    },
+    {
+      summary: `09. 🎙️ Conduct Executive Discovery Session`,
+      desc: textDoc(
+        `🎙️ STEP 9: CONDUCT EXECUTIVE DISCOVERY SESSION\n\n` +
+        `• Target Agenda: Deep dive into operational bottlenecks and workflows\n` +
+        `• Key Focus Area: ${p.challenge || p.processSummary || p.requirement || "Operational efficiency"}\n\n` +
+        `Action Items:\n` +
+        `[ ] Host live discovery session with leadership\n` +
+        `[ ] Record call minutes, technical constraints, and expectations\n` +
+        `[ ] Confirm agreed target delivery timeline and milestone dates`
+      ),
+    },
+    {
+      summary: `10. 📑 Engagement Proposal & Dossier Generation`,
+      desc: textDoc(
+        `📑 STEP 10: ENGAGEMENT PROPOSAL & DOSSIER GENERATION\n\n` +
+        `• Client: ${leadName} — ${p.company || "Independent"}\n` +
+        `• Solution Category: ${leadType}\n\n` +
+        `Action Items:\n` +
+        `[ ] Compile comprehensive Executive Proposal & Roadmap Dossier\n` +
+        `[ ] Include architecture diagram, milestone schedule, and pricing\n` +
+        `[ ] Deliver proposal to client with executive walkthrough video/link`
+      ),
+    },
+    {
+      summary: `11. ✍️ SOW Finalization & Legal Sign-off`,
+      desc: textDoc(
+        `✍️ STEP 11: SOW FINALIZATION & LEGAL SIGN-OFF\n\n` +
+        `• Contract Scope: Statement of Work (SOW) & Master Services Agreement\n\n` +
+        `Action Items:\n` +
+        `[ ] Finalize contract clauses, IP assignment, and SLAs\n` +
+        `[ ] Dispatch digital contract for formal executive signatures\n` +
+        `[ ] Verify initial retainer / milestone invoice clearance`
+      ),
+    },
+    {
+      summary: `12. 🚀 Client Onboarding & Environment Setup`,
+      desc: textDoc(
+        `🚀 STEP 12: CLIENT ONBOARDING & ENVIRONMENT SETUP\n\n` +
+        `• Dedicated Channel: Slack Connect / Microsoft Teams\n` +
+        `• Stakeholder: ${leadName} (${leadEmail})\n\n` +
+        `Action Items:\n` +
+        `[ ] Setup dedicated communication channel with client team\n` +
+        `[ ] Receive credential handoffs (staging environment, APIs, tokens)\n` +
+        `[ ] Schedule and confirm Phase 1 Sprint Kickoff date`
+      ),
+    },
+    {
+      summary: `13. 🏁 Milestone 1 Kickoff & Delivery`,
+      desc: textDoc(
+        `🏁 STEP 13: MILESTONE 1 KICKOFF & DELIVERY\n\n` +
+        `• First Milestone Focus: ${p.desiredOutcome || p.requirement || "Sprint 1 Implementation"}\n\n` +
+        `Action Items:\n` +
+        `[ ] Conduct official Project Kickoff meeting\n` +
+        `[ ] Spin up development sprint board and assign development backlog\n` +
+        `[ ] Deliver initial Prototype / Sprint 1 review within agreed window`
+      ),
+    },
+  ];
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 /**
- * Creates a Jira Task for every lead, plus 3–4 sub-tasks depending on lead type.
- *
- * Sub-tasks:
- *   1. 📋 Contact Information
- *   2. 📝 Requirement & Business Context
- *   3. ✅ Follow-up Action Required
- *   4. 📁 NDA & Documents  (Audit leads only)
+ * Creates a Jira Task for every lead, plus 13 structured workflow sub-tasks.
  */
 export async function createJiraLeadTask(payload: JiraLeadPayload): Promise<JiraCreateResult> {
   if (!isJiraConfigured()) {
@@ -363,43 +536,21 @@ export async function createJiraLeadTask(payload: JiraLeadPayload): Promise<Jira
 
   console.log(`✅ Jira parent task created: ${parent.key} → ${parent.url}`);
 
-  // 2. Build sub-task list
-  const subTaskDefs: Array<{ summary: string; desc: object }> = [
-    {
-      summary: `📋 Contact Info — ${payload.name}`,
-      desc: buildContactInfoDescription(payload),
-    },
-    {
-      summary: `📝 Requirement Details — ${payload.leadType}`,
-      desc: buildRequirementDescription(payload),
-    },
-    {
-      summary: `✅ Follow-up Actions — ${payload.name}`,
-      desc: buildFollowUpDescription(payload),
-    },
-  ];
+  // 2. Build 13 sub-tasks
+  const subTaskDefs = build13SubTasks(payload);
 
-  // Audit leads get an extra sub-task for documents/NDA
-  if (payload.leadType === "Process Audit") {
-    subTaskDefs.push({
-      summary: `📁 NDA & Documents — ${payload.name}`,
-      desc: buildDocumentsDescription(payload),
-    });
+  // 3. Create 13 sub-tasks sequentially to guarantee order and avoid Jira rate limits
+  const subTaskKeys: string[] = [];
+  for (const { summary, desc } of subTaskDefs) {
+    const res = await createIssue(summary, desc, "Subtask", parent.key);
+    if (res.ok && res.key) {
+      subTaskKeys.push(res.key);
+    } else {
+      console.warn(`⚠️ Failed to create subtask "${summary}":`, res.error);
+    }
   }
 
-  // 3. Create sub-tasks in parallel
-  const subTaskResults = await Promise.all(
-    subTaskDefs.map(({ summary, desc }) => createIssue(summary, desc, "Subtask", parent.key)),
-  );
-
-  const subTaskKeys = subTaskResults.filter((r) => r.ok && r.key).map((r) => r.key as string);
-
-  const failedCount = subTaskResults.filter((r) => !r.ok).length;
-  if (failedCount > 0) {
-    console.warn(`⚠️ ${failedCount} sub-task(s) failed to create under ${parent.key}`);
-  }
-
-  console.log(`✅ Jira sub-tasks created: [${subTaskKeys.join(", ")}] under ${parent.key}`);
+  console.log(`✅ Jira 13 sub-tasks created: [${subTaskKeys.join(", ")}] under ${parent.key}`);
 
   return {
     ok: true,
