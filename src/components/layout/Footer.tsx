@@ -107,16 +107,60 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Bottom bar — legal links required on all websites */}
-      <div className="border-t border-border">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-5 py-5 text-xs text-muted-foreground sm:flex-row lg:px-8">
-          <p>© {new Date().getFullYear()} ProfitPatterns. All rights reserved.</p>
-          <nav aria-label="Legal links" className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1">
-            <Link to="/privacy"  className="transition-colors hover:text-foreground">Privacy Policy</Link>
-            <Link to="/terms"    className="transition-colors hover:text-foreground">Terms of Use</Link>
-            <Link to="/faq"      className="transition-colors hover:text-foreground">FAQ</Link>
-            <Link to="/contact"  className="transition-colors hover:text-foreground">Contact</Link>
-          </nav>
+      {/* ── Bottom legal bar — bold & clearly visible ── */}
+      <div className="bg-gradient-to-r from-[#0F0F0F] via-[#1A1710] to-[#0F0F0F] border-t border-[#C4B296]/20">
+        <div className="mx-auto max-w-7xl px-5 py-4 lg:px-8">
+          <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+
+            {/* Copyright */}
+            <p className="text-[11px] font-medium text-[#888880] tracking-wide whitespace-nowrap">
+              © {new Date().getFullYear()}{" "}
+              <span className="text-[#C4B296] font-semibold">ProfitPatterns</span>.
+              {" "}All rights reserved.
+            </p>
+
+            {/* Legal links — bright & prominent */}
+            <nav aria-label="Legal links" className="flex flex-wrap items-center justify-center gap-x-1 gap-y-2">
+              {/* Privacy Policy — amber pill */}
+              <Link
+                to="/privacy"
+                className="inline-flex items-center gap-1 rounded-full bg-[#C4B296]/15 border border-[#C4B296]/40 px-3 py-1 text-[11px] font-semibold text-[#E8D9C0] transition-all hover:bg-[#C4B296]/30 hover:border-[#C4B296]/70 hover:text-white"
+              >
+                🔒 Privacy Policy
+              </Link>
+
+              <span className="text-[#444] text-xs select-none">·</span>
+
+              {/* Terms of Use — amber pill */}
+              <Link
+                to="/terms"
+                className="inline-flex items-center gap-1 rounded-full bg-[#C4B296]/15 border border-[#C4B296]/40 px-3 py-1 text-[11px] font-semibold text-[#E8D9C0] transition-all hover:bg-[#C4B296]/30 hover:border-[#C4B296]/70 hover:text-white"
+              >
+                📄 Terms of Use
+              </Link>
+
+              <span className="text-[#444] text-xs select-none">·</span>
+
+              {/* FAQ — plain bright */}
+              <Link
+                to="/faq"
+                className="text-[11px] font-medium text-[#999] transition-colors hover:text-white px-2 py-1"
+              >
+                FAQ
+              </Link>
+
+              <span className="text-[#444] text-xs select-none">·</span>
+
+              {/* Contact — plain bright */}
+              <Link
+                to="/contact"
+                className="text-[11px] font-medium text-[#999] transition-colors hover:text-white px-2 py-1"
+              >
+                Contact
+              </Link>
+            </nav>
+
+          </div>
         </div>
       </div>
     </footer>
