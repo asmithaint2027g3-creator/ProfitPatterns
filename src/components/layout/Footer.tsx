@@ -107,14 +107,16 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Bottom bar */}
+      {/* Bottom bar — legal links required on all websites */}
       <div className="border-t border-border">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-5 py-5 text-xs text-muted-foreground sm:flex-row lg:px-8">
           <p>© {new Date().getFullYear()} ProfitPatterns. All rights reserved.</p>
-          <div className="flex gap-6">
-            <Link to="/faq" className="transition-colors hover:text-foreground">FAQ</Link>
-            <Link to="/contact" className="transition-colors hover:text-foreground">Privacy & Contact</Link>
-          </div>
+          <nav aria-label="Legal links" className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1">
+            <Link to="/privacy"  className="transition-colors hover:text-foreground">Privacy Policy</Link>
+            <Link to="/terms"    className="transition-colors hover:text-foreground">Terms of Use</Link>
+            <Link to="/faq"      className="transition-colors hover:text-foreground">FAQ</Link>
+            <Link to="/contact"  className="transition-colors hover:text-foreground">Contact</Link>
+          </nav>
         </div>
       </div>
     </footer>

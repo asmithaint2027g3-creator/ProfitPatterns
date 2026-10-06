@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { CheckCircle2, Lock, ShieldCheck, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -363,6 +364,14 @@ export function LongForm({ source = "long_form" }: { source?: string }) {
         >
           {status === "loading" ? "Submitting Briefing…" : "Request Strategic Consultation →"}
         </Button>
+
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          By submitting this form you agree to our{" "}
+          <Link to="/privacy" className="underline underline-offset-2 hover:text-foreground transition-colors">Privacy Policy</Link>
+          {" "}and{" "}
+          <Link to="/terms" className="underline underline-offset-2 hover:text-foreground transition-colors">Terms of Use</Link>.
+          We will not share your information with third parties.
+        </p>
       </div>
     </form>
   );

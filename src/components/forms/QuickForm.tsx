@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { CheckCircle2, Lock, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -243,6 +244,13 @@ export function QuickForm({ source = "quick_form" }: { source?: string }) {
         <Lock className="size-3 text-primary" />
         <span>Confidential advisory • No spam guaranteed</span>
       </div>
+
+      <p className="text-center text-[10px] text-muted-foreground leading-relaxed">
+        By submitting you agree to our{" "}
+        <Link to="/privacy" className="underline underline-offset-2 hover:text-foreground transition-colors">Privacy Policy</Link>
+        {" "}&amp;{" "}
+        <Link to="/terms" className="underline underline-offset-2 hover:text-foreground transition-colors">Terms of Use</Link>.
+      </p>
     </form>
   );
 }
